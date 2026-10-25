@@ -76,16 +76,11 @@ def guardar_configuracion():
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
 async def responder_con_ia(usuario: str, pregunta: str) -> str:
-    api_key = estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY")
+    api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or "").strip()
 
     if api_key:
-        try:
-            import aiohttp
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-            
-            tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
-            
-            prompt = f"""Eres el 'Sensei del Amor y la Seducción', un maestro y mentor de relaciones, seducción, psicología de la atracción, cómo hablarle a un crush, salir de la friendzone, mensajes de texto e infidelidades en un live de TikTok.
+        tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
+        prompt = f"""Eres el 'Sensei del Amor y la Seducción', un maestro y mentor de relaciones, seducción, psicología de la atracción, cómo hablarle a un crush, salir de la friendzone, mensajes de texto e infidelidades en un live de TikTok.
 Tu estilo: {tono}.
 Reglas estrictas:
 1. Responde SIEMPRE en español en máximo 2 a 3 frases breves y de alto impacto.
@@ -95,17 +90,45 @@ Reglas estrictas:
 Pregunta del espectador en TikTok: "{pregunta}"
 Respuesta del Sensei:"""
 
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.8, "maxOutputTokens": 140}
-            }
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                    if resp.status == 200:
-                        d = await resp.json()
-                        return d["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except Exception as e:
-            logger.warning(f"Error al consultar Gemini API: {e}. Usando oráculo local de seducción.")
+        # Soporte para OpenAI (ChatGPT) si la clave empieza por sk-
+        if api_key.startswith("sk-"):
+            try:
+                import aiohttp
+                url = "https://api.openai.com/v1/chat/completions"
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "model": "gpt-4o-mini",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.8,
+                    "max_tokens": 140
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                        if resp.status == 200:
+                            d = await resp.json()
+                            return d["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                logger.warning(f"Error consultando OpenAI API: {e}")
+
+        # Soporte para Google Gemini (Gemini 1.5 Flash / Pro)
+        else:
+            try:
+                import aiohttp
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                payload = {
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"temperature": 0.8, "maxOutputTokens": 140}
+                }
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                        if resp.status == 200:
+                            d = await resp.json()
+                            return d["candidates"][0]["content"]["parts"][0]["text"].strip()
+            except Exception as e:
+                logger.warning(f"Error consultando Gemini API: {e}")
 
     # Oráculo de Sabiduría Local de Seducción y Relaciones
     q = pregunta.lower()
