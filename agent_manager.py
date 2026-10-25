@@ -280,6 +280,68 @@ Siempre das un mensaje de poder espiritual y revelación."""
         "system_prompt": """Eres 'Coach Titán', un entrenador personal de élite, disciplinado, enérgico y directo en TikTok Live.
 Resuelves dudas de entrenamiento y recomiendas la mejor suplementación para los objetivos del espectador.
 Cierra siempre motivando a entrenar duro y recomendando los suplementos disponibles en el enlace del perfil."""
+    },
+    "calzado_sneakers": {
+        "name": "SneakerDrop · Calzado & Sneakers en Vivo",
+        "type": "tienda_ventas",
+        "sales_mode": "modo_bestia",
+        "niche": "Calzado deportivo, sneakers urbanos, zapatillas de colección y streetwear",
+        "banner_title": "~ SNEAKERDROP · CALZADO EN VIVO ~",
+        "banner_subtitle": "Sneakers Prémium · Tallas 36 a 44 · Envíos Hoy 👟",
+        "voice": "es-CO-GonzaloNeural",
+        "estilo": "vendedor_experto",
+        "theme_color": "#ff3366",
+        "accent_color": "#00f0ff",
+        "avatar": "/assets/logo_orb_gold.png",
+        "bg_hex": "0x0a0c16",
+        "store_name": "SneakerDrop Luxury & Streetwear",
+        "call_to_action": "👟 Pide tus zapatillas favoritas en el link de mi perfil. Envíos gratis y tallas confirmadas hoy.",
+        "keywords": [
+            "zapatillas", "sneakers", "calzado", "tenis", "zapatos", "talla", "tallas",
+            "jordan", "nike", "adidas", "yeezy", "air force", "comprar", "precio", "envio", "envío"
+        ],
+        "featured_products": [
+            {
+                "id": "shoe_1",
+                "name": "Nike Air Jordan 1 Retro High OG",
+                "price": "$85 USD",
+                "notes": "Cuero prémium, amortiguación Air-Sole, combinaciones Panda y Chicago, tallas 38 al 44. Envío gratis hoy.",
+                "badge": "🔥 BEST SELLER"
+            },
+            {
+                "id": "shoe_2",
+                "name": "Nike Air Force 1 '07 White",
+                "price": "$65 USD",
+                "notes": "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida, tallas 37 al 44.",
+                "badge": "👑 CLÁSICO INFALIBLE"
+            },
+            {
+                "id": "shoe_3",
+                "name": "Adidas Forum Low Classic",
+                "price": "$70 USD",
+                "notes": "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario, tallas 38 al 43.",
+                "badge": "⚡ TENDENCIA URBANA"
+            },
+            {
+                "id": "shoe_4",
+                "name": "Yeezy Boost 350 V2 Onyx",
+                "price": "$95 USD",
+                "notes": "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación, tallas 38 al 45.",
+                "badge": "🌟 MÁXIMA COMODIDAD"
+            }
+        ],
+        "system_prompt": """Eres el presentador y experto en calzado y streetwear de 'SneakerDrop' en una transmisión en vivo de TikTok Live.
+Tu estilo es urbano, enérgico, cercano, conocedor de la cultura sneaker y apasionado por las zapatillas.
+
+REGLAS DE VENTA EN MODO BESTIA COMERCIAL (CALZADO & SNEAKERS):
+1. Saluda con vibra y cercanía llamando al espectador por su nombre limpio (sin arrobas).
+2. CONOCE TU CATÁLOGO Y CIERRA VENTAS CON OPCIONES:
+   - Conecta la consulta del cliente con los modelos de tu catálogo (Jordan 1, Air Force 1, Forum Low, Yeezy Boost).
+   - Habla de la comodidad, los materiales (cuero legítimo, amortiguación Air / Boost) y las tallas disponibles.
+   - OFRECE SIEMPRE OPCIONES A/B: "¿Prefieres el estilo clásico del Air Force 1 o quieres dar el salto al Jordan 1 High que es más de colección?".
+   - Menciona el precio accesible y la urgencia de pocas tallas en stock.
+   - Cierra con el llamado a la acción: "Toca el enlace de mi perfil para apartar tu talla con envío gratis antes de que se agoten".
+3. Longitud: 3 a 4 oraciones de alto impacto."""
     }
 }
 
@@ -353,6 +415,22 @@ class AgentManager:
                     "gemini_api_key": "",
                     "client_name": "Don Perfume (Sensei Sin Ventas)",
                     "client_pin": "9999",
+                    "is_streaming": False,
+                    "created_at": "2026-10-25"
+                }
+                self.save_agents()
+
+            # Asegurar que el Agente de Calzado & Sneakers esté disponible
+            if "calzado-sneakers" not in self.agents and "calzado_sneakers" in AGENT_TEMPLATES:
+                self.agents["calzado-sneakers"] = {
+                    "id": "calzado-sneakers",
+                    **AGENT_TEMPLATES["calzado_sneakers"],
+                    "tiktok_username": "",
+                    "rtmp_url": "",
+                    "stream_key": "",
+                    "gemini_api_key": "",
+                    "client_name": "Demo Calzado & Sneakers Urbanos",
+                    "client_pin": "7777",
                     "is_streaming": False,
                     "created_at": "2026-10-25"
                 }

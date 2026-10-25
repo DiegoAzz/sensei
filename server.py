@@ -6,6 +6,7 @@ parejas e infidelidades en TikTok, genera sabiduría con IA y responde con voz n
 """
 
 import os
+import re
 import sys
 import json
 import asyncio
@@ -186,12 +187,12 @@ LLAMADO A LA ACCIÓN: {cta}
 REGLAS DE VENTA EN MODO BESTIA COMERCIAL (VENTA ACTIVA CON OPCIONES DE PREGUNTAS):
 1. Saluda con entusiasmo y energía usando su nombre limpio: "{nombre_humano}".
 2. VENTA ACTIVA CON OPCIONES DE PREGUNTAS (PERSUASIVA, NO ABUSIVA):
-   - Reconoce la fragancia o necesidad que menciona el cliente y conéctala con la pasión de tu catálogo.
-   - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B AL CLIENTE para facilitar la decisión (ej: "¿Prefieres llevarte la opción A de diseñador o prefieres el clon árabe B con mayor fijación por menor precio?", "¿Prefieres el frasco grande o te armo un set con dos aromas?").
-   - Menciona el precio accesible y crea urgencia de inventario limitado ("últimas piezas disponibles hoy").
+   - Reconoce el producto, modelo o necesidad que menciona el cliente y conéctala con las opciones de tu catálogo.
+   - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B AL CLIENTE para facilitar la decisión (ej: "¿Prefieres el modelo clásico A o la opción B con mayor exclusividad?", "¿Te gustaría en talla 40 o 41?", "¿Prefieres la opción individual o el paquete completo?").
+   - Menciona el precio accesible y crea urgencia de inventario limitado ("quedan pocas piezas disponibles hoy").
    - Cierra con una pregunta de cierre con opciones (ej: '¿cuál de los dos prefieres?') e invita a tocar el enlace del perfil: "{cta}".
 3. Si el espectador se ríe (jaja, jeje, xd): ríete con él y contagia buena vibra.
-4. NUNCA digas que eres una IA o bot; eres la dueña y presentadora en vivo.
+4. NUNCA digas que eres una IA o bot; eres el experto/a y presentador/a en vivo de la tienda.
 5. Al puro inicio pon la emoción entre corchetes: [VENTA], [RECOMENDACION] o [RISA].
 6. Máximo 3 a 4 oraciones de alto impacto para TikTok Live.
 
@@ -215,18 +216,18 @@ REGLAS DE VENTA Y CONVERSIÓN EN TIKTOK LIVE (VENTA CONSULTIVA EQUILIBRADA):
 1. Saluda a la persona con calidez usando su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
 2. INTELIGENCIA DE VENTA Y CONVERSACIÓN (NATURAL Y CONSULTIVA):
    A) Si el espectador pregunta por COMPRA, PRECIO, ENVÍO O DISPONIBILIDAD (ej: '¿cuánto cuesta?', '¿dónde lo compro?', '¿tienen stock?', 'recomiéndame uno para comprar'):
-      - Menciona el precio accesible, que lo tienes en la boutique con envío prioritario y cierra con el llamado a la acción: "{cta}".
-   B) Si el espectador hace una pregunta de OPINIÓN, NOTAS, COMPARACIÓN O CURIOSIDAD (ej: '¿qué tal Jean Paul Gaultier?', '¿cuál huele mejor entre Dior y Chanel?', '¿dura mucho?'):
+      - Menciona el precio accesible, que lo tienes disponible con envío prioritario y cierra con el llamado a la acción: "{cta}".
+   B) Si el espectador hace una pregunta de OPINIÓN, CARACTERÍSTICAS, COMPARACIÓN O CURIOSIDAD (ej: '¿qué tal esa marca?', '¿cuál dura o rinde más?', '¿es cómodo?'):
       - NO intentes venderle agresivamente ni le menciones precios o enlaces de compra de forma forzada.
-      - Responde como una sommelier apasionada describiendo las notas y sensaciones del aroma.
-      - CIERRA CON UNA PREGUNTA DE ENGANCHE PARA EL LIVE (ej: '¿Tú eres más de aromas dulces con vainilla o prefieres los frescos cítricos?', '¿Lo buscas para uso diario o para citas nocturnas?'). Esto hace que la gente comente en el live de TikTok y se queden enganchados.
+      - Responde como un especialista apasionado describiendo las cualidades, materiales o sensaciones del producto.
+      - CIERRA CON UNA PREGUNTA DE ENGANCHE PARA EL LIVE (ej: '¿Tú buscas algo más clásico o prefieres lo más moderno y exclusivo?', '¿Para qué uso o estilo lo necesitas?'). Esto hace que la gente comente en el live de TikTok y se queden enganchados.
 3. Si el espectador se ríe (jaja, jeje, xd): ríete con él y mantén la vibra alegre y magnética.
-4. NUNCA digas que eres una IA o bot; eres la dueña y sommelier en vivo de la tienda.
+4. NUNCA digas que eres una IA o bot; eres el experto/a en vivo de la tienda.
 5. Al puro inicio pon la emoción entre corchetes: [VENTA], [RECOMENDACION], [RISA] o [SABIO].
 6. Máximo 3 a 4 oraciones de alto impacto para TikTok Live.
 
 Pregunta del cliente en TikTok: "{pregunta}"
-Respuesta de Salomé / Sommelier:"""
+Respuesta del Asesor en Directo:"""
 
     else:
         tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
@@ -396,21 +397,43 @@ def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
         return (f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.", "SABIO")
 
 def generar_respuesta_agente_personalizado(usuario: str, pregunta: str, agent: dict) -> tuple:
-    """Responde de forma profesional y personalizada según el nicho y reglas de cualquier agente creado desde cero."""
+    """Responde de forma profesional y personalizada según el nicho, productos y reglas de cualquier agente creado desde cero."""
     nombre = limpiar_nombre_usuario(usuario)
     ag_name = agent.get("name", "Asesor").split("·")[0].strip()
     nicho = agent.get("niche", "nuestra especialidad")
-    cta = agent.get("call_to_action", "Toca el enlace de nuestro perfil para más información.")
+    cta = agent.get("call_to_action", "Toca el enlace de nuestro perfil para pedir el tuyo.")
+    sales_mode = agent.get("sales_mode", "modo_bestia")
+    prods = agent.get("featured_products", [])
     
     q_low = pregunta.lower()
+
+    # Risa / Humor
     if any(k in q_low for k in ["jaja", "jeje", "xd", "chiste", "broma", "risa"]):
-        return (f"¡Jajaja! Saludos {nombre}, me encanta tu energía. En cuanto a lo que preguntas sobre {nicho}, aquí en vivo estamos resolviendo cada duda con el mayor profesionalismo. {cta}", "RISA")
+        return (f"¡Jajaja! Saludos {nombre}, me encanta tu energía. En cuanto a lo que preguntas sobre {nicho}, aquí en vivo estamos respondiendo cada duda. {cta}", "RISA")
+
+    # 1. Búsqueda de productos específicos en el catálogo del agente (Calzado, Ropa, etc.)
+    for p in prods:
+        p_name = p.get("name", "").lower()
+        palabras_prod = [w for w in re.findall(r'\b[a-zA-Z0-9]{3,}\b', p_name)]
+        if any(w in q_low for w in palabras_prod) or p_name in q_low:
+            precio_txt = f"por solo {p.get('price')}" if p.get("price") else ""
+            notes_txt = f" Destaca por: {p.get('notes')}" if p.get("notes") else ""
+            if sales_mode == "sensei_puro":
+                return (f"¡Excelente elección, {nombre}! El modelo {p['name']} es de lo más cotizado en {nicho}.{notes_txt}. ¿Para qué tipo de uso o estilo lo estás buscando?", "SABIO")
+            else:
+                return (f"¡Gran elección, {nombre}! Tenemos disponible {p['name']} {precio_txt}.{notes_txt}. Quedan pocas unidades en inventario. ¿Te aparto el tuyo de una vez? {cta}", "VENTA")
+
+    # 2. Si pregunta por precios o catálogo en general
+    if any(k in q_low for k in ["precio", "cuanto", "cuánto", "vale", "comprar", "tienen", "catalogo", "catálogo", "modelos", "tallas", "zapatos", "calzado", "disponible"]):
+        if prods:
+            ejemplos = ", ".join([f"{p['name']} ({p.get('price', '')})" for p in prods[:2]])
+            return (f"¡Hola {nombre}! En nuestro catálogo tenemos referencias disponibles como {ejemplos} con despacho inmediato. ¿Qué modelo o talla buscas para confirmarte? {cta}", "VENTA")
     
-    # Extraer palabras clave de la pregunta
+    # 3. Respuesta general inteligente
     palabras = [w for w in re.findall(r'\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{4,}\b', pregunta) if w.lower() not in ["como", "para", "donde", "cuando", "porque", "tienes", "quiero", "puedo", "hacer", "cual", "cuanto", "cuanto", "hola"]]
     tema = f"sobre '{palabras[0]}'" if palabras else ""
 
-    return (f"Hola {nombre}. Como experto en {nicho}, es una excelente consulta {tema}. Te confirmo que en nuestro servicio ofrecemos soluciones a tu medida con resultados comprobados. {cta}", "SABIO")
+    return (f"Hola {nombre}. Como experto en {nicho}, es una excelente consulta {tema}. Te confirmo que en nuestro catálogo ofrecemos productos y soluciones de máxima calidad garantizada. {cta}", "SABIO")
 
 # ==================== SÍNTESIS DE VOZ (TTS) ====================
 async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO", voz_override: str = None):

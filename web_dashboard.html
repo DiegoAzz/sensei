@@ -1101,6 +1101,9 @@
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn-admin-pill" id="btn-manage-products" style="background: rgba(0, 240, 255, 0.15); border-color: #00f0ff; color: #00f0ff; cursor: pointer;">
+            📦 Gestionar Productos / Catálogo
+          </button>
           <button type="button" class="btn-admin-pill" id="btn-simular-venta" style="background: rgba(255, 215, 0, 0.15); border-color: var(--gold); color: var(--gold);">
             🔔 Simular Compra en Directo
           </button>
@@ -1244,6 +1247,19 @@
             <div class="form-group">
               <label class="form-label">Subtítulo en Pantalla</label>
               <input type="text" id="cfg-banner-subtitle" class="input-field" placeholder="ej: Fragancias Árabes · Diseñador 🛍️">
+            </div>
+          </div>
+
+          <!-- Acceso Directo a Catálogo de Productos del Agente -->
+          <div style="background: rgba(0, 240, 255, 0.05); border: 1px dashed rgba(0, 240, 255, 0.35); border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-size: 12px; font-weight: 700; color: #00f0ff; display: block;">📦 Catálogo de Productos para Vender</span>
+                <span style="font-size: 11px; color: var(--ink70);" id="cfg-products-count">Cargando productos...</span>
+              </div>
+              <button type="button" id="btn-open-catalog-manager" class="btn-admin-pill" style="background: rgba(0, 240, 255, 0.18); border-color: #00f0ff; color: #00f0ff; padding: 6px 12px; font-size: 12px; cursor: pointer;">
+                ✏️ Editar Catálogo
+              </button>
             </div>
           </div>
 
@@ -1397,6 +1413,7 @@
           <button type="button" class="btn-preset btn-tpl-load" data-template="sensei_perfumes">👑 Sensei del Perfume (0% Ventas · Sabiduría)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="sensei_amor">⛩️ Sensei del Amor (Romance)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="madame_tarot">🔮 Tarot & Destino (Astrología)</button>
+          <button type="button" class="btn-preset btn-tpl-load" data-template="calzado_sneakers">👟 Calzado & Sneakers (Ventas)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="fitness_titan">💪 Coach Fitness (Suplementos)</button>
         </div>
       </div>
@@ -1513,6 +1530,89 @@
       </div>
       <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
         <button type="button" class="btn-action-primary" id="btn-copy-url-action">📋 Copiar Enlace</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Gestor de Catálogo de Productos (Calzado, Ropa, Perfumes, etc.) -->
+  <div class="modal-backdrop" id="modal-manage-products">
+    <div class="modal-card" style="max-width: 760px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h3 class="modal-title">📦 Gestor de Catálogo y Productos del Agente</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-products">&times;</button>
+      </div>
+
+      <p style="font-size: 12px; color: var(--ink70); margin-bottom: 12px;">
+        Configura los productos que tu agente ofrece y vende en TikTok Live (Calzado, Ropa, Perfumes, Tecnología, etc.). La IA usará estos nombres, precios, tallas y detalles para responder y cerrar ventas.
+      </p>
+
+      <!-- Plantillas Rápidas de Productos por Nicho -->
+      <div style="background: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 14px;">
+        <span style="font-size: 11px; color: var(--gold); font-family: var(--font-mono); font-weight: 700; display: block; margin-bottom: 6px;">
+          ⚡ CARGAR CATÁLOGO DE EJEMPLO SEGÚN EL NEGOCIO:
+        </span>
+        <div class="preset-pills" style="gap: 6px;">
+          <button type="button" class="btn-preset" id="btn-load-shoes-catalog">👟 Calzado & Sneakers</button>
+          <button type="button" class="btn-preset" id="btn-load-perfumes-catalog">🌸 Perfumería Árabe</button>
+          <button type="button" class="btn-preset" id="btn-load-clothing-catalog">👕 Moda & Ropa</button>
+          <button type="button" class="btn-preset" id="btn-load-tech-catalog">📱 Celulares & Tech</button>
+          <button type="button" class="btn-preset" id="btn-load-fitness-catalog">💪 Suplementos Fitness</button>
+          <button type="button" class="btn-preset" id="btn-clear-catalog" style="border-color: #ff3366; color: #ff3366;">🧹 Vaciar Todo</button>
+        </div>
+      </div>
+
+      <!-- Formulario para Añadir / Editar Producto -->
+      <div style="background: rgba(18, 5, 26, 0.7); border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+        <span style="font-size: 12px; font-weight: 700; color: #00f0ff; display: block; margin-bottom: 10px;" id="form-product-title">
+          ➕ Añadir Nuevo Producto al Catálogo
+        </span>
+        <input type="hidden" id="prod-edit-id" value="">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group">
+            <label class="form-label">Nombre del Producto / Modelo</label>
+            <input type="text" id="prod-input-name" class="input-field" placeholder="ej: Zapatillas Nike Air Jordan 1 Retro">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Precio</label>
+            <input type="text" id="prod-input-price" class="input-field" placeholder="ej: $85 USD o $320.000 COP">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Etiqueta / Badge</label>
+            <input type="text" id="prod-input-badge" class="input-field" placeholder="ej: 🔥 BEST SELLER">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción, Tallas, Colores y Detalles para la IA</label>
+          <input type="text" id="prod-input-notes" class="input-field" placeholder="ej: Cuero legítimo, suela Air antideslizante, tallas 38 al 44, envío gratis nacional hoy">
+          <span style="font-size: 11px; color: var(--ink70); margin-top: 2px;">
+            💡 Entre más detalles pongas (tallas, materiales, colores), mejor responderá la IA cuando le pregunten por este producto.
+          </span>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+          <button type="button" class="btn-admin-pill" id="btn-cancel-edit-prod" style="display: none;">Cancelar Edición</button>
+          <button type="button" class="btn-action-primary" id="btn-save-single-prod" style="padding: 9px 18px; font-size: 13px;">
+            ➕ Añadir Producto a la Lista
+          </button>
+        </div>
+      </div>
+
+      <!-- Lista de Productos Actuales -->
+      <div style="margin-bottom: 16px;">
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span>Productos Configurados en este Agente</span>
+          <span id="modal-products-count" style="color: var(--gold); font-family: var(--font-mono);">0 productos</span>
+        </label>
+        <div id="modal-products-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <!-- Botones de Guardar / Cerrar -->
+      <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 14px;">
+        <button type="button" class="btn-admin-pill" id="btn-close-products-footer">Cerrar</button>
+        <button type="button" class="btn-action-primary" id="btn-save-all-products" style="padding: 10px 20px;">
+          💾 Guardar Todo el Catálogo en el Agente
+        </button>
       </div>
     </div>
   </div>
@@ -1762,15 +1862,22 @@
 
       cargarAvataresDisponibles(agent.avatar);
 
-      // Showcase de Tienda Física
-      if (agent.type === "tienda_ventas") {
+      // Contador de productos en panel de configuración
+      const cfgProductsCount = document.getElementById("cfg-products-count");
+      const prods = agent.featured_products || [];
+      const hasProducts = prods.length > 0;
+      if (cfgProductsCount) {
+        cfgProductsCount.textContent = `${prods.length} producto${prods.length === 1 ? '' : 's'} activo${prods.length === 1 ? '' : 's'} para vender`;
+      }
+
+      // Showcase de Tienda y Catálogo de Productos
+      if (agent.type === "tienda_ventas" || hasProducts) {
         storeShowcaseSection.style.display = "flex";
         storeTitleText.textContent = agent.store_name || agent.name;
-        storeSubtitleText.textContent = agent.call_to_action || "Escaparate de productos y ventas en vivo";
+        storeSubtitleText.textContent = agent.call_to_action || "Catálogo de productos y ofertas en vivo";
 
-        // Renderizar productos
+        // Renderizar productos en el escaparate
         storeProductsGrid.innerHTML = "";
-        const prods = agent.featured_products || [];
         prods.forEach(p => {
           const card = document.createElement("div");
           card.className = "product-card";
@@ -1786,35 +1893,57 @@
             </button>
           `;
           card.querySelector(".btn-ask-product").addEventListener("click", () => {
-            testCommentInput.value = `¿Qué notas tiene y por qué recomiendas ${p.name}?`;
+            testCommentInput.value = `¿Qué precio tienen y qué tallas o detalles hay de ${p.name}?`;
             btnTestEnviar.click();
           });
           storeProductsGrid.appendChild(card);
         });
 
-        // Configurar píldoras de prueba para perfumes
-        if (presetPillsContainer) {
+      } else {
+        storeShowcaseSection.style.display = "none";
+      }
+
+      // Adaptar píldoras de comentarios según el nicho y tipo de agente
+      if (presetPillsContainer) {
+        const nichoLow = `${agent.niche || ''} ${agent.name || ''}`.toLowerCase();
+        if (nichoLow.includes("calzado") || nichoLow.includes("sneaker") || nichoLow.includes("zapato") || nichoLow.includes("zapatilla") || nichoLow.includes("tenis")) {
+          presetPillsContainer.innerHTML = `
+            <button type="button" class="btn-preset" data-q="¿Tienen los Jordan 1 High y en qué tallas?">👟 Jordan 1 Tallas</button>
+            <button type="button" class="btn-preset" data-q="¿Qué precio tienen los Air Force 1 blancos?">👑 Air Force 1 Precio</button>
+            <button type="button" class="btn-preset" data-q="¿Cuáles zapatillas son más cómodas para caminar todo el día?">☁️ Más Cómodas</button>
+            <button type="button" class="btn-preset" data-q="¿Hacen envíos gratis si compro hoy?">📦 Envíos Gratis</button>
+          `;
+        } else if (nichoLow.includes("perfume") || nichoLow.includes("fragancia")) {
           presetPillsContainer.innerHTML = `
             <button type="button" class="btn-preset" data-q="¿Cuál perfume me recomiendas para una cita nocturna?">🌙 Cita Nocturna</button>
             <button type="button" class="btn-preset" data-q="¿Tienen el clon de Sauvage Elixir de diseñador?">👑 Clon Sauvage</button>
             <button type="button" class="btn-preset" data-q="¿Qué fragancia dura más de 12 horas para oficina?">💼 Duración 12h</button>
             <button type="button" class="btn-preset" data-q="¿Cuál es el mejor perfume femenino dulce y viral?">🌺 Femenino Viral</button>
           `;
-          asignarEventosPills();
-        }
-
-      } else {
-        storeShowcaseSection.style.display = "none";
-        // Restaurar píldoras de amor
-        if (presetPillsContainer) {
+        } else if (nichoLow.includes("fitness") || nichoLow.includes("suplement") || nichoLow.includes("entren") || nichoLow.includes("gym")) {
+          presetPillsContainer.innerHTML = `
+            <button type="button" class="btn-preset" data-q="¿Qué suplemento me recomiendas para ganar masa muscular?">💪 Ganar Masa</button>
+            <button type="button" class="btn-preset" data-q="¿Qué precio tiene la creatina y cómo se toma?">⚡ Creatina Precio</button>
+            <button type="button" class="btn-preset" data-q="¿Tienen proteína limpia baja en carbohidratos?">🥛 Proteína Isolate</button>
+            <button type="button" class="btn-preset" data-q="¿Hacen envíos a mi ciudad hoy?">📦 Envíos Hoy</button>
+          `;
+        } else if (agent.type === "tienda_ventas" || hasProducts) {
+          const p1 = prods[0] ? prods[0].name : "productos";
+          presetPillsContainer.innerHTML = `
+            <button type="button" class="btn-preset" data-q="¿Qué precio tiene ${p1} y qué promociones tienen hoy?">🏷️ Precios & Promos</button>
+            <button type="button" class="btn-preset" data-q="¿Qué características o beneficios tiene ${p1}?">⭐ Beneficios</button>
+            <button type="button" class="btn-preset" data-q="¿Cuáles son los productos más vendidos de la tienda?">🔥 Más Vendidos</button>
+            <button type="button" class="btn-preset" data-q="¿Cómo hago para comprar con envío gratis?">🛒 Comprar Ahora</button>
+          `;
+        } else {
           presetPillsContainer.innerHTML = `
             <button type="button" class="btn-preset" data-q="Me dejó en visto hace 3 días, ¿qué hago?">👀 Dejado en Visto</button>
             <button type="button" class="btn-preset" data-q="¿Cómo salir de la friendzone con mi crush?">💔 Salir de Friendzone</button>
             <button type="button" class="btn-preset" data-q="¿Debo perdonar una infidelidad si me pide perdón?">⚔️ Infidelidad</button>
             <button type="button" class="btn-preset" data-q="Mi ex me volvió a escribir después de meses de contacto cero">🕊️ Volver con mi Ex</button>
           `;
-          asignarEventosPills();
         }
+        asignarEventosPills();
       }
     }
 
@@ -2068,6 +2197,365 @@
           btnSaveAgentConfig.textContent = "💾 Guardar Cambios y Prompt de este Agente";
         } finally {
           btnSaveAgentConfig.disabled = false;
+        }
+      });
+    }
+
+    // ==================== GESTOR VISUAL DE CATÁLOGO Y PRODUCTOS ====================
+    const modalManageProducts = document.getElementById("modal-manage-products");
+    const btnManageProducts = document.getElementById("btn-manage-products");
+    const btnOpenCatalogManager = document.getElementById("btn-open-catalog-manager");
+    const btnCloseProducts = document.getElementById("btn-close-products");
+    const btnCloseProductsFooter = document.getElementById("btn-close-products-footer");
+    const btnSaveAllProducts = document.getElementById("btn-save-all-products");
+    const modalProductsList = document.getElementById("modal-products-list");
+    const modalProductsCount = document.getElementById("modal-products-count");
+
+    const formProductTitle = document.getElementById("form-product-title");
+    const prodEditId = document.getElementById("prod-edit-id");
+    const prodInputName = document.getElementById("prod-input-name");
+    const prodInputPrice = document.getElementById("prod-input-price");
+    const prodInputBadge = document.getElementById("prod-input-badge");
+    const prodInputNotes = document.getElementById("prod-input-notes");
+    const btnSaveSingleProd = document.getElementById("btn-save-single-prod");
+    const btnCancelEditProd = document.getElementById("btn-cancel-edit-prod");
+
+    const btnLoadShoesCatalog = document.getElementById("btn-load-shoes-catalog");
+    const btnLoadPerfumesCatalog = document.getElementById("btn-load-perfumes-catalog");
+    const btnLoadClothingCatalog = document.getElementById("btn-load-clothing-catalog");
+    const btnLoadTechCatalog = document.getElementById("btn-load-tech-catalog");
+    const btnLoadFitnessCatalog = document.getElementById("btn-load-fitness-catalog");
+    const btnClearCatalog = document.getElementById("btn-clear-catalog");
+
+    let tempProductsList = [];
+
+    function abrirModalProductos() {
+      if (!currentAgent) return;
+      tempProductsList = JSON.parse(JSON.stringify(currentAgent.featured_products || []));
+      resetFormProducto();
+      renderModalProductsList();
+      modalManageProducts.classList.add("active");
+    }
+
+    function cerrarModalProductos() {
+      modalManageProducts.classList.remove("active");
+    }
+
+    if (btnManageProducts) btnManageProducts.addEventListener("click", abrirModalProductos);
+    if (btnOpenCatalogManager) btnOpenCatalogManager.addEventListener("click", abrirModalProductos);
+    if (btnCloseProducts) btnCloseProducts.addEventListener("click", cerrarModalProductos);
+    if (btnCloseProductsFooter) btnCloseProductsFooter.addEventListener("click", cerrarModalProductos);
+
+    function resetFormProducto() {
+      if (prodEditId) prodEditId.value = "";
+      if (prodInputName) prodInputName.value = "";
+      if (prodInputPrice) prodInputPrice.value = "";
+      if (prodInputBadge) prodInputBadge.value = "";
+      if (prodInputNotes) prodInputNotes.value = "";
+      if (formProductTitle) formProductTitle.textContent = "➕ Añadir Nuevo Producto al Catálogo";
+      if (btnSaveSingleProd) btnSaveSingleProd.textContent = "➕ Añadir Producto a la Lista";
+      if (btnCancelEditProd) btnCancelEditProd.style.display = "none";
+    }
+
+    if (btnCancelEditProd) {
+      btnCancelEditProd.addEventListener("click", resetFormProducto);
+    }
+
+    function renderModalProductsList() {
+      if (!modalProductsList) return;
+      modalProductsList.innerHTML = "";
+      const count = tempProductsList.length;
+      if (modalProductsCount) modalProductsCount.textContent = `${count} producto${count === 1 ? '' : 's'}`;
+
+      if (count === 0) {
+        modalProductsList.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: var(--ink70); font-size: 13px; border: 1px dashed var(--line); border-radius: 8px;">
+            No hay productos configurados todavía en este agente.<br>
+            <span style="color: var(--cyan); font-weight: 600;">Agrega uno arriba o haz clic en los botones rápidos de ejemplo (👟 Calzado, 🌸 Perfumes, 👕 Moda, etc.).</span>
+          </div>
+        `;
+        return;
+      }
+
+      tempProductsList.forEach((p, idx) => {
+        const item = document.createElement("div");
+        item.style.cssText = "display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; gap: 12px;";
+        item.innerHTML = `
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span class="product-badge" style="font-size: 10px; padding: 2px 6px;">${p.badge || 'DESTACADO'}</span>
+              <strong style="color: #fff; font-size: 13px;">${p.name}</strong>
+              <span style="color: var(--gold); font-family: var(--font-mono); font-weight: 700; font-size: 12px;">${p.price || ''}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--ink70); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${p.notes || 'Sin detalles extra'}
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; flex-shrink: 0;">
+            <button type="button" class="btn-admin-pill btn-edit-p" style="padding: 4px 10px; font-size: 11px; color: var(--cyan); border-color: var(--cyan); cursor: pointer;">
+              ✏️ Editar
+            </button>
+            <button type="button" class="btn-admin-pill btn-del-p" style="padding: 4px 10px; font-size: 11px; color: #ff3366; border-color: #ff3366; cursor: pointer;">
+              🗑️
+            </button>
+          </div>
+        `;
+
+        item.querySelector(".btn-edit-p").addEventListener("click", () => {
+          prodEditId.value = p.id || `idx_${idx}`;
+          prodInputName.value = p.name || "";
+          prodInputPrice.value = p.price || "";
+          prodInputBadge.value = p.badge || "";
+          prodInputNotes.value = p.notes || "";
+          formProductTitle.textContent = `✏️ Editando: ${p.name}`;
+          btnSaveSingleProd.textContent = "💾 Actualizar este Producto";
+          btnCancelEditProd.style.display = "inline-block";
+          prodInputName.focus();
+        });
+
+        item.querySelector(".btn-del-p").addEventListener("click", () => {
+          tempProductsList.splice(idx, 1);
+          renderModalProductsList();
+        });
+
+        modalProductsList.appendChild(item);
+      });
+    }
+
+    if (btnSaveSingleProd) {
+      btnSaveSingleProd.addEventListener("click", () => {
+        const name = prodInputName.value.trim();
+        if (!name) {
+          alert("Debes escribir el nombre o modelo del producto");
+          prodInputName.focus();
+          return;
+        }
+
+        const price = prodInputPrice.value.trim();
+        const badge = prodInputBadge.value.trim() || "🔥 DESTACADO";
+        const notes = prodInputNotes.value.trim();
+        const editId = prodEditId.value;
+
+        if (editId) {
+          const target = tempProductsList.find(p => (p.id === editId || `idx_${tempProductsList.indexOf(p)}` === editId));
+          if (target) {
+            target.name = name;
+            target.price = price;
+            target.badge = badge;
+            target.notes = notes;
+          }
+        } else {
+          tempProductsList.push({
+            id: "prod_" + Date.now(),
+            name,
+            price,
+            badge,
+            notes
+          });
+        }
+
+        resetFormProducto();
+        renderModalProductsList();
+      });
+    }
+
+    // Presets de catálogos
+    if (btnLoadShoesCatalog) {
+      btnLoadShoesCatalog.addEventListener("click", () => {
+        tempProductsList = [
+          {
+            id: "shoe_1",
+            name: "Nike Air Jordan 1 Retro High OG",
+            price: "$85 USD",
+            badge: "🔥 BEST SELLER",
+            notes: "Cuero legítimo prémium, amortiguación Air-Sole, combinaciones Panda y Chicago, tallas 38 al 44. Envío gratis hoy."
+          },
+          {
+            id: "shoe_2",
+            name: "Nike Air Force 1 '07 White",
+            price: "$65 USD",
+            badge: "👑 CLÁSICO INFALIBLE",
+            notes: "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida, tallas 37 al 44."
+          },
+          {
+            id: "shoe_3",
+            name: "Adidas Forum Low Classic",
+            price: "$70 USD",
+            badge: "⚡ TENDENCIA URBANA",
+            notes: "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario, tallas 38 al 43."
+          },
+          {
+            id: "shoe_4",
+            name: "Yeezy Boost 350 V2 Onyx",
+            price: "$95 USD",
+            badge: "🌟 MÁXIMA COMODIDAD",
+            notes: "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación, tallas 38 al 45."
+          }
+        ];
+        renderModalProductsList();
+      });
+    }
+
+    if (btnLoadPerfumesCatalog) {
+      btnLoadPerfumesCatalog.addEventListener("click", () => {
+        tempProductsList = [
+          {
+            id: "perf_1",
+            name: "Asad de Lattafa",
+            price: "$45 USD",
+            badge: "🔥 BEST SELLER",
+            notes: "Clon prémium de Sauvage Elixir, notas de pimienta negra, café, tabaco y vainilla. Proyección bestial de 10+ horas."
+          },
+          {
+            id: "perf_2",
+            name: "Club de Nuit Intense Man",
+            price: "$55 USD",
+            badge: "👑 REY DE CUMPLIDOS",
+            notes: "Inspirado en Creed Aventus, notas de piña ahumada, abedul y ámbar gris. La bestia negra de cumplidos masculinos."
+          },
+          {
+            id: "perf_3",
+            name: "Khamrah de Lattafa",
+            price: "$50 USD",
+            badge: "🍯 DULCE & SEDUCTOR",
+            notes: "Inspirado en Angels' Share de Kilian, notas de canela, praliné, dátiles y vainilla bourbon. Aroma cálido de noche."
+          },
+          {
+            id: "perf_4",
+            name: "Yara Pink de Lattafa",
+            price: "$40 USD",
+            badge: "🌸 TIKTOK VIRAL FEMENINO",
+            notes: "Notas dulces de orquídea, mandarina, heliotropo, acorde gourmand y vainilla. Femenino, adictivo y duradero."
+          }
+        ];
+        renderModalProductsList();
+      });
+    }
+
+    if (btnLoadClothingCatalog) {
+      btnLoadClothingCatalog.addEventListener("click", () => {
+        tempProductsList = [
+          {
+            id: "cloth_1",
+            name: "Hoodie Heavyweight Oversize",
+            price: "$45 USD",
+            badge: "🔥 TENDENCIA STREETWEAR",
+            notes: "100% algodón rústico 450 GSM, corte oversize relajado, capucha doble forro, colores negro y crema, tallas S a XL."
+          },
+          {
+            id: "cloth_2",
+            name: "Pantalón Cargo Táctico Multi-Bolsillos",
+            price: "$50 USD",
+            badge: "⚡ BEST SELLER",
+            notes: "Tela ripstop antirasgaduras, 6 bolsillos de carga, elástico y ajustador en tobillos, tallas 28 a 36."
+          },
+          {
+            id: "cloth_3",
+            name: "Camiseta Boxy Fit Acid Wash",
+            price: "$28 USD",
+            badge: "👑 BÁSICO PREMIUM",
+            notes: "Cuello cerrado de 3cm, tejido de alto gramaje con lavado vintage premium, tallas S a L."
+          }
+        ];
+        renderModalProductsList();
+      });
+    }
+
+    if (btnLoadTechCatalog) {
+      btnLoadTechCatalog.addEventListener("click", () => {
+        tempProductsList = [
+          {
+            id: "tech_1",
+            name: "Auriculares Pro Wireless ANC",
+            price: "$49 USD",
+            badge: "🔥 CANCELACIÓN DE RUIDO",
+            notes: "Cancelación activa de ruido 42dB, batería de 36 horas continuas, sonido Hi-Res y carga rápida tipo C."
+          },
+          {
+            id: "tech_2",
+            name: "Smartwatch Ultra Amoled 2.04",
+            price: "$59 USD",
+            badge: "⚡ OFERTA FLASH",
+            notes: "Pantalla AMOLED brillante, llamadas bluetooth, resistencia al agua IP68, monitor cardíaco y 100 modos de deporte."
+          },
+          {
+            id: "tech_3",
+            name: "Cargador Rápido GaN 65W Multi-Puerto",
+            price: "$25 USD",
+            badge: "🚀 CARGA ULTRA RÁPIDA",
+            notes: "3 puertos (2 USB-C + 1 USB-A), tecnología nitruro de galio (GaN), carga laptops, iPhones y Android a máxima velocidad."
+          }
+        ];
+        renderModalProductsList();
+      });
+    }
+
+    if (btnLoadFitnessCatalog) {
+      btnLoadFitnessCatalog.addEventListener("click", () => {
+        tempProductsList = [
+          {
+            id: "fit_1",
+            name: "Creatina Monohidrato Creapure 300g",
+            price: "$32 USD",
+            badge: "⚡ 100% PURA CREAPURE",
+            notes: "Sello Creapure alemán garantizado, máxima absorción para fuerza y volumen muscular, 60 servicios."
+          },
+          {
+            id: "fit_2",
+            name: "Whey Protein Isolate 2kg",
+            price: "$65 USD",
+            badge: "👑 CERO AZÚCAR & CARBS",
+            notes: "27g de proteína pura por scoop, absorción rápida post-entreno, sabor Chocolate Belga o Vainilla Gourmet."
+          }
+        ];
+        renderModalProductsList();
+      });
+    }
+
+    if (btnClearCatalog) {
+      btnClearCatalog.addEventListener("click", () => {
+        if (confirm("¿Seguro que deseas vaciar la lista de productos de este agente?")) {
+          tempProductsList = [];
+          renderModalProductsList();
+        }
+      });
+    }
+
+    if (btnSaveAllProducts) {
+      btnSaveAllProducts.addEventListener("click", async () => {
+        if (!currentAgent) return;
+        btnSaveAllProducts.disabled = true;
+        btnSaveAllProducts.textContent = "⏳ Guardando catálogo...";
+
+        try {
+          const res = await fetch(`/api/agents/${currentAgent.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${adminToken}`
+            },
+            body: JSON.stringify({
+              featured_products: tempProductsList,
+              type: (tempProductsList.length > 0 && currentAgent.type !== "consultorio") ? "tienda_ventas" : currentAgent.type
+            })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            currentAgent.featured_products = [...tempProductsList];
+            if (tempProductsList.length > 0 && currentAgent.type !== "consultorio") {
+              currentAgent.type = "tienda_ventas";
+            }
+            aplicarDatosAgente(currentAgent);
+            cerrarModalProductos();
+            addLog(`💾 ¡Catálogo actualizado con ${tempProductsList.length} productos para '${currentAgent.name}'!`, "green");
+          } else {
+            alert("Error guardando catálogo: " + (d.error || "No se pudo actualizar"));
+          }
+        } catch (e) {
+          alert("Error de conexión al guardar productos: " + e.message);
+        } finally {
+          btnSaveAllProducts.disabled = false;
+          btnSaveAllProducts.textContent = "💾 Guardar Todo el Catálogo en el Agente";
         }
       });
     }
