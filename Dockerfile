@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el proyecto
 COPY . .
 
-# Exponer el puerto del panel de control
-EXPOSE 8080
+# Exponer los puertos para el panel web de control en Coolify
+EXPOSE 8080 3000
 
 CMD ["python", "server.py"]

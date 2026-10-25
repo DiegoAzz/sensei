@@ -338,7 +338,7 @@ async def handle_index(request):
     return web.FileResponse(html_file)
 
 # ==================== MAIN ====================
-def main():
+async def start_dual_servers():
     app = web.Application()
     app.router.add_get("/", handle_index)
     app.router.add_get("/api/status", handle_status)
@@ -347,9 +347,29 @@ def main():
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
 
-    port = int(os.environ.get("PORT", 8080))
-    registrar_log(f"Panel del Sensei del Amor y la Seducción listo en http://localhost:{port}")
-    web.run_app(app, host="0.0.0.0", port=port)
+    runner = web.AppRunner(app)
+    await runner.setup()
+
+    port_env = int(os.environ.get("PORT", 8080))
+    puertos = list(set([port_env, 8080, 3000]))
+
+    for p in puertos:
+        try:
+            site = web.TCPSite(runner, "0.0.0.0", p)
+            await site.start()
+            registrar_log(f"Panel del Sensei listo en http://0.0.0.0:{p}")
+        except Exception as e:
+            registrar_log(f"Puerto {p} no disponible: {e}", "warn")
+
+    # Mantener el servidor activo
+    while True:
+        await asyncio.sleep(3600)
+
+def main():
+    try:
+        asyncio.run(start_dual_servers())
+    except KeyboardInterrupt:
+        logger.info("Servidor detenido.")
 
 if __name__ == "__main__":
     main()
