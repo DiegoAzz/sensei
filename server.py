@@ -159,11 +159,13 @@ LLAMADO A LA ACCIÓN: {cta}
 
 REGLAS DE VENTA Y CONVERSIÓN EN TIKTOK LIVE:
 1. Saluda a la persona con calidez usando su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
-2. Si el espectador pregunta por recomendaciones, marcas o perfumes (ej: Jean Paul Gaultier, Sauvage, Baccarat, etc.):
-   - Reconoce la fragancia que menciona y explica sus notas de forma sensorial y apasionada.
-   - Recomiéndala o conéctala con el producto ideal de tu catálogo si aplica.
-   - Menciona el precio accesible y crea urgencia ("últimas piezas en inventario").
-   - Cierra invitando a comprar: "{cta}".
+2. INTELIGENCIA DE VENTA Y CONVERSACIÓN (NATURAL Y CONSULTIVA):
+   A) Si el espectador pregunta por COMPRA, PRECIO, ENVÍO O DISPONIBILIDAD (ej: '¿cuánto cuesta?', '¿dónde lo compro?', '¿tienen stock?', 'recomiéndame uno para comprar'):
+      - Menciona el precio accesible, que lo tienes en la boutique con envío prioritario y cierra con el llamado a la acción: "{cta}".
+   B) Si el espectador hace una pregunta de OPINIÓN, NOTAS, COMPARACIÓN O CURIOSIDAD (ej: '¿qué tal Jean Paul Gaultier?', '¿cuál huele mejor entre Dior y Chanel?', '¿dura mucho?'):
+      - NO intentes venderle agresivamente ni le menciones precios o enlaces de compra de forma forzada.
+      - Responde como una sommelier apasionada describiendo las notas y sensaciones del aroma.
+      - CIERRA CON UNA PREGUNTA DE ENGANCHE PARA EL LIVE (ej: '¿Tú eres más de aromas dulces con vainilla o prefieres los frescos cítricos?', '¿Lo buscas para uso diario o para citas nocturnas?'). Esto hace que la gente comente en el live de TikTok y se queden enganchados.
 3. Si el espectador se ríe (jaja, jeje, xd): ríete con él y mantén la vibra alegre y magnética.
 4. NUNCA digas que eres una IA o bot; eres la dueña y sommelier en vivo de la tienda.
 5. Al puro inicio pon la emoción entre corchetes: [VENTA], [RECOMENDACION], [RISA] o [SABIO].
@@ -940,9 +942,13 @@ async def handle_upload_avatar(request):
         uid = uuid.uuid4().hex[:8]
         assets_dir = BASE_DIR / "assets"
         assets_dir.mkdir(exist_ok=True)
+        persistent_avatars_dir = DATA_DIR / "avatars"
+        persistent_avatars_dir.mkdir(parents=True, exist_ok=True)
 
         jpg_path = assets_dir / f"avatar_{uid}.jpg"
         circle_path = assets_dir / f"avatar_{uid}_circle.png"
+        p_jpg_path = persistent_avatars_dir / f"avatar_{uid}.jpg"
+        p_circle_path = persistent_avatars_dir / f"avatar_{uid}_circle.png"
 
         size = min(im.size)
         left = (im.width - size) // 2
@@ -950,6 +956,7 @@ async def handle_upload_avatar(request):
         cropped = im.crop((left, top, left + size, top + size)).resize((512, 512), Image.Resampling.LANCZOS)
 
         cropped.convert("RGB").save(jpg_path, format="JPEG", quality=92)
+        cropped.convert("RGB").save(p_jpg_path, format="JPEG", quality=92)
 
         mask = Image.new("L", (1024, 1024), 0)
         draw = ImageDraw.Draw(mask)
@@ -959,6 +966,7 @@ async def handle_upload_avatar(request):
         circle_im = cropped.copy()
         circle_im.putalpha(mask)
         circle_im.save(circle_path, format="PNG")
+        circle_im.save(p_circle_path, format="PNG")
 
         avatar_url = f"/assets/avatar_{uid}.jpg"
         circle_url = f"/assets/avatar_{uid}_circle.png"
@@ -1179,6 +1187,16 @@ async def start_dual_servers():
     # Servir archivos estáticos (Logo del Sensei, imágenes, audio)
     assets_dir = BASE_DIR / "assets"
     assets_dir.mkdir(exist_ok=True)
+
+    # Sincronizar y restaurar avatares persistentes guardados en DATA_DIR / "avatars"
+    data_avatars_dir = DATA_DIR / "avatars"
+    data_avatars_dir.mkdir(parents=True, exist_ok=True)
+    for p_img in data_avatars_dir.glob("avatar_*"):
+        dest = assets_dir / p_img.name
+        if not dest.exists():
+            import shutil
+            shutil.copy2(p_img, dest)
+
     app.router.add_static("/assets", assets_dir)
 
     async def handle_favicon(request):

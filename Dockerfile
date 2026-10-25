@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el proyecto
 COPY . .
 
+# Volumen persistente para datos de agentes, configuraciones y avatares
+VOLUME ["/app/data"]
+
 # Exponer los puertos para el panel web de control en Coolify
 EXPOSE 8080 3000
 
