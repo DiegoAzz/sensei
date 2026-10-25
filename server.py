@@ -663,6 +663,11 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str, agent: dict = None):
     if not agent:
         agent = agent_manager.get_active_agent() or {}
 
+    avatar_type = agent.get("avatar_type", "image")
+    video_idle_rel = (agent.get("video_idle") or "").lstrip("/")
+    video_file = BASE_DIR / video_idle_rel if video_idle_rel else None
+    has_video_loop = (avatar_type == "video_loop") and video_file and video_file.exists()
+
     avatar_rel = agent.get("avatar", "/assets/logo_sensei.jpg").lstrip("/")
     logo_file = BASE_DIR / avatar_rel
     # Buscar versión circular transparente si existe
@@ -682,16 +687,6 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str, agent: dict = None):
     b_sub = agent.get("banner_subtitle", "Deja tu pregunta en los comentarios")
     cta = agent.get("call_to_action", "Pregunta al experto en los comentarios")
 
-    cmd = [
-        "ffmpeg",
-        "-re",
-        "-f", "lavfi",
-        # Fondo dinámico del nicho del agente
-        "-i", f"color=c={bg_hex}:s=720x1280:r=30",
-        # Audio en tiempo real por tubería stdin (Voz + Música de fondo)
-        "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
-    ]
-
     overlay_file = DATA_DIR / "live_overlay.txt"
     if not overlay_file.exists():
         actualizar_overlay_video("", "", estado_tipo="esperando", agent=agent)
@@ -699,44 +694,82 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str, agent: dict = None):
     font_path = asegurar_fuente_tipografica()
     font_param = f":fontfile={font_path}" if font_path else ""
 
-    if has_logo:
-        cmd.extend(["-loop", "1", "-i", str(logo_file)])
+    if has_video_loop:
+        # Transmisión con Presentador Humano en Video Loop
+        cmd = [
+            "ffmpeg",
+            "-re",
+            "-stream_loop", "-1",
+            "-i", str(video_file),
+            # Audio en tiempo real por tubería stdin (Voz + Música de fondo)
+            "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
+        ]
         filter_complex = (
-            # 1. Fondo base del marco
-            f"[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x111624@0.95:t=fill,"
-            f"drawbox=x=30:y=100:w=660:h=1060:color={theme_hex}@0.45:t=2,"
-            # Título principal del agente o tienda
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=140,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=16:x=(w-text_w)/2:y=185[bg];"
-            # 2. Escalar el avatar circular
-            "[2:v]scale=320:320[avatar];"
-            # 3. Superponer el avatar LEVITANDO en el aire continuamente
-            "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
-            # 4. Caja de consulta en vivo y vitrina de venta (Holograma Láser con proyección de texto)
-            f"[v1]drawbox=x=56:y=596:w=608:h=268:color={theme_hex}@0.4:t=fill,"
-            "drawbox=x=60:y=600:w=600:h=260:color=0x060911@0.85:t=fill,"
-            "drawbox=x=60:y=600:w=600:h=260:color=0x00f0ff@0.7:t=2,"
-            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=625,"
-            # 5. Llamado a la acción inferior con borde láser
-            "drawbox=x=56:y=1036:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
-            "drawbox=x=60:y=1040:w=600:h=65:color=0x0c121f@0.85:t=fill,"
-            f"drawbox=x=60:y=1040:w=600:h=65:color={theme_hex}@0.85:t=2,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1063"
+            # 1. Marco semitransparente superior para visibilidad de marca
+            f"[0:v]drawbox=x=0:y=0:w=720:h=180:color=0x060911@0.75:t=fill,"
+            f"drawbox=x=30:y=30:w=660:h=120:color={theme_hex}@0.6:t=2,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=24:x=(w-text_w)/2:y=55,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=15:x=(w-text_w)/2:y=95[bg];"
+            # 2. Caja holográfica de consulta en vivo y vitrina en la zona inferior
+            f"[bg]drawbox=x=56:y=766:w=608:h=268:color={theme_hex}@0.4:t=fill,"
+            "drawbox=x=60:y=770:w=600:h=260:color=0x060911@0.88:t=fill,"
+            "drawbox=x=60:y=770:w=600:h=260:color=0x00f0ff@0.7:t=2,"
+            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=795,"
+            # 3. Llamado a la acción inferior con borde láser
+            "drawbox=x=56:y=1056:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
+            "drawbox=x=60:y=1060:w=600:h=65:color=0x0c121f@0.88:t=fill,"
+            f"drawbox=x=60:y=1060:w=600:h=65:color={theme_hex}@0.85:t=2,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1083"
         )
         cmd.extend(["-filter_complex", filter_complex])
     else:
-        vf = (
-            f"drawbox=x=30:y=130:w=660:h=1000:color=0x111624@0.95:t=fill,"
-            f"drawbox=x=30:y=130:w=660:h=1000:color={theme_hex}@0.55:t=2,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=170,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=17:x=(w-text_w)/2:y=215,"
-            "drawbox=x=60:y=270:w=600:h=230:color=0x0c0110@0.9:t=fill,"
-            "drawbox=x=60:y=270:w=600:h=230:color=0xff7597@0.3:t=1,"
-            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=295,"
-            "drawbox=x=60:y=1040:w=600:h=60:color=0xff2a6d@0.25:t=fill,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1060"
-        )
-        cmd.extend(["-vf", vf])
+        cmd = [
+            "ffmpeg",
+            "-re",
+            "-f", "lavfi",
+            # Fondo dinámico del nicho del agente
+            "-i", f"color=c={bg_hex}:s=720x1280:r=30",
+            # Audio en tiempo real por tubería stdin (Voz + Música de fondo)
+            "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
+        ]
+        if has_logo:
+            cmd.extend(["-loop", "1", "-i", str(logo_file)])
+            filter_complex = (
+                # 1. Fondo base del marco
+                f"[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x111624@0.95:t=fill,"
+                f"drawbox=x=30:y=100:w=660:h=1060:color={theme_hex}@0.45:t=2,"
+                # Título principal del agente o tienda
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=140,"
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=16:x=(w-text_w)/2:y=185[bg];"
+                # 2. Escalar el avatar circular
+                "[2:v]scale=320:320[avatar];"
+                # 3. Superponer el avatar LEVITANDO en el aire continuamente
+                "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
+                # 4. Caja de consulta en vivo y vitrina de venta (Holograma Láser con proyección de texto)
+                f"[v1]drawbox=x=56:y=596:w=608:h=268:color={theme_hex}@0.4:t=fill,"
+                "drawbox=x=60:y=600:w=600:h=260:color=0x060911@0.85:t=fill,"
+                "drawbox=x=60:y=600:w=600:h=260:color=0x00f0ff@0.7:t=2,"
+                f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=625,"
+                # 5. Llamado a la acción inferior con borde láser
+                "drawbox=x=56:y=1036:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
+                "drawbox=x=60:y=1040:w=600:h=65:color=0x0c121f@0.85:t=fill,"
+                f"drawbox=x=60:y=1040:w=600:h=65:color={theme_hex}@0.85:t=2,"
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1063"
+            )
+            cmd.extend(["-filter_complex", filter_complex])
+        else:
+            vf = (
+                f"drawbox=x=30:y=130:w=660:h=1000:color=0x111624@0.95:t=fill,"
+                f"drawbox=x=30:y=130:w=660:h=1000:color={theme_hex}@0.55:t=2,"
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=170,"
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=17:x=(w-text_w)/2:y=215,"
+                "drawbox=x=60:y=270:w=600:h=230:color=0x0c0110@0.9:t=fill,"
+                "drawbox=x=60:y=270:w=600:h=230:color=0xff7597@0.3:t=1,"
+                f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=295,"
+                "drawbox=x=60:y=1040:w=600:h=60:color=0xff2a6d@0.25:t=fill,"
+                f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1060"
+            )
+            cmd.extend(["-vf", vf])
 
     cmd.extend([
         "-c:v", "libx264",
@@ -816,6 +849,7 @@ async def worker_preguntas():
 
         estado["active_user"] = nombre_humano
         estado["active_question"] = pregunta
+        estado["status_phase"] = "pensando"
 
         # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
         actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
@@ -827,6 +861,7 @@ async def worker_preguntas():
         respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
         estado["active_answer"] = respuesta
         estado["active_emotion"] = emocion
+        estado["status_phase"] = "respondiendo"
 
         tag_resp = "🌸 Boutique" if tipo_ag == "tienda_ventas" else f"📿 {current_agent.get('name', 'Sensei')}"
         registrar_log(f"{tag_resp} [{emocion}] responde a {nombre_humano}: \"{respuesta}\"", "green")
@@ -851,17 +886,25 @@ async def worker_preguntas():
             res_tts = subprocess.run(cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             if res_tts.returncode == 0:
                 buffer_voz_pcm.extend(res_tts.stdout)
+                estado["is_speaking"] = True
                 registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
 
             # Esperar a que termine de reproducirse la respuesta en el Live
             while len(buffer_voz_pcm) > 0 and estado["is_streaming"]:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(0.3)
+            estado["is_speaking"] = False
+            estado["status_phase"] = "leyendo"
 
         except Exception as e:
+            estado["is_speaking"] = False
             registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
         # Mantener el texto visible 5 segundos para que la audiencia lo lea
         await asyncio.sleep(5)
+        estado["status_phase"] = "esperando"
+        estado["active_user"] = ""
+        estado["active_question"] = ""
+        estado["active_answer"] = ""
         # Volver al estado de bienvenida en el overlay
         actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
@@ -879,10 +922,14 @@ async def simulador_ventas_loop():
         if current_agent.get("type") == "tienda_ventas" and cola_preguntas.empty() and len(buffer_voz_pcm) == 0:
             alerta = agent_manager.generar_alerta_venta(current_agent.get("id"))
             if alerta:
+                estado["last_sale_alert"] = alerta
+                estado["status_phase"] = "venta_alerta"
                 actualizar_overlay_video(estado_tipo="venta_alerta", agent=current_agent)
                 registrar_log(alerta["mensaje"], "green")
                 await asyncio.sleep(12)
+                estado["last_sale_alert"] = None
                 if cola_preguntas.empty() and len(buffer_voz_pcm) == 0:
+                    estado["status_phase"] = "esperando"
                     actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
 # ==================== CLIENTE TIKTOK LIVE ====================
@@ -1159,14 +1206,18 @@ async def handle_set_agent_avatar(request):
 
 async def handle_status(request):
     current_agent = agent_manager.get_active_agent() or {}
+    is_speaking = estado.get("is_speaking", False) or len(buffer_voz_pcm) > 0
     return web.json_response({
         **current_agent,
         "is_streaming": estado["is_streaming"],
+        "is_speaking": is_speaking,
+        "status_phase": estado.get("status_phase", "esperando"),
         "active_agent_id": agent_manager.active_agent_id,
         "active_user": estado.get("active_user", ""),
         "active_emotion": estado.get("active_emotion", "SABIO"),
         "active_question": estado.get("active_question", ""),
         "active_answer": estado.get("active_answer", ""),
+        "last_sale_alert": estado.get("last_sale_alert", None),
         "is_admin": is_super_admin(request)
     })
 
@@ -1302,11 +1353,17 @@ async def handle_index(request):
     html_file = BASE_DIR / "web_dashboard.html"
     return web.FileResponse(html_file)
 
+async def handle_live_screen(request):
+    html_file = BASE_DIR / "live_screen.html"
+    return web.FileResponse(html_file)
+
 # ==================== MAIN ====================
 async def start_dual_servers():
     app = web.Application()
     app.router.add_get("/", handle_index)
     app.router.add_get("/client", handle_index)
+    app.router.add_get("/live-screen", handle_live_screen)
+    app.router.add_get("/overlay", handle_live_screen)
     app.router.add_get("/api/status", handle_status)
     app.router.add_post("/api/start", handle_start)
     app.router.add_post("/api/stop", handle_stop)

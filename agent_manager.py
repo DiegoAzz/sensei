@@ -98,6 +98,9 @@ AGENT_TEMPLATES = {
         "theme_color": "#d4af37",
         "accent_color": "#00f0ff",
         "avatar": "/assets/logo_salome.jpg",
+        "avatar_type": "video_loop",
+        "video_idle": "/assets/salome_idle.mp4",
+        "video_talking": "/assets/salome_talking.mp4",
         "bg_hex": "0x0a0c16",
         "store_name": "Salomé Fragrances & Luxury Boutique",
         "call_to_action": "📦 Pide tu perfume favorito tocando el enlace de nuestra biografía. Envíos gratis a toda Colombia hoy.",
@@ -487,6 +490,18 @@ class AgentManager:
                 if ag_id == "sensei-perfumes":
                     ag["system_prompt"] = AGENT_TEMPLATES["sensei_perfumes"]["system_prompt"]
 
+            # Asegurar avatar_type y videos en agentes existentes
+            for ag_id, ag in self.agents.items():
+                if not ag.get("avatar_type"):
+                    if ag_id == "perfumes-elite":
+                        ag["avatar_type"] = "video_loop"
+                        ag["video_idle"] = "/assets/salome_idle.mp4"
+                        ag["video_talking"] = "/assets/salome_talking.mp4"
+                    else:
+                        ag["avatar_type"] = "image"
+                        ag["video_idle"] = ""
+                        ag["video_talking"] = ""
+
             # Asegurar campo sizes en productos de calzado existentes
             if "calzado-sneakers" in self.agents:
                 for p in self.agents["calzado-sneakers"].get("featured_products", []):
@@ -564,6 +579,9 @@ class AgentManager:
             "theme_color": data.get("theme_color") or preset.get("theme_color", "#ff2a6d"),
             "accent_color": data.get("accent_color") or preset.get("accent_color", "#ffd700"),
             "avatar": data.get("avatar") or preset.get("avatar", "/assets/logo_sensei.jpg"),
+            "avatar_type": data.get("avatar_type") or preset.get("avatar_type", "image"),
+            "video_idle": data.get("video_idle") or preset.get("video_idle", ""),
+            "video_talking": data.get("video_talking") or preset.get("video_talking", ""),
             "bg_hex": data.get("bg_hex") or preset.get("bg_hex", "0x0f0214"),
             "store_name": data.get("store_name") or preset.get("store_name", ""),
             "call_to_action": data.get("call_to_action") or preset.get("call_to_action", "Pregunta en los comentarios"),
@@ -593,7 +611,8 @@ class AgentManager:
         campos = [
             "name", "type", "niche", "banner_title", "banner_subtitle", "voice", "estilo",
             "sales_mode",
-            "theme_color", "accent_color", "avatar", "bg_hex", "store_name", "call_to_action",
+            "theme_color", "accent_color", "avatar", "avatar_type", "video_idle", "video_talking",
+            "bg_hex", "store_name", "call_to_action",
             "keywords", "featured_products", "system_prompt", "tiktok_username", "rtmp_url",
             "stream_key", "gemini_api_key", "client_name", "client_pin"
         ]
