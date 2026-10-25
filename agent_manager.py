@@ -89,6 +89,7 @@ AGENT_TEMPLATES = {
     "tienda_perfumes": {
         "name": "Salomé · Perfumes & Boutique en Vivo",
         "type": "tienda_ventas",
+        "sales_mode": "modo_bestia",
         "niche": "Perfumería fina, fragancias árabes, clones de diseñador y asesoría olfativa",
         "banner_title": "~ BOUTIQUE SALOMÉ PERFUMES EN VIVO ~",
         "banner_subtitle": "Fragancias Árabes · Diseñador · Asesoría Olfativa 🛍️",
@@ -139,19 +140,55 @@ AGENT_TEMPLATES = {
         "system_prompt": """Eres 'Salomé', una maestra y sommelier de alta perfumería carismática, sensual, elegante, persuasiva y apasionada en una transmisión en vivo de TikTok.
 Estás dentro de tu exclusiva boutique de fragancias.
 
-REGLAS DE ORO DE LA MAESTRA SOMMELIER:
+REGLAS DE ORO DE LA MAESTRA SOMMELIER (MODO BESTIA COMERCIAL CON OPCIONES):
 1. TRANSMITE EL AROMA CON PASIÓN Y SEDUCCIÓN:
    - Describe las notas de salida, corazón y fondo de manera sensorial (cítricos chispeantes, maderas ahumadas, vainilla embriagadora, etc.).
    - Dile al cliente exactamente para qué ocasiones sirve (citas nocturnas, oficina, calor, seducción y conquista).
-2. INTELIGENCIA DE VENTA Y CONVERSACIÓN (NATURAL Y CONSULTIVA):
-   - Si el espectador pregunta por COMPRA, PRECIO, ENVÍO O DISPONIBILIDAD (ej: '¿cuánto cuesta?', '¿dónde lo compro?', '¿tienen stock?', 'recomiéndame uno para comprar'):
-     Menciona el precio accesible, que lo tienes en la boutique con envío prioritario y cierra con un llamado a la acción claro al enlace de tu biografía.
-   - Si el espectador hace una pregunta de OPINIÓN, NOTAS, COMPARACIÓN O CURIOSIDAD (ej: '¿qué tal Jean Paul Gaultier?', '¿cuál huele mejor entre Dior y Chanel?', '¿dura mucho?'):
-     NO le intentes vender agresivamente ni le menciones precios o links de compra de forma forzada. Responde como una sommelier apasionada describiendo las notas y sensaciones, y CIERRA CON UNA PREGUNTA DE ENGANCHE PARA EL LIVE (ej: '¿Tú eres más de aromas dulces con vainilla o prefieres los frescos cítricos?', '¿Lo buscas para uso diario o para citas nocturnas?'). Esto hace que la gente comente en el live y aumente la retención.
+2. INTELIGENCIA DE VENTA ACTIVA CON OPCIONES (PERSUASIVA, NO ABUSIVA):
+   - Conecta siempre la consulta del cliente con el catálogo de tu boutique.
+   - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B (ej: "¿prefieres la opción A de diseñador o el clon árabe B con mayor fijación por menor precio?").
+   - Menciona el precio accesible, que quedan pocas unidades y cierra con un llamado a la acción claro al enlace de tu biografía.
 3. FORMATO DE RESPUESTA:
    - Sé enérgica, cercana, educada y habla dirigiéndote a la persona por su nombre limpio (sin arrobas).
    - Longitud: 3 a 4 oraciones directas, persuasivas y llenas de magnetismo olfativo.
    - Jamás hables de que eres una inteligencia artificial o un bot; eres la dueña y sommelier de la boutique en vivo.
+"""
+    },
+    "sensei_perfumes": {
+        "name": "Don Perfume · El Sensei de las Fragancias",
+        "type": "consultorio",
+        "sales_mode": "sensei_puro",
+        "niche": "Alta perfumería, familias olfativas, notas, tops, rendimiento y estilo olfativo (0% Ventas)",
+        "banner_title": "~ EL SENSEI DE LOS PERFUMES EN VIVO ~",
+        "banner_subtitle": "Veredicto Olfativo · Notas · Tops · Calificaciones 👑",
+        "voice": "es-MX-JorgeNeural",
+        "estilo": "sabio_directo",
+        "theme_color": "#d4af37",
+        "accent_color": "#00f0ff",
+        "avatar": "/assets/logo_perfume.jpg",
+        "bg_hex": "0x0a0c16",
+        "store_name": "Consultorio del Maestro Sommelier",
+        "call_to_action": "Deja el nombre de tu perfume o la ocasión en el chat para darte mi veredicto",
+        "keywords": [
+            "perfume", "fragancia", "olor", "sauvage", "lattafa", "asad", "khamrah",
+            "club de nuit", "gaultier", "creed", "baccarat", "notas", "fijacion", "duracion",
+            "estela", "califica", "top", "opinion", "versace", "chanel", "dior", "arabe"
+        ],
+        "featured_products": [],
+        "system_prompt": """Eres 'Don Perfume', el legendario Sensei de las Fragancias y maestro sommelier de alta perfumería en TikTok Live.
+Tu estilo es sabio, elegante, respetado, certero y apasionado por el arte olfativo.
+
+REGLAS SUPREMAS DEL SENSEI DE LAS FRAGANCIAS:
+1. CERO VENTAS / PROHIBIDO VENDER (ESTRICTO):
+   - Jamás vendas productos, jamás menciones tiendas, ofertas, precios, envíos ni links en la biografía.
+   - Tu valor es 100% de autoridad, sabiduría, educación y asesoría de alto estatus.
+2. VEREDICTOS Y CALIFICACIONES DE MAESTRO:
+   - Cuando el espectador pregunte por un perfume, dale tu veredicto sincero, describe sus notas (salida, corazón y fondo) y califícalo sobre 10 en fijación y magnetismo.
+   - Desmiente mitos olfativos y enseña secretos de maceración y aplicación estratégica.
+3. CONVERSACIÓN Y ENGANCHE EN TIKTOK LIVE:
+   - Dirígete a la persona por su nombre limpio (sin arrobas ni números feos).
+   - Cierra con una frase memorable y una pregunta para conocer el estilo o la colección del espectador.
+   - Longitud: 3 a 4 oraciones de máxima autoridad.
 """
     },
     "sensei_amor": {
@@ -263,7 +300,7 @@ class AgentManager:
             except Exception as e:
                 logger.error(f"Error cargando agents.json: {e}")
 
-        # Si no hay agentes, inicializar con el Sensei y la Boutique de Perfumes
+        # Si no hay agentes, inicializar con el Sensei, Salomé y Don Perfume
         if not self.agents:
             self.agents = {
                 "sensei-amor": {
@@ -289,16 +326,51 @@ class AgentManager:
                     "client_pin": "5678",
                     "is_streaming": False,
                     "created_at": "2026-10-25"
+                },
+                "sensei-perfumes": {
+                    "id": "sensei-perfumes",
+                    **AGENT_TEMPLATES["sensei_perfumes"],
+                    "tiktok_username": "",
+                    "rtmp_url": "",
+                    "stream_key": "",
+                    "gemini_api_key": "",
+                    "client_name": "Don Perfume (Sensei Sin Ventas)",
+                    "client_pin": "9999",
+                    "is_streaming": False,
+                    "created_at": "2026-10-25"
                 }
             }
             self.save_agents()
         else:
-            # Auto-actualizar Salomé a venta consultiva natural si tiene la regla antigua
-            if "perfumes-elite" in self.agents:
-                pe = self.agents["perfumes-elite"]
-                if "REGLAS DE ORO DE LA MAESTRA SOMMELIER DE VENTAS" in pe.get("system_prompt", ""):
-                    pe["system_prompt"] = AGENT_TEMPLATES["tienda_perfumes"]["system_prompt"]
-                    self.save_agents()
+            # Asegurar que el Sensei de los Perfumes (Sin Ventas) esté disponible
+            if "sensei-perfumes" not in self.agents and "sensei_perfumes" in AGENT_TEMPLATES:
+                self.agents["sensei-perfumes"] = {
+                    "id": "sensei-perfumes",
+                    **AGENT_TEMPLATES["sensei_perfumes"],
+                    "tiktok_username": "",
+                    "rtmp_url": "",
+                    "stream_key": "",
+                    "gemini_api_key": "",
+                    "client_name": "Don Perfume (Sensei Sin Ventas)",
+                    "client_pin": "9999",
+                    "is_streaming": False,
+                    "created_at": "2026-10-25"
+                }
+                self.save_agents()
+
+            # Asegurar sales_mode en agentes existentes
+            for ag_id, ag in self.agents.items():
+                if not ag.get("sales_mode"):
+                    if ag_id == "sensei-perfumes" or ag.get("type") == "consultorio":
+                        ag["sales_mode"] = "sensei_puro"
+                    else:
+                        ag["sales_mode"] = "modo_bestia"
+                # Actualizar prompt de Salomé a venta con opciones
+                if ag_id == "perfumes-elite":
+                    if "REGLAS DE ORO DE LA MAESTRA SOMMELIER DE VENTAS" in ag.get("system_prompt", "") or "REGLAS DE ORO DE LA MAESTRA SOMMELIER:" in ag.get("system_prompt", ""):
+                        ag["system_prompt"] = AGENT_TEMPLATES["tienda_perfumes"]["system_prompt"]
+                        ag["sales_mode"] = "modo_bestia"
+            self.save_agents()
 
     def save_agents(self):
         try:
@@ -356,6 +428,7 @@ class AgentManager:
             "banner_subtitle": data.get("banner_subtitle") or preset.get("banner_subtitle", ""),
             "voice": data.get("voice") or preset.get("voice", "es-MX-JorgeNeural"),
             "estilo": data.get("estilo") or preset.get("estilo", "sabio_directo"),
+            "sales_mode": data.get("sales_mode") or preset.get("sales_mode", "modo_bestia" if (data.get("type") or preset.get("type")) == "tienda_ventas" else "sensei_puro"),
             "theme_color": data.get("theme_color") or preset.get("theme_color", "#ff2a6d"),
             "accent_color": data.get("accent_color") or preset.get("accent_color", "#ffd700"),
             "avatar": data.get("avatar") or preset.get("avatar", "/assets/logo_sensei.jpg"),
@@ -387,6 +460,7 @@ class AgentManager:
         # Permitir actualizar campos configurables
         campos = [
             "name", "type", "niche", "banner_title", "banner_subtitle", "voice", "estilo",
+            "sales_mode",
             "theme_color", "accent_color", "avatar", "bg_hex", "store_name", "call_to_action",
             "keywords", "featured_products", "system_prompt", "tiktok_username", "rtmp_url",
             "stream_key", "gemini_api_key", "client_name", "client_pin"

@@ -1160,6 +1160,18 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label" style="color: var(--gold);">⚡ Modo e Intensidad de Ventas</label>
+            <select id="cfg-sales-mode" class="input-field" style="border-color: rgba(212, 175, 55, 0.4); background: rgba(18, 8, 28, 0.9);">
+              <option value="modo_bestia">🔥 Modo Bestia Comercial (Cierre activo de ventas con opciones A/B y catálogo)</option>
+              <option value="consultivo">🤝 Venta Consultiva Natural (Conversacional, enganche y vende solo si preguntan)</option>
+              <option value="sensei_puro">👑 Sensei Puro / Educativo (0% Ventas · Pura sabiduría, notas y estatus)</option>
+            </select>
+            <span style="font-size: 11px; color: var(--gold); display: block; margin-top: 2px;">
+              💡 Elige si tu agente vende activamente con opciones para el cliente, o si es un Sensei sabio que no vende nada.
+            </span>
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Voz Neuronal del Sensei</label>
             <select id="cfg-voice" class="input-field">
               <option value="es-MX-JorgeNeural">Sensei Jorge (Voz masculina profunda y sabia)</option>
@@ -1382,6 +1394,7 @@
         <div class="preset-pills" style="margin-top: 6px;">
           <button type="button" class="btn-preset btn-tpl-load active" data-template="blank" id="btn-tpl-blank" style="border-color: #00f0ff; color: #00f0ff; font-weight: 700; background: rgba(0, 240, 255, 0.15); box-shadow: 0 0 10px rgba(0,240,255,0.3);">✨ Empezar en Blanco (Crear desde Cero)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="tienda_perfumes">🌸 Boutique de Perfumes (Ventas)</button>
+          <button type="button" class="btn-preset btn-tpl-load" data-template="sensei_perfumes">👑 Sensei del Perfume (0% Ventas · Sabiduría)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="sensei_amor">⛩️ Sensei del Amor (Romance)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="madame_tarot">🔮 Tarot & Destino (Astrología)</button>
           <button type="button" class="btn-preset btn-tpl-load" data-template="fitness_titan">💪 Coach Fitness (Suplementos)</button>
@@ -1404,12 +1417,20 @@
         <input type="text" id="new-agent-niche" class="input-field" placeholder="ej: Desarrollo de Videojuegos, Apps y Software a Medida">
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label class="form-label">Tipo de Agente</label>
           <select id="new-agent-type" class="input-field">
-            <option value="tienda_ventas">🛍️ Tienda de Ventas (Live Shopping con simulación de compra)</option>
-            <option value="consultorio">⛩️ Consultorio de Consejos / Sabiduría</option>
+            <option value="tienda_ventas">🛍️ Tienda de Ventas (Shopping)</option>
+            <option value="consultorio">⛩️ Consultorio / Asesoría</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="color: var(--gold);">Modo de Ventas</label>
+          <select id="new-agent-sales-mode" class="input-field" style="border-color: rgba(212, 175, 55, 0.4);">
+            <option value="modo_bestia">🔥 Modo Bestia Comercial</option>
+            <option value="consultivo">🤝 Venta Consultiva</option>
+            <option value="sensei_puro">👑 Sensei Puro (0% Ventas)</option>
           </select>
         </div>
         <div class="form-group">
@@ -1720,6 +1741,10 @@
       cfgStreamKey.value = agent.stream_key || "";
       cfgVoice.value = agent.voice || "es-MX-JorgeNeural";
       cfgEstilo.value = agent.estilo || "sabio_directo";
+      const cfgSalesMode = document.getElementById("cfg-sales-mode");
+      if (cfgSalesMode) {
+        cfgSalesMode.value = agent.sales_mode || (agent.type === "consultorio" ? "sensei_puro" : "modo_bestia");
+      }
       if (cfgGeminiKey) cfgGeminiKey.value = agent.gemini_api_key || "";
 
       // Prompt and niche fields
@@ -2009,6 +2034,7 @@
           banner_subtitle: cfgBannerSubtitle ? cfgBannerSubtitle.value.trim() : "",
           voice: cfgVoice.value,
           estilo: cfgEstilo.value,
+          sales_mode: document.getElementById("cfg-sales-mode") ? document.getElementById("cfg-sales-mode").value : "modo_bestia",
           avatar: currentAgent.avatar || "/assets/logo_sensei.jpg",
           tiktok_username: cfgUsername.value.trim(),
           rtmp_url: cfgRtmpUrl.value.trim(),
@@ -2086,6 +2112,9 @@
           document.getElementById("new-agent-id").value = "agente-" + Math.floor(100 + Math.random() * 900);
           document.getElementById("new-agent-niche").value = "";
           document.getElementById("new-agent-type").value = "consultorio";
+          if (document.getElementById("new-agent-sales-mode")) {
+            document.getElementById("new-agent-sales-mode").value = "modo_bestia";
+          }
           document.getElementById("new-agent-voice").value = "es-CO-SalomeNeural";
           document.getElementById("new-agent-client").value = "Cliente Alquiler ($250/mes)";
           document.getElementById("new-agent-pin").value = Math.floor(1000 + Math.random() * 9000);
@@ -2116,6 +2145,9 @@ REGLAS DE ORO:
             document.getElementById("new-agent-banner").value = t.banner_title || "";
             document.getElementById("new-agent-sub").value = t.banner_subtitle || "";
             document.getElementById("new-agent-prompt").value = t.system_prompt || "";
+            if (t.sales_mode && document.getElementById("new-agent-sales-mode")) {
+              document.getElementById("new-agent-sales-mode").value = t.sales_mode;
+            }
             if (t.avatar) {
               document.getElementById("new-agent-avatar").value = t.avatar;
               marcarAvatarSeleccionadoModal(t.avatar);
@@ -2133,6 +2165,7 @@ REGLAS DE ORO:
         id: document.getElementById("new-agent-id").value.trim(),
         niche: document.getElementById("new-agent-niche").value.trim(),
         type: document.getElementById("new-agent-type").value,
+        sales_mode: document.getElementById("new-agent-sales-mode") ? document.getElementById("new-agent-sales-mode").value : "modo_bestia",
         voice: document.getElementById("new-agent-voice").value,
         avatar: document.getElementById("new-agent-avatar").value || "/assets/logo_sensei.jpg",
         client_name: document.getElementById("new-agent-client").value.trim(),

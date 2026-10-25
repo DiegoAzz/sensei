@@ -193,25 +193,27 @@ PERFUMES_DB = {
 
 def obtener_sommelier_experto(usuario: str, pregunta: str, agent: dict) -> tuple:
     """
-    Analiza la pregunta del cliente con ojos y nariz de Maestro Sommelier.
-    Distingue con elegancia entre preguntas de curiosidad/opinión vs intención de compra.
+    Analiza la pregunta del cliente según el modo configurado:
+    1. 'sensei_puro': 0% Ventas, pura sabiduría y veredictos de maestro.
+    2. 'modo_bestia': Venta comercial activa con opciones de preguntas A/B.
+    3. 'consultivo': Venta consultiva equilibrada y natural.
     """
     q = pregunta.lower().strip()
     nombre = usuario.split("_")[0].capitalize()
     if nombre.lower().startswith("user") and any(c.isdigit() for c in nombre):
         nombre = "amigo"
 
+    sales_mode = agent.get("sales_mode")
+    if not sales_mode:
+        sales_mode = "sensei_puro" if agent.get("type") == "consultorio" else "modo_bestia"
+
     nombre_agente = agent.get("name", "Salomé")
-    if "salome" in nombre_agente.lower():
-        presentador = "Salomé"
-    elif "don perfume" in nombre_agente.lower():
+    if "don perfume" in nombre_agente.lower() or "sensei" in nombre_agente.lower():
         presentador = "Don Perfume"
     else:
-        presentador = nombre_agente.split("·")[0].strip()
+        presentador = "Salomé"
 
     cta = agent.get("call_to_action", "Toca el enlace de mi biografía para pedir el tuyo con envío gratis hoy.")
-    prods_destacados = agent.get("featured_products", [])
-    cat_names = [p.get("name", "") for p in prods_destacados]
 
     # Detector de intención de compra
     quiere_comprar = any(k in q for k in [
@@ -222,7 +224,6 @@ def obtener_sommelier_experto(usuario: str, pregunta: str, agent: dict) -> tuple
 
     # 1. BÚSQUEDA DE PERFUMES ESPECÍFICOS POR NOMBRE / MARCA
     for key, p in PERFUMES_DB.items():
-        # Match directo de la clave o palabras clave asociadas (incluyendo errores ortográficos comunes)
         matches = [key]
         if key == "sauvage": matches.extend(["sauvage", "elixir", "dior sauvage", "sauvage elixir", "sauvach", "sauvaj", "sauvaje"])
         elif key == "club de nuit": matches.extend(["club de nuit", "cdnim", "armaf", "club de nuit intense", "club denuit", "intense man"])
@@ -244,212 +245,282 @@ def obtener_sommelier_experto(usuario: str, pregunta: str, agent: dict) -> tuple
         elif key == "ombre leather": matches.extend(["ombre leather", "leather", "cuero tom ford"])
 
         if any(m in q for m in matches):
-            if quiere_comprar:
+            # MODO 1: SENSEI PURO (0% VENTAS)
+            if sales_mode == "sensei_puro":
                 texto = (
-                    f"¡Excelente elección, {nombre}! {p['nombre']} lo tenemos disponible en nuestra boutique con máxima fijación garantizada y envío prioritario. "
-                    f"Abre con notas de {p['salida']}, corazón de {p['corazon']} y una duración épica de {p['duracion']}. {cta}"
+                    f"¡Saludos, {nombre}! En el oráculo olfativo, {p['nombre']} tiene un veredicto de 9.4/10 de maestro. "
+                    f"Abre con notas de {p['salida']}, corazón seductor de {p['corazon']} y una duración de {p['duracion']}. "
+                    f"Es ideal para {p['ocasion']}. Dime, {nombre}, ¿tú ya lo tienes en tu colección o buscas dar el salto hacia este aroma?"
+                )
+                return (texto, "SABIO")
+
+            # MODO 2: MODO BESTIA COMERCIAL (VENTA ACTIVA CON OPCIONES A/B)
+            elif sales_mode == "modo_bestia":
+                texto = (
+                    f"¡Gran elección, {nombre}! {p['nombre']} es un éxito total: notas de {p['salida']} y secado cálido con duración de {p['duracion']}. "
+                    f"En nuestra boutique lo tenemos disponible con envío gratis hoy. "
+                    f"¿Te gustaría ordenar este clásico o prefieres que te muestre una opción árabe similar con mayor fijación? "
+                    f"Toca el enlace de mi perfil para elegir el tuyo. {cta}"
                 )
                 return (texto, "VENTA")
+
+            # MODO 3: VENTA CONSULTIVA EQUILIBRADA
             else:
-                texto = (
-                    f"¡Excelente gusto, {nombre}! {p['nombre']} es una obra maestra olfativa. "
-                    f"Abre con notas de {p['salida']}, corazón seductor de {p['corazon']} y seca en un fondo cálido de {p['fondo']}. "
-                    f"Es ideal para {p['ocasion']} con una duración de {p['duracion']}. "
-                    f"Dime, {nombre}, ¿tú prefieres fragancias así de intensas y cumplidoras, o buscas algo más discreto para el día a día?"
-                )
-                return (texto, "RECOMENDACION")
+                if quiere_comprar:
+                    texto = (
+                        f"¡Excelente elección, {nombre}! {p['nombre']} lo tenemos disponible en nuestra boutique con máxima fijación garantizada y envío prioritario. "
+                        f"Abre con notas de {p['salida']}, corazón de {p['corazon']} y una duración épica de {p['duracion']}. {cta}"
+                    )
+                    return (texto, "VENTA")
+                else:
+                    texto = (
+                        f"¡Excelente gusto, {nombre}! {p['nombre']} es una obra maestra olfativa. "
+                        f"Abre con notas de {p['salida']}, corazón seductor de {p['corazon']} y seca en un fondo cálido de {p['fondo']}. "
+                        f"Es ideal para {p['ocasion']} con una duración de {p['duracion']}. "
+                        f"Dime, {nombre}, ¿tú prefieres fragancias así de intensas y cumplidoras, o buscas algo más discreto para el día a día?"
+                    )
+                    return (texto, "RECOMENDACION")
 
     # 2. CONSULTAS POR OCASIÓN Y CONQUISTA
     # A) Cita nocturna / Seducción / Romance
     if any(k in q for k in ["cita", "romance", "conquistar", "seducir", "novia", "novio", "pareja", "crush", "noche", "íntimo", "intimo"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Para citas inolvidables, {nombre}, mis recomendaciones de boutique son **Khamrah de Lattafa** y **Asad**: "
-                f"notas de canela dulce, maderas ahumadas y vainilla cremosa. "
-                f"Disponibles con envío inmediato tocando el enlace de mi biografía. {cta}"
+                f"Para una cita donde quieras dejar una huella imborrable, {nombre}, el secreto de maestro no es bañarte en perfume, "
+                f"sino usar notas de canela dulce, dátiles maduros y vainilla cremosa. "
+                f"Obras como **Khamrah de Lattafa** o **Asad** crean un magnetismo inolvidable. "
+                f"Cuéntame, {nombre}, ¿la cita será en un lugar cerrado o al aire libre?"
+            )
+            return (texto, "SABIO")
+        elif sales_mode == "modo_bestia":
+            texto = (
+                f"Para citas donde quieras seducir al 100%, {nombre}, tus dos mejores opciones en boutique son **Khamrah de Lattafa** (dulce licoroso) "
+                f"o **Asad** (especiado masculino). Ambos están listos para despacho hoy con envío gratis. "
+                f"¿Prefieres una vibra dulce gourmand o algo más amaderado oscuro? Pide el tuyo en el enlace de mi biografía. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"Para una cita donde quieras dejar una huella imborrable, {nombre}, necesitas notas cálidas, licorosas y golosas que inviten al abrazo: "
-                f"canela dulce, dátiles maduros, vainilla cremosa o maderas ahumadas. "
-                f"Joyas como **Khamrah de Lattafa** o **Asad** son imanes de cumplidos que proyectan magnetismo puro. "
-                f"Cuéntame, {nombre}, ¿a qué tipo de cita vas a ir? ¿Cena elegante, noche de fiesta o algo más íntimo?"
-            )
-            return (texto, "SABIO")
+            if quiere_comprar:
+                texto = (
+                    f"Para citas inolvidables, {nombre}, mis recomendaciones de boutique son **Khamrah de Lattafa** y **Asad**: "
+                    f"notas de canela dulce, maderas ahumadas y vainilla cremosa. Disponibles con envío inmediato en el enlace de mi perfil. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"Para una cita donde quieras dejar una huella imborrable, {nombre}, necesitas notas cálidas, licorosas y golosas: "
+                    f"canela dulce, dátiles maduros, vainilla cremosa o maderas ahumadas como **Khamrah** o **Asad**. "
+                    f"Cuéntame, {nombre}, ¿a qué tipo de cita vas a ir? ¿Cena elegante, noche de fiesta o algo más íntimo?"
+                )
+                return (texto, "SABIO")
 
     # B) Oficina / Trabajo / Universidad / Diario
     if any(k in q for k in ["oficina", "trabajo", "diario", "universidad", "firma", "reunión", "reunion", "elegante", "formal"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Para oficina y trabajo, {nombre}, te recomiendo **Club de Nuit Intense Man** o **Fakhar Black**: "
-                f"proyectan pulcritud ejecutiva y estatus. Pide el tuyo en el enlace de mi perfil con envío rápido. {cta}"
+                f"Para tu jornada laboral o entorno ejecutivo, {nombre}, buscas un aroma con presencia pero sin fatigar a tus compañeros: "
+                f"bergamota chispeante, manzana verde, abedul ahumado y ambroxan limpio. "
+                f"Mis elecciones de maestro son **Club de Nuit Intense Man** o **Fakhar Black**. "
+                f"¿En tu trabajo pasas el día con aire acondicionado o estás más tiempo en movimiento?"
+            )
+            return (texto, "SABIO")
+        elif sales_mode == "modo_bestia":
+            texto = (
+                f"Para oficina y trabajo, {nombre}, te tengo dos opciones ganadoras de catálogo: **Club de Nuit Intense Man** (cítrico y ahumado) "
+                f"o **Fakhar Black** (moderno y elegante). Ambos proyectan respeto de líder. "
+                f"¿Prefieres un aroma cítrico potente o algo más suave de diario? Aparta el tuyo en el enlace de la bio. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"Para tu jornada diaria o entorno profesional, {nombre}, buscas un aroma con presencia ejecutiva pero sin saturar: "
-                f"bergamota chispeante, manzana verde, abedul ahumado y ambroxan limpio. "
-                f"Tus mejores aliados son **Club de Nuit Intense Man** o **Fakhar Black de Lattafa**; proyectan liderazgo y pulcritud. "
-                f"Oye, {nombre}, ¿en tu trabajo pasas el día con aire acondicionado o estás más tiempo en movimiento?"
-            )
-            return (texto, "RECOMENDACION")
+            if quiere_comprar:
+                texto = (
+                    f"Para oficina y trabajo, {nombre}, te recomiendo **Club de Nuit Intense Man** o **Fakhar Black**: "
+                    f"proyectan pulcritud ejecutiva y estatus. Pide el tuyo en el enlace de mi perfil con envío rápido. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"Para tu jornada diaria o entorno profesional, {nombre}, buscas un aroma con presencia ejecutiva pero sin saturar: "
+                    f"bergamota chispeante, manzana verde, abedul ahumado y ambroxan limpio como **Club de Nuit Intense Man** o **Fakhar Black**. "
+                    f"Oye, {nombre}, ¿en tu trabajo pasas el día con aire acondicionado o estás más tiempo en movimiento?"
+                )
+                return (texto, "RECOMENDACION")
 
     # C) Calor / Verano / Playa / Gimnasio
     if any(k in q for k in ["calor", "verano", "playa", "sol", "fresco", "frescura", "sudor", "gym", "gimnasio", "deporte", "mar"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Para calor y alta frescura, {nombre}, te sugiero **Hawas de Rasasi** o **Acqua Di Giò Profondo**: "
-                f"notas acuáticas y cítricas que duran todo el día. Consíguelo en el enlace de nuestra boutique hoy mismo. {cta}"
+                f"En climas cálidos o para entrenar, {nombre}, jamás uses perfumes dulces pesados porque marean. "
+                f"La clave está en acordes acuáticos salinos, ciruela helada, pomelo amargo y almizcle blanco como **Rasasi Hawas** o **Acqua Di Giò Profondo**. "
+                f"¿Prefieres los cítricos marinos estilo playa o algo más aromático jabonoso?"
+            )
+            return (texto, "SABIO")
+        elif sales_mode == "modo_bestia":
+            texto = (
+                f"Para días de calor o gym, {nombre}, te recomiendo dos bestias frescas: **Hawas de Rasasi** (acuático frutal) "
+                f"o **Acqua Di Giò Profondo** (marino elegante). Duran más de 8 horas en piel. "
+                f"¿Prefieres notas acuáticas marinas o cítricos limpios? Pide el tuyo tocando el enlace del perfil. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"En climas cálidos o para entrenar, {nombre}, jamás uses perfumes dulces pesados porque marean. "
-                f"La clave está en acordes acuáticos salinos, ciruela helada, pomelo amargo y almizcle blanco. "
-                f"**Rasasi Hawas** o **Acqua Di Giò Profondo** son reyes acuáticos: duran horas en el calor con un halo de limpieza deportiva insuperable. "
-                f"¿Prefieres los cítricos marinos estilo playa o algo más aromático jabonoso?"
-            )
-            return (texto, "RECOMENDACION")
+            if quiere_comprar:
+                texto = (
+                    f"Para calor y alta frescura, {nombre}, te sugiero **Hawas de Rasasi** o **Acqua Di Giò Profondo**: "
+                    f"notas acuáticas y cítricas que duran todo el día. Consíguelo en el enlace de nuestra boutique hoy mismo. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"En climas cálidos o para entrenar, {nombre}, jamás uses perfumes dulces pesados porque marean. "
+                    f"**Rasasi Hawas** o **Acqua Di Giò Profondo** son reyes acuáticos: duran horas en el calor con un halo de limpieza deportiva insuperable. "
+                    f"¿Prefieres los cítricos marinos estilo playa o algo más aromático jabonoso?"
+                )
+                return (texto, "RECOMENDACION")
 
     # D) Fiesta / Boliche / Discoteca / Antro
     if any(k in q for k in ["fiesta", "discoteca", "antro", "boliche", "rumba", "salir", "destacar"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Para destacar en la discoteca, {nombre}, las bestias son **9PM de Afnan** o **Le Male Elixir**. "
-                f"Pídelo ya antes de que se agoten en el link de la biografía. {cta}"
+                f"Para salir de fiesta donde compites contra aire acondicionado, humo y multitudes, {nombre}, necesitas proyección explosiva: "
+                f"manzana dulce, canela, miel dorada y vainilla negra. Mis recomendaciones son **9PM de Afnan** o **Le Male Elixir**. "
+                f"¿A ti te gusta ser el centro de atención que llena la pista, o buscas algo más seductor de cerca?"
+            )
+            return (texto, "SABIO")
+        elif sales_mode == "modo_bestia":
+            texto = (
+                f"¡Para romper la pista de fiesta, {nombre}! En boutique te recomiendo dos joyas: **9PM de Afnan** o **Le Male Elixir**. "
+                f"Cortan el humo y duran toda la noche. ¿Te gustaría asegurar 9PM por solo $38 USD o prefieres el Elixir de diseñador? "
+                f"Toca el enlace de mi biografía antes de que vuelen. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"Para salir de fiesta donde compites contra aire acondicionado, humo y multitudes, {nombre}, necesitas proyección explosiva: "
-                f"manzana dulce, canela, miel dorada y vainilla negra. "
-                f"Tus armas secretas son **9PM de Afnan** o **Le Male Elixir**; cortan el aire al instante y hacen que todas las miradas giren hacia ti. "
-                f"¿A ti te gusta ser el centro de atención que proyecta modo bestia en la pista, o buscas algo más seductor de cerca?"
-            )
-            return (texto, "SABIO")
+            if quiere_comprar:
+                texto = (
+                    f"Para destacar en la discoteca, {nombre}, las bestias son **9PM de Afnan** o **Le Male Elixir**. "
+                    f"Pídelo ya antes de que se agoten en el link de la biografía. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"Para salir de fiesta donde compites contra aire acondicionado, humo y multitudes, {nombre}, necesitas proyección explosiva: "
+                    f"**9PM de Afnan** o **Le Male Elixir** cortan el aire al instante y hacen que todas las miradas giren hacia ti. "
+                    f"¿A ti te gusta ser el centro de atención que proyecta modo bestia en la pista, o buscas algo más seductor de cerca?"
+                )
+                return (texto, "SABIO")
 
     # E) Perfumes Femeninos Dulces y Virales
     if any(k in q for k in ["mujer", "femenino", "chica", "dulce mujer", "para mi novia", "para dama", "dama"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Para dama, {nombre}, las joyas más pedidas son **Yara Rosa de Lattafa** y **Nebras**: "
-                f"vainilla, malvavisco y mango tropical. Disponibles con empaque de lujo en el enlace de mi biografía. {cta}"
-            )
-            return (texto, "VENTA")
-        else:
-            texto = (
-                f"¡Para mujeres radiantes y magnéticas, {nombre}! En perfumería femenina la tendencia viral número uno es el acorde de "
+                f"¡Para mujeres radiantes y magnéticas, {nombre}! En perfumería femenina la joya número uno es el acorde de "
                 f"orquídeas suaves, malvavisco esponjoso, mango tropical y vainilla cremosa. "
-                f"**Yara Rosa de Lattafa** y **Nebras** son verdaderas joyas que despiertan halagos donde sea que vayas; huelen a postre fino de boutique. "
-                f"¿Te gustan los aromas dulces gourmand tipo postre o prefieres algo más floral y delicado?"
-            )
-            return (texto, "RECOMENDACION")
-
-    # 3. CONSULTAS POR NOTAS O FAMILIAS OLFATIVAS
-    if any(k in q for k in ["tabaco", "cigar", "smoke"]) and any(k in q for k in ["vainilla", "vanille"]):
-        if quiere_comprar:
-            texto = (
-                f"Esa combinación de tabaco y vainilla bourbon la encuentras en nuestra bestia **Asad de Lattafa**, {nombre}. "
-                f"Pide el tuyo en el enlace de nuestra biografía con envío inmediato. {cta}"
-            )
-            return (texto, "VENTA")
-        else:
-            texto = (
-                f"¡Esa combinación es de las más sensuales y aristocráticas del mundo, {nombre}! "
-                f"El tabaco curado combinado con vainilla bourbon crea un aura oscura, cálida y de puro millonario. "
-                f"Te recomiendo fragancias como **Tobacco Vanille de Tom Ford** o **Asad de Lattafa**, con tabaco rubio, café y vainilla. "
-                f"¿Has probado la vainilla combinada con licor o café? Es de las experiencias olfativas más adictivas que existen."
+                f"**Yara Rosa de Lattafa** y **Nebras** son verdaderas joyas que despiertan halagos donde sea que vayas. "
+                f"¿Te gustan los aromas dulces tipo postre o prefieres algo más floral y delicado?"
             )
             return (texto, "SABIO")
-
-    if any(k in q for k in ["vainilla", "vanille", "dulce", "gourmand"]):
-        if quiere_comprar:
+        elif sales_mode == "modo_bestia":
             texto = (
-                f"Si buscas vainilla gourmand de máxima fijación, {nombre}, tenemos **Khamrah de Lattafa** y **Nebras**. "
-                f"Revisa nuestro catálogo en el enlace de la bio para ordenar el tuyo. {cta}"
+                f"Para dama, {nombre}, las joyas más pedidas son **Yara Rosa de Lattafa** (mango y malvavisco) y **Nebras** (cacao y vainilla). "
+                f"Vienen en empaque de lujo con envío prioritario hoy. ¿Te gustaría ordenar Yara Rosa para ti o para regalo? "
+                f"Pídelo en el link de la biografía. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"Si amas la vainilla, {nombre}, debes buscar vainilla bourbon de Madagascar combinada con haba tonka o café para que no huela infantil sino ultra sensual. "
-                f"**Khamrah de Lattafa** y **Nebras** tienen esa vainilla cremosa y embriagadora que se funde en la piel como una caricia. "
-                f"¿A ti te gustan las vainillas esponjosas tipo postre o prefieres una vainilla amaderada más madura?"
-            )
-            return (texto, "RECOMENDACION")
+            if quiere_comprar:
+                texto = (
+                    f"Para dama, {nombre}, las joyas más pedidas son **Yara Rosa de Lattafa** y **Nebras**. "
+                    f"Disponibles con empaque de lujo en el enlace de mi biografía. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"¡Para mujeres radiantes y magnéticas, {nombre}! **Yara Rosa de Lattafa** y **Nebras** son verdaderas joyas que despiertan halagos donde sea que vayas; "
+                    f"huelen a postre fino de boutique. ¿Te gustan los aromas dulces gourmand tipo postre o prefieres algo más floral y delicado?"
+                )
+                return (texto, "RECOMENDACION")
 
-    if any(k in q for k in ["tabaco", "cigar", "smoke"]):
-        if quiere_comprar:
+    # 3. CONSULTAS POR CLONES / ÁRABES VS ORIGINALES
+    if any(k in q for k in ["clon", "clones", "arabe", "árabe", "dupe", "inspiracion", "inspiración", "original"]):
+        if sales_mode == "sensei_puro":
             texto = (
-                f"En notas de tabaco y especias finas, {nombre}, nuestra estrella es **Asad de Lattafa**. "
-                f"Ordena el tuyo tocando el enlace de mi biografía antes de que vuelen. {cta}"
-            )
-            return (texto, "VENTA")
-        else:
-            texto = (
-                f"Las notas de tabaco rubio curado, {nombre}, aportan una vibra madura, masculina y sumamente aristocrática, especialmente cuando se mezclan con vainilla, café y especias. "
-                f"Fragancias como **Asad de Lattafa** destacan con su corazón de café espresso, tabaco y pimienta negra. "
-                f"¿Prefieres el tabaco dulce con miel y vainilla o el tabaco seco y ahumado más rudo?"
+                f"¡Es la gran revolución olfativa, {nombre}! Casas árabes como Lattafa, Armaf, Afnan y Rasasi utilizan los mismos aceites esenciales franceses que marcas de diseñador de $300 USD pero sin el sobreprecio del marketing. "
+                f"**Asad** te da el 95% de Sauvage Elixir y **Club de Nuit** el ADN de Creed Aventus con mayor duración. "
+                f"¿Tú ya has probado fragancias árabes en tu piel, o sería tu primera experiencia con ellas?"
             )
             return (texto, "SABIO")
-
-    if any(k in q for k in ["oud", "madera", "amaderado", "cedro", "sandalo", "sándalo"]):
-        if quiere_comprar:
+        elif sales_mode == "modo_bestia":
             texto = (
-                f"Para maderas nobles y Oud oriental de más de 12 horas, {nombre}, te sugiero **Bade'e Al Oud** o **Club de Nuit**. "
-                f"Pídelo en el link de la biografía con envío gratis hoy. {cta}"
+                f"¡Es la mejor inversión inteligente, {nombre}! En nuestro catálogo tenemos los clones árabes número uno: **Asad** ($38 USD) que supera a Sauvage Elixir, "
+                f"y **Club de Nuit** ($42 USD) idéntico a Creed Aventus. ¿Prefieres la elegancia ahumada o la vibra especiada de seducción? "
+                f"Pide el tuyo tocando el link de mi bio. {cta}"
             )
             return (texto, "VENTA")
         else:
-            texto = (
-                f"Las maderas nobles y el Oud oriental, {nombre}, son el sello indiscutible de la alta perfumería árabe: aportan profundidad, misterio y una fijación de más de 12 horas. "
-                f"Fragancias como **Bade'e Al Oud** o **Club de Nuit Intense Man** secan con maderas ahumadas y ámbar mineral que imponen respeto y elegancia pura. "
-                f"¿Buscas un oud oriental profundo y oscuro de jeque, o prefieres maderas más suaves y ejecutivas?"
-            )
-            return (texto, "RECOMENDACION")
+            if quiere_comprar:
+                texto = (
+                    f"¡Los mejores clones árabes de alta calidad los tenemos en catálogo, {nombre}! "
+                    f"Descubre todas las joyas inspiradas en diseñadores tocando el enlace de nuestra biografía. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"¡Es la gran revolución olfativa, {nombre}! Casas árabes como Lattafa, Armaf, Afnan y Rasasi utilizan los mismos aceites esenciales franceses que marcas de $300 USD pero sin el sobreprecio del marketing. "
+                    f"¿Tú ya has probado fragancias árabes en tu piel, o sería tu primera experiencia con ellas?"
+                )
+                return (texto, "SABIO")
 
     # 4. PREGUNTAS DE RENDIMIENTO / DURACIÓN / FIJACIÓN
     if any(k in q for k in ["duracion", "duración", "dura", "estela", "fijacion", "fijación", "proyeccion", "proyección", "horas", "piel"]):
-        if quiere_comprar:
+        if sales_mode == "sensei_puro":
             texto = (
-                f"Todas nuestras fragancias son concentración Eau de Parfum y Extracto de Perfume, {nombre}, con aceites macerados de 10 a 14 horas de fijación. "
-                f"¡Pide tu fragancia árabe favorita en el enlace de nuestra biografía! {cta}"
-            )
-            return (texto, "VENTA")
-        else:
-            texto = (
-                f"En perfumería árabe de calidad, {nombre}, la duración se logra con aceites macerados de alta pureza y bases de ámbar y resinas. "
+                f"En perfumería de calidad, {nombre}, la duración se logra con aceites macerados de alta pureza y bases de ámbar y resinas. "
                 f"Fragancias como **Asad**, **Club de Nuit** y **Khamrah** entregan fácilmente entre 10 y 14 horas en piel y días en ropa. "
                 f"Dime, {nombre}, ¿en tu piel los perfumes suelen durar poco o tienes buena fijación natural?"
             )
             return (texto, "SABIO")
+        elif sales_mode == "modo_bestia":
+            texto = (
+                f"En nuestra boutique todas las fragancias son concentración Eau de Parfum y Extracto con duración garantizada de 10 a 14 horas en piel, {nombre}. "
+                f"Fragancias como **Asad** y **Khamrah** no te van a fallar jamás. ¿Prefieres un aroma para uso diario o para ocasiones especiales? "
+                f"Explora el catálogo en el link del perfil. {cta}"
+            )
+            return (texto, "VENTA")
+        else:
+            if quiere_comprar:
+                texto = (
+                    f"Todas nuestras fragancias son concentración Eau de Parfum y Extracto de Perfume, {nombre}, con aceites macerados de 10 a 14 horas de fijación. {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"En perfumería árabe de calidad, {nombre}, la duración se logra con aceites macerados de alta pureza y bases de ámbar y resinas. "
+                    f"Dime, {nombre}, ¿en tu piel los perfumes suelen durar poco o tienes buena fijación natural?"
+                )
+                return (texto, "SABIO")
 
-    # 5. PREGUNTAS SOBRE CLONES / ÁRABES VS ORIGINALES
-    if any(k in q for k in ["clon", "clones", "arabe", "árabe", "dupe", "inspiracion", "inspiración", "original"]):
+    # 5. RESPUESTA GENERAL Y CALUROSA
+    if sales_mode == "sensei_puro":
+        texto = (
+            f"¡Bienvenido al consultorio olfativo del Sensei, {nombre}! Aquí evaluamos notas, rendimiento y estilo olfativo con criterio de maestro y cero ventas. "
+            f"Cuéntame, ¿qué perfume usas actualmente o cuál ha sido tu aroma favorito de todos los tiempos?"
+        )
+        return (texto, "SABIO")
+    elif sales_mode == "modo_bestia":
+        texto = (
+            f"¡Bienvenido a nuestra boutique en vivo, {nombre}! Aquí tenemos las mejores bestias olfativas de nicho y fragancias árabes con envío gratis hoy. "
+            f"¿Buscas un perfume dulce seductor para citas o algo fresco ejecutivo para el trabajo? Dime cuál prefieres y te doy la opción exacta de nuestro catálogo en el enlace de la bio. {cta}"
+        )
+        return (texto, "VENTA")
+    else:
         if quiere_comprar:
             texto = (
-                f"¡Los mejores clones árabes de alta calidad los tenemos en catálogo, {nombre}! "
-                f"Descubre todas las joyas inspiradas en diseñadores tocando el enlace de nuestra biografía. {cta}"
+                f"¡Con todo gusto, {nombre}! Puedes explorar nuestro catálogo completo y pedir con envío prioritario en el enlace de mi biografía. {cta}"
             )
             return (texto, "VENTA")
         else:
             texto = (
-                f"¡Es la gran revolución olfativa, {nombre}! Casas árabes como Lattafa, Armaf, Afnan y Rasasi utilizan los mismos aceites esenciales franceses que marcas de $300 USD pero sin el sobreprecio del marketing. "
-                f"Por ejemplo, **Asad** te da el 95% de Sauvage Elixir, y **Club de Nuit** el ADN exacto de Creed Aventus, pero con mayor duración. "
-                f"¿Tú ya has probado fragancias árabes en tu piel, o sería tu primera experiencia con ellas?"
+                f"¡Bienvenido a nuestra boutique en vivo, {nombre}! Aquí somos apasionados de la alta perfumería de nicho, fragancias árabes y bestias de cumplidos. "
+                f"Cuéntame, {nombre}, ¿qué perfume usas actualmente o cuál ha sido tu aroma favorito de todos los tiempos?"
             )
-            return (texto, "SABIO")
-
-    # 6. RESPUESTA GENERAL Y CALUROSA DE BIENVENIDA A LA BOUTIQUE
-    if quiere_comprar:
-        texto = (
-            f"¡Con todo gusto, {nombre}! Puedes explorar nuestro catálogo completo y pedir con envío prioritario en el enlace de mi biografía. {cta}"
-        )
-        return (texto, "VENTA")
-    else:
-        texto = (
-            f"¡Bienvenido a nuestra boutique en vivo, {nombre}! Aquí somos apasionados de la alta perfumería de nicho, fragancias árabes y bestias de cumplidos. "
-            f"Cuéntame, {nombre}, ¿qué perfume usas actualmente o cuál ha sido tu aroma favorito de todos los tiempos?"
-        )
-        return (texto, "RECOMENDACION")
+            return (texto, "RECOMENDACION")
 
