@@ -305,28 +305,32 @@ Cierra siempre motivando a entrenar duro y recomendando los suplementos disponib
                 "id": "shoe_1",
                 "name": "Nike Air Jordan 1 Retro High OG",
                 "price": "$85 USD",
-                "notes": "Cuero prémium, amortiguación Air-Sole, combinaciones Panda y Chicago, tallas 38 al 44. Envío gratis hoy.",
+                "sizes": "38, 39, 40, 41, 42, 43, 44",
+                "notes": "Cuero prémium, amortiguación Air-Sole, combinaciones Panda y Chicago. Envío gratis hoy.",
                 "badge": "🔥 BEST SELLER"
             },
             {
                 "id": "shoe_2",
                 "name": "Nike Air Force 1 '07 White",
                 "price": "$65 USD",
-                "notes": "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida, tallas 37 al 44.",
+                "sizes": "37, 38, 39, 40, 41, 42, 43, 44",
+                "notes": "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida.",
                 "badge": "👑 CLÁSICO INFALIBLE"
             },
             {
                 "id": "shoe_3",
                 "name": "Adidas Forum Low Classic",
                 "price": "$70 USD",
-                "notes": "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario, tallas 38 al 43.",
+                "sizes": "38, 39, 40, 41, 42, 43",
+                "notes": "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario.",
                 "badge": "⚡ TENDENCIA URBANA"
             },
             {
                 "id": "shoe_4",
                 "name": "Yeezy Boost 350 V2 Onyx",
                 "price": "$95 USD",
-                "notes": "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación, tallas 38 al 45.",
+                "sizes": "38, 39, 40, 41, 42, 43, 44, 45",
+                "notes": "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación.",
                 "badge": "🌟 MÁXIMA COMODIDAD"
             }
         ],
@@ -448,6 +452,22 @@ class AgentManager:
                     if "REGLAS DE ORO DE LA MAESTRA SOMMELIER DE VENTAS" in ag.get("system_prompt", "") or "REGLAS DE ORO DE LA MAESTRA SOMMELIER:" in ag.get("system_prompt", ""):
                         ag["system_prompt"] = AGENT_TEMPLATES["tienda_perfumes"]["system_prompt"]
                         ag["sales_mode"] = "modo_bestia"
+
+            # Asegurar campo sizes en productos de calzado existentes
+            if "calzado-sneakers" in self.agents:
+                for p in self.agents["calzado-sneakers"].get("featured_products", []):
+                    if not p.get("sizes"):
+                        p_nom = p.get("name", "").lower()
+                        if "jordan" in p_nom:
+                            p["sizes"] = "38, 39, 40, 41, 42, 43, 44"
+                        elif "air force" in p_nom:
+                            p["sizes"] = "37, 38, 39, 40, 41, 42, 43, 44"
+                        elif "forum" in p_nom:
+                            p["sizes"] = "38, 39, 40, 41, 42, 43"
+                        elif "yeezy" in p_nom:
+                            p["sizes"] = "38, 39, 40, 41, 42, 43, 44, 45"
+                        else:
+                            p["sizes"] = "38 al 44"
             self.save_agents()
 
     def save_agents(self):

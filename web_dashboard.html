@@ -1567,14 +1567,18 @@
           ➕ Añadir Nuevo Producto al Catálogo
         </span>
         <input type="hidden" id="prod-edit-id" value="">
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
           <div class="form-group">
             <label class="form-label">Nombre del Producto / Modelo</label>
-            <input type="text" id="prod-input-name" class="input-field" placeholder="ej: Zapatillas Nike Air Jordan 1 Retro">
+            <input type="text" id="prod-input-name" class="input-field" placeholder="ej: Nike Air Jordan 1 High">
           </div>
           <div class="form-group">
             <label class="form-label">Precio</label>
             <input type="text" id="prod-input-price" class="input-field" placeholder="ej: $85 USD o $320.000 COP">
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="color: #00f0ff;">📏 Tallas Disponibles</label>
+            <input type="text" id="prod-input-sizes" class="input-field" placeholder="ej: 38, 39, 40, 41, 42, 43 o S, M, L">
           </div>
           <div class="form-group">
             <label class="form-label">Etiqueta / Badge</label>
@@ -1582,10 +1586,10 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label">Descripción, Tallas, Colores y Detalles para la IA</label>
-          <input type="text" id="prod-input-notes" class="input-field" placeholder="ej: Cuero legítimo, suela Air antideslizante, tallas 38 al 44, envío gratis nacional hoy">
+          <label class="form-label">Descripción, Materiales, Colores y Detalles para la IA</label>
+          <input type="text" id="prod-input-notes" class="input-field" placeholder="ej: Cuero legítimo, suela Air antideslizante, combinaciones Panda y Chicago, envío gratis hoy">
           <span style="font-size: 11px; color: var(--ink70); margin-top: 2px;">
-            💡 Entre más detalles pongas (tallas, materiales, colores), mejor responderá la IA cuando le pregunten por este producto.
+            💡 La IA revisará exactamente las <strong>Tallas Disponibles</strong> para confirmar en vivo si el cliente pregunta por su número o talla.
           </span>
         </div>
         <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
@@ -1883,8 +1887,11 @@
           card.className = "product-card";
           card.innerHTML = `
             <div>
-              <span class="product-badge">${p.badge || 'DESTACADO'}</span>
-              <div class="product-name" style="margin-top: 6px;">${p.name}</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span class="product-badge">${p.badge || 'DESTACADO'}</span>
+                ${p.sizes ? `<span style="font-size: 11px; color: #00f0ff; font-weight: 700; background: rgba(0,240,255,0.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(0,240,255,0.35);">📏 ${p.sizes}</span>` : ''}
+              </div>
+              <div class="product-name">${p.name}</div>
               <div class="product-price">${p.price || ''}</div>
               <div class="product-notes">${p.notes || ''}</div>
             </div>
@@ -1893,7 +1900,8 @@
             </button>
           `;
           card.querySelector(".btn-ask-product").addEventListener("click", () => {
-            testCommentInput.value = `¿Qué precio tienen y qué tallas o detalles hay de ${p.name}?`;
+            const tallaSugerida = p.sizes ? p.sizes.split(',')[0].trim() : 'mi talla';
+            testCommentInput.value = `¿Tienen disponible ${p.name} en ${tallaSugerida} y qué precio tiene?`;
             btnTestEnviar.click();
           });
           storeProductsGrid.appendChild(card);
@@ -2215,6 +2223,7 @@
     const prodEditId = document.getElementById("prod-edit-id");
     const prodInputName = document.getElementById("prod-input-name");
     const prodInputPrice = document.getElementById("prod-input-price");
+    const prodInputSizes = document.getElementById("prod-input-sizes");
     const prodInputBadge = document.getElementById("prod-input-badge");
     const prodInputNotes = document.getElementById("prod-input-notes");
     const btnSaveSingleProd = document.getElementById("btn-save-single-prod");
@@ -2250,6 +2259,7 @@
       if (prodEditId) prodEditId.value = "";
       if (prodInputName) prodInputName.value = "";
       if (prodInputPrice) prodInputPrice.value = "";
+      if (prodInputSizes) prodInputSizes.value = "";
       if (prodInputBadge) prodInputBadge.value = "";
       if (prodInputNotes) prodInputNotes.value = "";
       if (formProductTitle) formProductTitle.textContent = "➕ Añadir Nuevo Producto al Catálogo";
@@ -2286,6 +2296,7 @@
               <span class="product-badge" style="font-size: 10px; padding: 2px 6px;">${p.badge || 'DESTACADO'}</span>
               <strong style="color: #fff; font-size: 13px;">${p.name}</strong>
               <span style="color: var(--gold); font-family: var(--font-mono); font-weight: 700; font-size: 12px;">${p.price || ''}</span>
+              ${p.sizes ? `<span style="background: rgba(0, 240, 255, 0.15); border: 1px solid rgba(0, 240, 255, 0.4); color: #00f0ff; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700;">📏 ${p.sizes}</span>` : ''}
             </div>
             <div style="font-size: 11px; color: var(--ink70); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
               ${p.notes || 'Sin detalles extra'}
@@ -2305,6 +2316,7 @@
           prodEditId.value = p.id || `idx_${idx}`;
           prodInputName.value = p.name || "";
           prodInputPrice.value = p.price || "";
+          if (prodInputSizes) prodInputSizes.value = p.sizes || "";
           prodInputBadge.value = p.badge || "";
           prodInputNotes.value = p.notes || "";
           formProductTitle.textContent = `✏️ Editando: ${p.name}`;
@@ -2332,6 +2344,7 @@
         }
 
         const price = prodInputPrice.value.trim();
+        const sizes = prodInputSizes ? prodInputSizes.value.trim() : "";
         const badge = prodInputBadge.value.trim() || "🔥 DESTACADO";
         const notes = prodInputNotes.value.trim();
         const editId = prodEditId.value;
@@ -2341,6 +2354,7 @@
           if (target) {
             target.name = name;
             target.price = price;
+            target.sizes = sizes;
             target.badge = badge;
             target.notes = notes;
           }
@@ -2349,6 +2363,7 @@
             id: "prod_" + Date.now(),
             name,
             price,
+            sizes,
             badge,
             notes
           });
@@ -2367,29 +2382,33 @@
             id: "shoe_1",
             name: "Nike Air Jordan 1 Retro High OG",
             price: "$85 USD",
+            sizes: "38, 39, 40, 41, 42, 43, 44",
             badge: "🔥 BEST SELLER",
-            notes: "Cuero legítimo prémium, amortiguación Air-Sole, combinaciones Panda y Chicago, tallas 38 al 44. Envío gratis hoy."
+            notes: "Cuero legítimo prémium, amortiguación Air-Sole, combinaciones Panda y Chicago. Envío gratis hoy."
           },
           {
             id: "shoe_2",
             name: "Nike Air Force 1 '07 White",
             price: "$65 USD",
+            sizes: "37, 38, 39, 40, 41, 42, 43, 44",
             badge: "👑 CLÁSICO INFALIBLE",
-            notes: "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida, tallas 37 al 44."
+            notes: "100% cuero blanco pulcro, estilo clásico urbano inconfundible, suela de goma cosida."
           },
           {
             id: "shoe_3",
             name: "Adidas Forum Low Classic",
             price: "$70 USD",
+            sizes: "38, 39, 40, 41, 42, 43",
             badge: "⚡ TENDENCIA URBANA",
-            notes: "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario, tallas 38 al 43."
+            notes: "Silueta retro con correa extraíble de velcro, cuero acolchado y gran comodidad para diario."
           },
           {
             id: "shoe_4",
             name: "Yeezy Boost 350 V2 Onyx",
             price: "$95 USD",
+            sizes: "38, 39, 40, 41, 42, 43, 44, 45",
             badge: "🌟 MÁXIMA COMODIDAD",
-            notes: "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación, tallas 38 al 45."
+            notes: "Tejido Primeknit ultra flexible, entresuela con tecnología Boost para máxima amortiguación."
           }
         ];
         renderModalProductsList();
@@ -2403,6 +2422,7 @@
             id: "perf_1",
             name: "Asad de Lattafa",
             price: "$45 USD",
+            sizes: "100ml (3.4 fl oz)",
             badge: "🔥 BEST SELLER",
             notes: "Clon prémium de Sauvage Elixir, notas de pimienta negra, café, tabaco y vainilla. Proyección bestial de 10+ horas."
           },
@@ -2410,6 +2430,7 @@
             id: "perf_2",
             name: "Club de Nuit Intense Man",
             price: "$55 USD",
+            sizes: "105ml (3.6 fl oz)",
             badge: "👑 REY DE CUMPLIDOS",
             notes: "Inspirado en Creed Aventus, notas de piña ahumada, abedul y ámbar gris. La bestia negra de cumplidos masculinos."
           },
@@ -2417,6 +2438,7 @@
             id: "perf_3",
             name: "Khamrah de Lattafa",
             price: "$50 USD",
+            sizes: "100ml (3.4 fl oz)",
             badge: "🍯 DULCE & SEDUCTOR",
             notes: "Inspirado en Angels' Share de Kilian, notas de canela, praliné, dátiles y vainilla bourbon. Aroma cálido de noche."
           },
@@ -2424,6 +2446,7 @@
             id: "perf_4",
             name: "Yara Pink de Lattafa",
             price: "$40 USD",
+            sizes: "100ml (3.4 fl oz)",
             badge: "🌸 TIKTOK VIRAL FEMENINO",
             notes: "Notas dulces de orquídea, mandarina, heliotropo, acorde gourmand y vainilla. Femenino, adictivo y duradero."
           }
@@ -2439,22 +2462,25 @@
             id: "cloth_1",
             name: "Hoodie Heavyweight Oversize",
             price: "$45 USD",
+            sizes: "S, M, L, XL",
             badge: "🔥 TENDENCIA STREETWEAR",
-            notes: "100% algodón rústico 450 GSM, corte oversize relajado, capucha doble forro, colores negro y crema, tallas S a XL."
+            notes: "100% algodón rústico 450 GSM, corte oversize relajado, capucha doble forro, colores negro y crema."
           },
           {
             id: "cloth_2",
             name: "Pantalón Cargo Táctico Multi-Bolsillos",
             price: "$50 USD",
+            sizes: "28, 30, 32, 34, 36",
             badge: "⚡ BEST SELLER",
-            notes: "Tela ripstop antirasgaduras, 6 bolsillos de carga, elástico y ajustador en tobillos, tallas 28 a 36."
+            notes: "Tela ripstop antirasgaduras, 6 bolsillos de carga, elástico y ajustador en tobillos."
           },
           {
             id: "cloth_3",
             name: "Camiseta Boxy Fit Acid Wash",
             price: "$28 USD",
+            sizes: "S, M, L",
             badge: "👑 BÁSICO PREMIUM",
-            notes: "Cuello cerrado de 3cm, tejido de alto gramaje con lavado vintage premium, tallas S a L."
+            notes: "Cuello cerrado de 3cm, tejido de alto gramaje con lavado vintage premium."
           }
         ];
         renderModalProductsList();
@@ -2468,6 +2494,7 @@
             id: "tech_1",
             name: "Auriculares Pro Wireless ANC",
             price: "$49 USD",
+            sizes: "Color Negro / Blanco",
             badge: "🔥 CANCELACIÓN DE RUIDO",
             notes: "Cancelación activa de ruido 42dB, batería de 36 horas continuas, sonido Hi-Res y carga rápida tipo C."
           },
@@ -2475,6 +2502,7 @@
             id: "tech_2",
             name: "Smartwatch Ultra Amoled 2.04",
             price: "$59 USD",
+            sizes: "Correa Naranja / Negra",
             badge: "⚡ OFERTA FLASH",
             notes: "Pantalla AMOLED brillante, llamadas bluetooth, resistencia al agua IP68, monitor cardíaco y 100 modos de deporte."
           },
@@ -2482,6 +2510,7 @@
             id: "tech_3",
             name: "Cargador Rápido GaN 65W Multi-Puerto",
             price: "$25 USD",
+            sizes: "65W (3 puertos)",
             badge: "🚀 CARGA ULTRA RÁPIDA",
             notes: "3 puertos (2 USB-C + 1 USB-A), tecnología nitruro de galio (GaN), carga laptops, iPhones y Android a máxima velocidad."
           }
@@ -2497,6 +2526,7 @@
             id: "fit_1",
             name: "Creatina Monohidrato Creapure 300g",
             price: "$32 USD",
+            sizes: "300g (60 servicios)",
             badge: "⚡ 100% PURA CREAPURE",
             notes: "Sello Creapure alemán garantizado, máxima absorción para fuerza y volumen muscular, 60 servicios."
           },
@@ -2504,6 +2534,7 @@
             id: "fit_2",
             name: "Whey Protein Isolate 2kg",
             price: "$65 USD",
+            sizes: "2kg (70 scoops)",
             badge: "👑 CERO AZÚCAR & CARBS",
             notes: "27g de proteína pura por scoop, absorción rápida post-entreno, sabor Chocolate Belga o Vainilla Gourmet."
           }

@@ -174,7 +174,15 @@ Respuesta del Sensei de los Perfumes:"""
     # 2. MODO BESTIA COMERCIAL (VENTA ACTIVA CON OPCIONES DE PREGUNTAS A/B)
     elif sales_mode == "modo_bestia":
         prods = agent.get("featured_products", [])
-        cat_text = "\n".join([f"- {p['name']} ({p.get('price', '')}): {p.get('notes', '')}" for p in prods]) if prods else "Productos exclusivos disponibles."
+        cat_lines = []
+        for p in prods:
+            item_str = f"- {p['name']} ({p.get('price', '')})"
+            if p.get("sizes"):
+                item_str += f" | Tallas: {p['sizes']}"
+            if p.get("notes"):
+                item_str += f": {p['notes']}"
+            cat_lines.append(item_str)
+        cat_text = "\n".join(cat_lines) if cat_lines else "Productos exclusivos disponibles."
         cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
 
         prompt = f"""{base_prompt}
@@ -188,6 +196,7 @@ REGLAS DE VENTA EN MODO BESTIA COMERCIAL (VENTA ACTIVA CON OPCIONES DE PREGUNTAS
 1. Saluda con entusiasmo y energía usando su nombre limpio: "{nombre_humano}".
 2. VENTA ACTIVA CON OPCIONES DE PREGUNTAS (PERSUASIVA, NO ABUSIVA):
    - Reconoce el producto, modelo o necesidad que menciona el cliente y conéctala con las opciones de tu catálogo.
+   - TALLAS Y DISPONIBILIDAD: Si el cliente pregunta por una talla (ej: '¿tienen talla 40?', '¿tienen en 41?', '¿talla L?'), revisa las tallas exactas de tu catálogo. Si está disponible, confírmale de inmediato con energía y dile que se la apartas antes de que se agote.
    - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B AL CLIENTE para facilitar la decisión (ej: "¿Prefieres el modelo clásico A o la opción B con mayor exclusividad?", "¿Te gustaría en talla 40 o 41?", "¿Prefieres la opción individual o el paquete completo?").
    - Menciona el precio accesible y crea urgencia de inventario limitado ("quedan pocas piezas disponibles hoy").
    - Cierra con una pregunta de cierre con opciones (ej: '¿cuál de los dos prefieres?') e invita a tocar el enlace del perfil: "{cta}".
@@ -202,7 +211,15 @@ Respuesta en Modo Bestia Comercial:"""
     # 3. MODO CONSULTIVO EQUILIBRADO
     elif agent_type == "tienda_ventas" or sales_mode == "consultivo":
         prods = agent.get("featured_products", [])
-        cat_text = "\n".join([f"- {p['name']} ({p.get('price', '')}): {p.get('notes', '')}" for p in prods]) if prods else "Productos exclusivos disponibles."
+        cat_lines = []
+        for p in prods:
+            item_str = f"- {p['name']} ({p.get('price', '')})"
+            if p.get("sizes"):
+                item_str += f" | Tallas: {p['sizes']}"
+            if p.get("notes"):
+                item_str += f": {p['notes']}"
+            cat_lines.append(item_str)
+        cat_text = "\n".join(cat_lines) if cat_lines else "Productos exclusivos disponibles."
         cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
 
         prompt = f"""{base_prompt}
@@ -417,11 +434,22 @@ def generar_respuesta_agente_personalizado(usuario: str, pregunta: str, agent: d
         palabras_prod = [w for w in re.findall(r'\b[a-zA-Z0-9]{3,}\b', p_name)]
         if any(w in q_low for w in palabras_prod) or p_name in q_low:
             precio_txt = f"por solo {p.get('price')}" if p.get("price") else ""
-            notes_txt = f" Destaca por: {p.get('notes')}" if p.get("notes") else ""
+            tallas_txt = f" Tallas disponibles: {p.get('sizes')}." if p.get("sizes") else ""
+            notes_txt = f" Destaca por: {p.get('notes')}." if p.get("notes") else ""
             if sales_mode == "sensei_puro":
-                return (f"¡Excelente elección, {nombre}! El modelo {p['name']} es de lo más cotizado en {nicho}.{notes_txt}. ¿Para qué tipo de uso o estilo lo estás buscando?", "SABIO")
+                return (f"¡Excelente elección, {nombre}! El modelo {p['name']} es de lo más cotizado en {nicho}.{tallas_txt}{notes_txt} ¿Para qué tipo de uso o estilo lo estás buscando?", "SABIO")
             else:
-                return (f"¡Gran elección, {nombre}! Tenemos disponible {p['name']} {precio_txt}.{notes_txt}. Quedan pocas unidades en inventario. ¿Te aparto el tuyo de una vez? {cta}", "VENTA")
+                return (f"¡Gran elección, {nombre}! Tenemos disponible {p['name']} {precio_txt}.{tallas_txt}{notes_txt} Quedan pocas unidades en inventario. ¿Te aparto tu talla de una vez? {cta}", "VENTA")
+
+    # 1.1 Si pregunta específicamente por una talla (ej: "talla 40", "talla 41", "talla 42", "tienen en 40", "talla M")
+    talla_match = re.search(r'\b(?:talla|número|numero)\s*([a-zA-Z0-9]+)\b|\b(?:en|tienen)\s*([3-4][0-9])\b', q_low)
+    if talla_match:
+        talla_pedida = talla_match.group(1) or talla_match.group(2)
+        prods_con_talla = [p for p in prods if talla_pedida in str(p.get("sizes", ""))]
+        if prods_con_talla:
+            p_ej = prods_con_talla[0]
+            precio_txt = f"por solo {p_ej.get('price')}" if p_ej.get("price") else ""
+            return (f"¡Sí, {nombre}! En talla {talla_pedida} tenemos disponible {p_ej['name']} {precio_txt}. Quedan muy pocos pares en stock. Toca el enlace de mi perfil para apartar la tuya antes de que se agote. {cta}", "VENTA")
 
     # 2. Si pregunta por precios o catálogo en general
     if any(k in q_low for k in ["precio", "cuanto", "cuánto", "vale", "comprar", "tienen", "catalogo", "catálogo", "modelos", "tallas", "zapatos", "calzado", "disponible"]):
