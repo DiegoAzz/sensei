@@ -33,19 +33,19 @@ DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CONFIG_FILE = DATA_DIR / "config.json"
 
+DEFAULT_GEMINI_KEY_B64 = "QVEuQWI4Uk42S3dkNEstcl9ycGZfR3FkY2x0VHh4b1NMWE42LVkyYUhCZ0lXY2d6LTZfb1E="
 DEFAULT_OPENAI_KEY_B64 = "c2stcHJvai1UMS1icEoxa3hieUhBTXl4QkNMdkdKdUpPMkVVczZmQ3dTMmtEQVhTd2NpYm1admFZb2ZQNzdXUEwzaFpTQ0tsVWpZVTRMMURKdFQzQmxia0ZKajlkR3VuZ1hCZm1TZTdEeWhZeVFwWW5SZ2I1WnRCOUVGb3g5YzU2cmRpcFQ3YmJQZG1LT1RlajZmQU5OSDcxd2IyNEZmVGNCZ0E="
-DEFAULT_GEMINI_KEY_B64 = "QVEuQWI4Uk42THprV1E3VVh0ZXlmYnFKamlmbC15TkR2bGI1cVo2cGFZUTZ3bTRhdC0tS1E="
 
 def obtener_ai_key_default():
-    env_k = os.environ.get("OPENAI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    env_k = os.environ.get("GEMINI_API_KEY") or os.environ.get("OPENAI_API_KEY")
     if env_k:
         return env_k.strip()
     try:
-        return base64.b64decode(DEFAULT_OPENAI_KEY_B64).decode("utf-8").strip()
+        return base64.b64decode(DEFAULT_GEMINI_KEY_B64).decode("utf-8").strip()
     except Exception:
         pass
     try:
-        return base64.b64decode(DEFAULT_GEMINI_KEY_B64).decode("utf-8").strip()
+        return base64.b64decode(DEFAULT_OPENAI_KEY_B64).decode("utf-8").strip()
     except Exception:
         return ""
 
@@ -218,10 +218,10 @@ Respuesta de {agent_name}:"""
             except Exception as e:
                 logger.warning(f"Error consultando OpenAI API: {e}")
 
-        # Soporte para Google Gemini (Gemini 3.5 / 3.7 / 3.8 Flash)
+        # Soporte para Google Gemini (Gemini Flash con respuesta ultra rápida)
         else:
             import aiohttp
-            modelos_gemini = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-flash-latest"]
+            modelos_gemini = ["gemini-3.5-flash", "gemini-flash-latest"]
             for modelo in modelos_gemini:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
