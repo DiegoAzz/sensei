@@ -547,6 +547,15 @@
             <button class="btn-preset" data-q="Somos casi algo hace 6 meses y no formaliza">Somos casi algo</button>
           </div>
 
+          <!-- Tarjeta de Respuesta Visual y Reproductor para Sandbox -->
+          <div id="sandbox-response-card" style="display: none; padding: 12px 14px; border-radius: 8px; background: rgba(255, 42, 109, 0.12); border: 1px solid var(--crimson); flex-direction: column; gap: 6px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; color: var(--rose); font-family: var(--font-mono); font-weight: 700;">📿 CONSEJO DEL SENSEI:</span>
+              <button type="button" id="btn-replay-audio" style="padding: 4px 10px; background: var(--crimson); color: #fff; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 700;">🔊 Escuchar de nuevo</button>
+            </div>
+            <div id="sandbox-response-text" style="font-size: 13px; color: var(--gold); font-style: italic; line-height: 1.45;"></div>
+          </div>
+
           <!-- Reproductores de audio HTML5 para Sandbox -->
           <audio id="bg-music-player" loop src="/assets/musica_misteriosa.mp3" preload="auto"></audio>
           <audio id="voice-player" preload="auto"></audio>
@@ -780,14 +789,30 @@
             user: "espectador_amor", 
             comment: q,
             voice: cfgVoice.value,
-            estilo: cfgEstilo.value
+            estilo: cfgEstilo.value,
+            gemini_api_key: cfgGeminiKey.value.trim()
           })
         });
         const d = await res.json();
         addLog(`[SENSEI RESPONDE]: "${d.answer}"`, "green");
 
+        const respCard = document.getElementById("sandbox-response-card");
+        const respText = document.getElementById("sandbox-response-text");
+        const btnReplay = document.getElementById("btn-replay-audio");
+
+        if (respCard && respText && d.answer) {
+          respText.textContent = `"${d.answer}"`;
+          respCard.style.display = "flex";
+        }
+
         if (d.audio_url) {
           voicePlayer.src = d.audio_url;
+          if (btnReplay) {
+            btnReplay.onclick = () => {
+              voicePlayer.play().catch(e => console.log(e));
+            };
+          }
+
           if (sandboxActive) {
             bgMusicPlayer.volume = 0.07; // Bajar música de fondo mientras habla
             sandboxStatusText.textContent = "🗣️ Sensei hablando en vivo...";
@@ -795,7 +820,7 @@
           try {
             await voicePlayer.play();
           } catch (err) {
-            console.log("Audio play blocked:", err);
+            console.log("Audio play blocked by browser:", err);
           }
           voicePlayer.onended = () => {
             if (sandboxActive) {

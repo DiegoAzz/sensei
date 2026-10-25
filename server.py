@@ -488,42 +488,52 @@ async def handle_audio_test(request):
     return web.Response(status=404)
 
 async def handle_test_comment(request):
-    data = await request.json()
-    user = data.get("user", "discipulo_test")
-    comment = data.get("comment", "")
-    voice = data.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
-    estilo = data.get("estilo") or estado.get("estilo", "sabio_directo")
+    try:
+        data = await request.json()
+        user = data.get("user", "espectador_amor")
+        comment = data.get("comment", "")
+        voice = data.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
+        estilo = data.get("estilo") or estado.get("estilo", "sabio_directo")
 
-    if comment:
-        orig_estilo = estado["estilo"]
-        estado["estilo"] = estilo
-        ans = await responder_con_ia(user, comment)
-        estado["estilo"] = orig_estilo
+        # Guardar clave de IA si se envio en la peticion
+        if data.get("gemini_api_key"):
+            estado["gemini_api_key"] = data["gemini_api_key"].strip()
+            guardar_configuracion()
 
-        audio_file = DATA_DIR / "consejo_test.mp3"
-        try:
-            orig_voice = estado["voice"]
-            estado["voice"] = voice
-            await sintetizar_audio(ans, str(audio_file))
-            estado["voice"] = orig_voice
+        if comment:
+            orig_estilo = estado["estilo"]
+            estado["estilo"] = estilo
+            ans = await responder_con_ia(user, comment)
+            estado["estilo"] = orig_estilo
 
-            registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
-            registrar_log(f"🧪 [SENSEI HABLA]: \"{ans}\"", "green")
+            audio_file = DATA_DIR / "consejo_test.mp3"
+            try:
+                orig_voice = estado["voice"]
+                estado["voice"] = voice
+                await sintetizar_audio(ans, str(audio_file))
+                estado["voice"] = orig_voice
 
-            loop_time = int(asyncio.get_event_loop().time() * 1000)
-            return web.json_response({
-                "ok": True,
-                "user": user,
-                "question": comment,
-                "answer": ans,
-                "audio_url": f"/api/audio-test?v={loop_time}"
-            })
-        except Exception as e:
-            logger.error(f"Error generando audio sandbox: {e}")
-            registrar_log(f"🧪 [SENSEI RESPONDE]: \"{ans}\"", "green")
-            return web.json_response({"ok": True, "answer": ans, "audio_url": None, "error": str(e)})
+                registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
+                registrar_log(f"🧪 [SENSEI HABLA]: \"{ans}\"", "green")
 
-    return web.json_response({"ok": False})
+                import time
+                loop_time = int(time.time() * 1000)
+                return web.json_response({
+                    "ok": True,
+                    "user": user,
+                    "question": comment,
+                    "answer": ans,
+                    "audio_url": f"/api/audio-test?v={loop_time}"
+                })
+            except Exception as e:
+                logger.error(f"Error generando audio sandbox: {e}")
+                registrar_log(f"🧪 [SENSEI RESPONDE]: \"{ans}\"", "green")
+                return web.json_response({"ok": True, "answer": ans, "audio_url": None, "error": str(e)})
+
+        return web.json_response({"ok": False})
+    except Exception as e:
+        logger.error(f"Error en handle_test_comment: {e}")
+        return web.json_response({"ok": False, "error": str(e)})
 
 async def handle_index(request):
     html_file = BASE_DIR / "web_dashboard.html"
