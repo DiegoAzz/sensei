@@ -287,6 +287,65 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO")
     await comunicador.save(salida_path)
 
 # ==================== MOTOR DE AUDIO Y STREAMING ====================
+def asegurar_fuente_tipografica() -> str:
+    """Garantiza la disponibilidad de una fuente TTF válida sin problemas de rutas en FFmpeg."""
+    data_font = DATA_DIR / "font.ttf"
+    if data_font.exists():
+        return "data/font.ttf"
+
+    posibles = [
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"),
+        Path("C:/Windows/Fonts/arial.ttf"),
+        Path("C:/Windows/Fonts/segoeui.ttf"),
+    ]
+    import shutil
+    for p in posibles:
+        if p.exists():
+            try:
+                shutil.copyfile(p, data_font)
+                return "data/font.ttf"
+            except Exception:
+                pass
+            return str(p.resolve()).replace("\\", "/")
+    return ""
+
+def actualizar_overlay_video(usuario: str = "", pregunta: str = "", respuesta: str = "", estado_tipo: str = "esperando"):
+    import textwrap
+    lineas = []
+    if estado_tipo == "esperando":
+        lineas.append("~ CONSULTORIO HOLOGRAFICO EN VIVO ~")
+        lineas.append("")
+        lineas.append("Deja tu caso en el chat de TikTok:")
+        lineas.append("Tu crush, ex parejas, celos o desamor.")
+        lineas.append("El Sensei te responde en vivo.")
+    elif estado_tipo == "pensando":
+        lineas.append(f"~ CASO DE: {usuario} ~")
+        q_wrapped = textwrap.fill(f'"{pregunta}"', width=42)
+        lineas.extend(q_wrapped.split("\n")[:2])
+        lineas.append("")
+        lineas.append("El Sensei esta meditando tu caso...")
+    elif estado_tipo == "respondiendo":
+        lineas.append(f"~ CASO DE: {usuario} ~")
+        q_wrapped = textwrap.fill(f'"{pregunta}"', width=42)
+        lineas.extend(q_wrapped.split("\n")[:2])
+        lineas.append("")
+        lineas.append("CONSEJO DEL SENSEI:")
+        ans_clean = respuesta.replace("@", "").replace("_", " ")
+        a_wrapped = textwrap.fill(f'"{ans_clean}"', width=42)
+        lineas.extend(a_wrapped.split("\n")[:4])
+
+    try:
+        overlay_file = DATA_DIR / "live_overlay.txt"
+        with open(overlay_file, "w", encoding="utf-8") as f:
+            f.write("\n".join(lineas[:9]))
+    except Exception as e:
+        logger.warning(f"Error escribiendo live_overlay.txt: {e}")
+
+# Inicializar texto de overlay para FFmpeg
+actualizar_overlay_video("", "", estado_tipo="esperando")
+
 def obtener_musica_pcm():
     global musica_pcm_cache
     if musica_pcm_cache:
@@ -332,6 +391,13 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
         "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
     ]
 
+    overlay_file = DATA_DIR / "live_overlay.txt"
+    if not overlay_file.exists():
+        actualizar_overlay_video("", "", estado_tipo="esperando")
+
+    font_path = asegurar_fuente_tipografica()
+    font_param = f":fontfile={font_path}" if font_path else ""
+
     if has_logo:
         cmd.extend(["-loop", "1", "-i", str(logo_file)])
         filter_complex = (
@@ -339,37 +405,35 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
             "[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x180420@0.95:t=fill,"
             "drawbox=x=30:y=100:w=660:h=1060:color=0xff2a6d@0.45:t=2,"
             # Título principal
-            "drawtext=text='~ EL SENSEI DEL AMOR ~':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=140,"
-            "drawtext=text='Conquista · Infidelidad · Parejas · Amor Propio':fontcolor=0xff7597:fontsize=16:x=(w-text_w)/2:y=185[bg];"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='~ EL SENSEI DEL AMOR ~':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=140,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Conquista · Infidelidad · Parejas · Amor Propio':fontcolor=0xff7597:fontsize=16:x=(w-text_w)/2:y=185[bg];"
             # 2. Escalar el avatar circular
             "[2:v]scale=320:320[avatar];"
             # 3. Superponer el avatar LEVITANDO en el aire continuamente
             "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
-            # 4. Caja de consulta en vivo del chat (Holograma Láser Cyber-Zen)
+            # 4. Caja de consulta en vivo del chat (Holograma Láser Cyber-Zen con proyección dinámica de texto)
             "[v1]drawbox=x=56:y=596:w=608:h=268:color=0xff2a6d@0.4:t=fill,"
-            "drawbox=x=60:y=600:w=600:h=260:color=0x0d0216@0.78:t=fill,"
+            "drawbox=x=60:y=600:w=600:h=260:color=0x0d0216@0.85:t=fill,"
             "drawbox=x=60:y=600:w=600:h=260:color=0x00f0ff@0.7:t=2,"
-            "drawtext=text='~ CONSULTORIO HOLOGRAFICO EN VIVO ~':fontcolor=0xffd700:fontsize=15:x=(w-text_w)/2:y=618,"
-            "drawtext=text='Deja tu caso en el chat: El Sensei te responde en vivo':fontcolor=0x00f0ff@0.9:fontsize=17:x=(w-text_w)/2:y=655,"
+            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor=0xffd700:fontsize=17:line_spacing=6:x=85:y=625,"
             # 5. Llamado a la acción inferior con borde láser
             "drawbox=x=56:y=1036:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
             "drawbox=x=60:y=1040:w=600:h=65:color=0x15031e@0.85:t=fill,"
             "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.85:t=2,"
-            "drawtext=text='[ Pregunta al Sensei: Tu crush, ligar, ex parejas o celos ]':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Pregunta al Sensei sobre tu crush, ligar o parejas':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
         )
         cmd.extend(["-filter_complex", filter_complex])
     else:
         vf = (
             "drawbox=x=30:y=130:w=660:h=1000:color=0x1a0720@0.95:t=fill,"
             "drawbox=x=30:y=130:w=660:h=1000:color=0xff2a6d@0.55:t=2,"
-            "drawtext=text='SENSEI DEL AMOR Y LA SEDUCCION':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=170,"
-            "drawtext=text='Conquista · Parejas · Salir de la Friendzone':fontcolor=0xff7597:fontsize=17:x=(w-text_w)/2:y=215,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='SENSEI DEL AMOR Y LA SEDUCCION':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=170,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Conquista · Parejas · Salir de la Friendzone':fontcolor=0xff7597:fontsize=17:x=(w-text_w)/2:y=215,"
             "drawbox=x=60:y=270:w=600:h=230:color=0x0c0110@0.9:t=fill,"
             "drawbox=x=60:y=270:w=600:h=230:color=0xff7597@0.3:t=1,"
-            "drawtext=text='CONSULTA EN VIVO DEL CHAT':fontcolor=0xff2a6d:fontsize=14:x=80:y=290,"
-            "drawtext=text='Deja tu pregunta sobre tu crush o pareja':fontcolor=0xedf4f9@0.9:fontsize=19:x=80:y=330,"
+            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor=0xffd700:fontsize=17:line_spacing=6:x=85:y=295,"
             "drawbox=x=60:y=1040:w=600:h=60:color=0xff2a6d@0.25:t=fill,"
-            "drawtext=text='🏮 Pregunta al Sensei: Tu crush, ligar, ex parejas o celos 🏮':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1060"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Pregunta al Sensei sobre tu crush, ligar o parejas':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1060"
         )
         cmd.extend(["-vf", vf])
 
@@ -446,8 +510,12 @@ async def audio_streamer_loop():
 async def worker_preguntas():
     while estado["is_streaming"]:
         usuario, pregunta = await cola_preguntas.get()
-        estado["active_user"] = usuario
+        nombre_humano = limpiar_nombre_usuario(usuario)
+        estado["active_user"] = nombre_humano
         estado["active_question"] = pregunta
+
+        # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
+        actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando")
 
         registrar_log(f"🏮 Consulta de @{usuario}: \"{pregunta}\"", "hl")
 
@@ -455,6 +523,9 @@ async def worker_preguntas():
         estado["active_answer"] = respuesta
         estado["active_emotion"] = emocion
         registrar_log(f"📿 Sensei [{emocion}] responde a @{usuario}: \"{respuesta}\"", "green")
+
+        # Proyectar consejo en tiempo real en la caja holográfica del video de TikTok
+        actualizar_overlay_video(nombre_humano, pregunta, respuesta, estado_tipo="respondiendo")
 
         audio_tmp = DATA_DIR / "consejo_sensei.mp3"
         try:
@@ -481,8 +552,13 @@ async def worker_preguntas():
         except Exception as e:
             registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
-        # Pausa natural para la audiencia
-        await asyncio.sleep(6)
+        # Mantener el consejo visible 5 segundos para que la audiencia lo lea
+        await asyncio.sleep(5)
+        # Volver al estado de bienvenida en el overlay
+        actualizar_overlay_video("", "", estado_tipo="esperando")
+
+        # Pausa natural para la audiencia antes de atender el siguiente caso
+        await asyncio.sleep(4)
         cola_preguntas.task_done()
 
 # ==================== CLIENTE TIKTOK LIVE ====================
@@ -561,6 +637,7 @@ async def handle_start(request):
 async def handle_stop(request):
     global ffmpeg_process, tiktok_task, worker_task, streamer_task
     estado["is_streaming"] = False
+    actualizar_overlay_video("", "", estado_tipo="esperando")
 
     if ffmpeg_process:
         try:
@@ -621,6 +698,7 @@ async def handle_test_comment(request):
 
                 registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
                 registrar_log(f"🧪 [SENSEI {emocion}]: \"{ans}\"", "green")
+                actualizar_overlay_video(limpiar_nombre_usuario(user), comment, ans, estado_tipo="respondiendo")
 
                 import time
                 loop_time = int(time.time() * 1000)
