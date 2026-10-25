@@ -1720,6 +1720,7 @@
       cfgStreamKey.value = agent.stream_key || "";
       cfgVoice.value = agent.voice || "es-MX-JorgeNeural";
       cfgEstilo.value = agent.estilo || "sabio_directo";
+      if (cfgGeminiKey) cfgGeminiKey.value = agent.gemini_api_key || "";
 
       // Prompt and niche fields
       if (cfgSystemPrompt) cfgSystemPrompt.value = agent.system_prompt || "";
@@ -2493,7 +2494,9 @@ REGLAS DE ORO:
     }, 2000);
 
     const storedKey = localStorage.getItem("sensei_ai_key");
-    if (storedKey && !cfgGeminiKey.value) {
+    if (storedKey && (storedKey.includes("b5qZ6paYQ") || storedKey.startsWith("sk-proj-"))) {
+      localStorage.removeItem("sensei_ai_key");
+    } else if (storedKey && !cfgGeminiKey.value) {
       cfgGeminiKey.value = storedKey;
     }
     cfgGeminiKey.addEventListener("input", () => {

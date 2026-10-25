@@ -145,13 +145,12 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
     agent_name = agent.get("name", "El Sensei del Amor")
     base_prompt = agent.get("system_prompt", "").strip()
 
-    if api_key:
-        if agent_type == "tienda_ventas":
-            prods = agent.get("featured_products", [])
-            cat_text = "\n".join([f"- {p['name']} ({p.get('price', '')}): {p.get('notes', '')}" for p in prods]) if prods else "Productos exclusivos disponibles."
-            cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
+    if agent_type == "tienda_ventas":
+        prods = agent.get("featured_products", [])
+        cat_text = "\n".join([f"- {p['name']} ({p.get('price', '')}): {p.get('notes', '')}" for p in prods]) if prods else "Productos exclusivos disponibles."
+        cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
 
-            prompt = f"""{base_prompt}
+        prompt = f"""{base_prompt}
 
 CATÁLOGO ACTUAL DE TU TIENDA:
 {cat_text}
@@ -160,30 +159,28 @@ LLAMADO A LA ACCIÓN: {cta}
 
 REGLAS DE VENTA Y CONVERSIÓN EN TIKTOK LIVE:
 1. Saluda a la persona con calidez usando su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
-2. Si el espectador pregunta por recomendaciones, ocasiones (citas, oficina, fiesta), duración o precios:
-   - Recomienda con entusiasmo el producto ideal del catálogo anterior.
-   - Describe sus notas o beneficios de forma sensorial y persuasiva.
+2. Si el espectador pregunta por recomendaciones, marcas o perfumes (ej: Jean Paul Gaultier, Sauvage, Baccarat, etc.):
+   - Reconoce la fragancia que menciona y explica sus notas de forma sensorial y apasionada.
+   - Recomiéndala o conéctala con el producto ideal de tu catálogo si aplica.
    - Menciona el precio accesible y crea urgencia ("últimas piezas en inventario").
    - Cierra invitando a comprar: "{cta}".
 3. Si el espectador se ríe (jaja, jeje, xd): ríete con él y mantén la vibra alegre y magnética.
-4. NUNCA digas que eres una IA o bot; eres el dueño y experto en vivo de la tienda.
+4. NUNCA digas que eres una IA o bot; eres la dueña y sommelier en vivo de la tienda.
 5. Al puro inicio pon la emoción entre corchetes: [VENTA], [RECOMENDACION], [RISA] o [SABIO].
 6. Máximo 3 a 4 oraciones de alto impacto para TikTok Live.
 
 Pregunta del cliente en TikTok: "{pregunta}"
-Respuesta del Experto:"""
+Respuesta de Salomé / Sommelier:"""
 
-        else:
-            tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
-            prompt = f"""{base_prompt}
+    else:
+        tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
+        prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
 
 REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
 1. TU ÚNICO UNIVERSO ES EL NICHO DE TU AGENTE ({agent.get('niche', 'Amor y Consejos')}).
 2. PROHIBIDO SALIR DEL PERSONAJE / PROHIBIDO HABLAR DE TECNOLOGÍA:
-   - Si alguien te pregunta de qué estás hecho, si eres una IA o robot, con qué software o código estás programado, o temas fuera de tu nicho:
    - NUNCA menciones que eres una IA, OpenAI, Gemini, Python o servidores.
-   - Desvía la pregunta con ingenio, picardía o misterio y regrésalo a tu nicho.
 3. SIENTE LA VIBRA DEL USUARIO:
    - Si se ríe ("jajaja", "xd"): ¡RÍETE CON ÉL! Comienza riéndote y vacílalo con humor.
 4. REGLA HUMANA DE SALUDO:
@@ -194,6 +191,18 @@ REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
 Pregunta del espectador en TikTok: "{pregunta}"
 Respuesta de {agent_name}:"""
 
+    keys_a_probar = []
+    if agent.get("gemini_api_key"):
+        k = agent["gemini_api_key"].strip()
+        if k: keys_a_probar.append(k)
+    if estado.get("gemini_api_key"):
+        k = estado["gemini_api_key"].strip()
+        if k and k not in keys_a_probar: keys_a_probar.append(k)
+    default_master = obtener_ai_key_default().strip()
+    if default_master and default_master not in keys_a_probar:
+        keys_a_probar.append(default_master)
+
+    for api_key in keys_a_probar:
         # Soporte para OpenAI (ChatGPT) si la clave empieza por sk-
         if api_key.startswith("sk-"):
             try:
@@ -215,6 +224,9 @@ Respuesta de {agent_name}:"""
                             d = await resp.json()
                             raw_ans = d["choices"][0]["message"]["content"].strip()
                             return parse_emocion_y_texto(raw_ans, pregunta)
+                        else:
+                            err_txt = await resp.text()
+                            logger.warning(f"OpenAI API HTTP {resp.status}: {err_txt}")
             except Exception as e:
                 logger.warning(f"Error consultando OpenAI API: {e}")
 
@@ -240,9 +252,13 @@ Respuesta de {agent_name}:"""
                                 parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
                                 for p in parts:
                                     if "text" in p and p["text"].strip():
+                                        # Auto-reparar la clave del agente para futuras consultas
+                                        if agent.get("gemini_api_key") != api_key:
+                                            agent["gemini_api_key"] = api_key
+                                            agent_manager.save_agents()
                                         return parse_emocion_y_texto(p["text"].strip(), pregunta)
                             elif resp.status == 429:
-                                logger.info(f"Gemini API quota agotada en clave actual (429). Activando motor experto local.")
+                                logger.info(f"Gemini API quota agotada en clave {api_key[:10]}... Probando siguiente.")
                                 break
                             else:
                                 err_txt = await resp.text()

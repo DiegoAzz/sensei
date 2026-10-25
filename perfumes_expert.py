@@ -215,24 +215,26 @@ def obtener_sommelier_experto(usuario: str, pregunta: str, agent: dict) -> tuple
 
     # 1. BÚSQUEDA DE PERFUMES ESPECÍFICOS POR NOMBRE / MARCA
     for key, p in PERFUMES_DB.items():
-        # Match directo de la clave o palabras clave asociadas
+        # Match directo de la clave o palabras clave asociadas (incluyendo errores ortográficos comunes)
         matches = [key]
-        if key == "sauvage": matches.extend(["elixir", "dior sauvage", "sauvage elixir"])
-        elif key == "club de nuit": matches.extend(["cdnim", "armaf", "club de nuit intense"])
-        elif key == "khamrah": matches.extend(["qahwa", "kamrah", "lattafa khamrah"])
-        elif key == "asad": matches.extend(["asad de lattafa", "asad lattafa"])
-        elif key == "yara": matches.extend(["yara tous", "yara rosa", "yara candy", "yara moi"])
-        elif key == "baccarat": matches.extend(["baccarat rouge", "br540", "rouge 540"])
-        elif key == "creed aventus": matches.extend(["aventus", "creed"])
-        elif key == "jean paul gaultier": matches.extend(["jpg", "le male", "ultra male", "le male elixir", "scandal"])
-        elif key == "acqua di gio": matches.extend(["adg", "profondo", "armani gio", "acqua di"])
-        elif key == "versace eros": matches.extend(["eros", "eros flame", "versace"])
-        elif key == "9pm": matches.extend(["afnan 9pm", "9 pm"])
-        elif key == "hawas": matches.extend(["rasasi hawas", "hawas rasasi"])
-        elif key == "bade'e al oud": matches.extend(["honor and glory", "honor & glory", "oud for glory", "bade e al oud"])
-        elif key == "fakhar black": matches.extend(["fakhar", "fakhar de lattafa"])
-        elif key == "nebras": matches.extend(["nebras lattafa", "eilish"])
-        elif key == "bleu de chanel": matches.extend(["chanel bleu", "bleu"])
+        if key == "sauvage": matches.extend(["sauvage", "elixir", "dior sauvage", "sauvage elixir", "sauvach", "sauvaj", "sauvaje"])
+        elif key == "club de nuit": matches.extend(["club de nuit", "cdnim", "armaf", "club de nuit intense", "club denuit", "intense man"])
+        elif key == "khamrah": matches.extend(["khamrah", "qahwa", "kamrah", "cahwa", "lattafa khamrah"])
+        elif key == "asad": matches.extend(["asad", "asad de lattafa", "asad lattafa", "azad"])
+        elif key == "yara": matches.extend(["yara", "yara tous", "yara rosa", "yara candy", "yara moi"])
+        elif key == "baccarat": matches.extend(["baccarat", "bacarat", "bakarat", "baccarat rouge", "br540", "rouge 540"])
+        elif key == "creed aventus": matches.extend(["creed", "aventus", "abentus", "creed aventus"])
+        elif key == "jean paul gaultier": matches.extend(["jean paul", "gaultier", "gultier", "jean pol", "jpg", "le male", "ultra male", "le male elixir", "scandal"])
+        elif key == "acqua di gio": matches.extend(["acqua", "aqua", "adg", "gio", "profondo", "armani gio", "acqua di"])
+        elif key == "versace eros": matches.extend(["versace", "eros", "versache", "eros flame"])
+        elif key == "9pm": matches.extend(["afnan 9pm", "9 pm", "9pm"])
+        elif key == "hawas": matches.extend(["rasasi hawas", "hawas rasasi", "hawas"])
+        elif key == "bade'e al oud": matches.extend(["honor and glory", "honor & glory", "oud for glory", "bade e al oud", "badee al oud", "bade'e"])
+        elif key == "fakhar black": matches.extend(["fakhar", "fakhar de lattafa", "fakhar black"])
+        elif key == "nebras": matches.extend(["nebras", "nebras lattafa", "eilish"])
+        elif key == "bleu de chanel": matches.extend(["chanel bleu", "bleu", "chanel", "blue de chanel"])
+        elif key == "tobacco vanille": matches.extend(["tobacco vanille", "tobaco", "tom ford tobacco"])
+        elif key == "ombre leather": matches.extend(["ombre leather", "leather", "cuero tom ford"])
 
         if any(m in q for m in matches):
             texto = (
