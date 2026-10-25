@@ -87,6 +87,18 @@ def guardar_configuracion():
         logger.error(f"Error al guardar config: {e}")
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
+def limpiar_nombre_usuario(raw_user: str) -> str:
+    import re
+    u = raw_user.lstrip("@").strip()
+    parts = u.replace("_", " ").replace(".", " ").split()
+    clean = parts[0] if parts else "amigo"
+    if clean.lower().startswith("user") and any(char.isdigit() for char in clean):
+        return "amigo"
+    clean = re.sub(r"\d+$", "", clean)
+    if not clean or len(clean) < 2:
+        return "amigo"
+    return clean.capitalize()
+
 def parse_emocion_y_texto(raw: str, pregunta: str) -> tuple:
     emocion = "SABIO"
     t = raw.strip()
@@ -104,6 +116,7 @@ def parse_emocion_y_texto(raw: str, pregunta: str) -> tuple:
 
 async def responder_con_ia(usuario: str, pregunta: str) -> tuple:
     api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or obtener_gemini_key_default()).strip()
+    nombre_humano = limpiar_nombre_usuario(usuario)
 
     if api_key:
         tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
@@ -116,17 +129,18 @@ REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
 2. PROHIBIDO SALIR DEL PERSONAJE / PROHIBIDO HABLAR DE TECNOLOGÍA:
    - Si alguien te pregunta de qué estás hecho, si eres una IA o robot, con qué software o código estás programado, dónde está tu página web o servidor, o temas fuera del amor (matemáticas, política, tecnología):
    - NUNCA menciones que eres una IA, ni menciones a OpenAI, Gemini, ChatGPT, Python, Coolify, servidores ni programación.
-   - Desvía la pregunta con picardía, misterio o humor y regrésalo al amor. Ejemplo: "Aquí no venimos a hablar de cables ni servidores, @usuario; hablemos del cable suelto que tienes en el corazón por seguir rogándole a quien te deja en visto."
+   - Desvía la pregunta con picardía, misterio o humor y regrésalo al amor. Ejemplo: "Aquí no venimos a hablar de cables ni servidores, {nombre_humano}; hablemos del cable suelto que tienes en el corazón por seguir rogándole a quien te deja en visto."
 
 REGLAS DE EMOCIÓN Y REACCIONES HUMANAS:
 3. SIENTE LA VIBRA DEL USUARIO:
-   - Si el espectador se ríe (escribe "jajaja", "jeje", "xd" o cuenta una anécdota cómica/ridícula): ¡RÍETE CON ÉL! Comienza riéndote ("¡Jajajaja!", "¡Ay, mi querido @{usuario}!"), vacílalo con humor y picardía, y luego dale un remate de sabiduría profunda.
+   - Si el espectador se ríe (escribe "jajaja", "jeje", "xd" o cuenta una anécdota cómica/ridícula): ¡RÍETE CON ÉL! Comienza riéndote ("¡Jajajaja!", "¡Ay, mi querido {nombre_humano}!"), vacílalo con humor y picardía, y luego dale un remate de sabiduría profunda.
    - Si habla de traición, infidelidad o mentiras: Muestra indignación estoica y respeto propio implacable.
    - Si habla de timidez, friendzone o cómo hablarle a su crush: Muestra picardía, seguridad y vibra de seductor magnético.
-4. FORMATO:
-   - Al puro inicio pon la etiqueta de tu emoción entre corchetes: [RISA], [SABIO], [PICANTE] o [ESTOICO].
-   - Saluda brevemente a @{usuario} por su nombre al comenzar.
+4. REGLA HUMANA DE SALUDO (CRUCIAL):
+   - Dirígete a la persona de forma natural por su nombre de pila: "{nombre_humano}" (ej: "¡Hola, {nombre_humano}!", "¡Escucha bien, {nombre_humano}!", "¡Atento, {nombre_humano}!").
+   - NUNCA uses el símbolo arroba (@) ni pronuncies la palabra "arroba". Habla de forma 100% humana, cálida y directa.
    - Responde SIEMPRE en español en máximo 2 a 3 frases breves y de alto impacto para TikTok.
+   - Al puro inicio pon la etiqueta de tu emoción entre corchetes: [RISA], [SABIO], [PICANTE] o [ESTOICO].
    - Enseña que la atracción nace de la seguridad y el amor propio, nunca de mendigar atención o rogar.
 
 Pregunta del espectador en TikTok: "{pregunta}"
@@ -243,7 +257,17 @@ Respuesta del Sensei:"""
 # ==================== SÍNTESIS DE VOZ (TTS) ====================
 async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO"):
     import edge_tts
+    import re
     voz = estado.get("voice", "es-MX-JorgeNeural")
+
+    # Limpieza total para pronunciación 100% humana:
+    # 1. Quitar cualquier '@' para que Edge-TTS JAMÁS pronuncie la palabra 'arroba'
+    # 2. Quitar guiones bajos para que no diga 'guion bajo'
+    # 3. Limpiar dobles espacios
+    texto_voz = re.sub(r"@([a-zA-ZáéíóúÁÉÍÓÚñÑ]+)[\w\.]*", r"\1", texto)
+    texto_voz = texto_voz.replace("@", "")
+    texto_voz = texto_voz.replace("_", " ")
+    texto_voz = re.sub(r"\s+", " ", texto_voz).strip()
 
     # Ajustar tono según la emoción
     if emocion == "RISA":
@@ -259,7 +283,7 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO")
         rate = "+0%"
         pitch = "-2Hz"
 
-    comunicador = edge_tts.Communicate(texto, voz, rate=rate, pitch=pitch)
+    comunicador = edge_tts.Communicate(texto_voz, voz, rate=rate, pitch=pitch)
     await comunicador.save(salida_path)
 
 # ==================== MOTOR DE AUDIO Y STREAMING ====================
