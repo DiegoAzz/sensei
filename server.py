@@ -33,13 +33,24 @@ DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CONFIG_FILE = DATA_DIR / "config.json"
 
-DEFAULT_KEY_B64 = "QVEuQWI4Uk42THprV1E3VVh0ZXlmYnFKamlmbC15TkR2bGI1cVo2cGFZUTZ3bTRhdC0tS1E="
+DEFAULT_OPENAI_KEY_B64 = "c2stcHJvai1UMS1icEoxa3hieUhBTXl4QkNMdkdKdUpPMkVVczZmQ3dTMmtEQVhTd2NpYm1admFZb2ZQNzdXUEwzaFpTQ0tsVWpZVTRMMURKdFQzQmxia0ZKajlkR3VuZ1hCZm1TZTdEeWhZeVFwWW5SZ2I1WnRCOUVGb3g5YzU2cmRpcFQ3YmJQZG1LT1RlajZmQU5OSDcxd2IyNEZmVGNCZ0E="
+DEFAULT_GEMINI_KEY_B64 = "QVEuQWI4Uk42THprV1E3VVh0ZXlmYnFKamlmbC15TkR2bGI1cVo2cGFZUTZ3bTRhdC0tS1E="
 
-def obtener_gemini_key_default():
+def obtener_ai_key_default():
+    env_k = os.environ.get("OPENAI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if env_k:
+        return env_k.strip()
     try:
-        return base64.b64decode(DEFAULT_KEY_B64).decode("utf-8").strip()
+        return base64.b64decode(DEFAULT_OPENAI_KEY_B64).decode("utf-8").strip()
+    except Exception:
+        pass
+    try:
+        return base64.b64decode(DEFAULT_GEMINI_KEY_B64).decode("utf-8").strip()
     except Exception:
         return ""
+
+def obtener_gemini_key_default():
+    return obtener_ai_key_default()
 
 # Estado del sistema
 estado = {
