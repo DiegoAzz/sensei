@@ -162,32 +162,64 @@ async def sintetizar_audio(texto: str, salida_path: str):
 def iniciar_proceso_ffmpeg(rtmp_destino: str):
     """
     Genera un stream vertical 720x1280 estilo Templo Oriental Neón
-    con estética de seducción, amor y misterio.
+    con el Sensei del Amor levitando suavemente en el aire de forma continua y misteriosa.
     """
+    logo_file = BASE_DIR / "assets" / "logo_circle.png"
+    if not logo_file.exists():
+        logo_file = BASE_DIR / "assets" / "logo_sensei.jpg"
+
+    has_logo = logo_file.exists()
+
     cmd = [
         "ffmpeg",
         "-re",
         "-f", "lavfi",
         # Fondo oscuro carmesí / ciruela místico
-        "-i", "color=c=0x120316:s=720x1280:r=30",
+        "-i", "color=c=0x0f0214:s=720x1280:r=30",
         "-f", "lavfi",
-        "-i", "anullsrc=r=44100:cl=stereo",
-        "-vf", (
-            # Tarjeta principal del Sensei
+        "-i", "anullsrc=r=44100:cl=stereo"
+    ]
+
+    if has_logo:
+        cmd.extend(["-loop", "1", "-i", str(logo_file)])
+        filter_complex = (
+            # 1. Fondo base del templo y marco
+            "[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x180420@0.95:t=fill,"
+            "drawbox=x=30:y=100:w=660:h=1060:color=0xff2a6d@0.45:t=2,"
+            # Título principal
+            "drawtext=text='~ EL SENSEI DEL AMOR ~':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=140,"
+            "drawtext=text='Conquista · Infidelidad · Parejas · Amor Propio':fontcolor=0xff7597:fontsize=16:x=(w-text_w)/2:y=185[bg];"
+            # 2. Escalar el avatar circular
+            "[2:v]scale=320:320[avatar];"
+            # 3. Superponer el avatar LEVITANDO en el aire continuamente
+            "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
+            # 4. Caja de consulta en vivo del chat
+            "[v1]drawbox=x=60:y=600:w=600:h=260:color=0x09010e@0.9:t=fill,"
+            "drawbox=x=60:y=600:w=600:h=260:color=0xff7597@0.3:t=1,"
+            "drawtext=text='● CONSULTORIO EN VIVO · TIKTOK LIVE':fontcolor=0xff2a6d:fontsize=14:x=80:y=620,"
+            "drawtext=text='Escribe tu pregunta sobre tu crush o pareja':fontcolor=0xedf4f9@0.9:fontsize=18:x=80:y=660,"
+            # 5. Llamado a la acción inferior
+            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.25:t=fill,"
+            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.8:t=2,"
+            "drawtext=text='★ Pregunta al Sensei: Tu crush, ligar, ex parejas o celos ★':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
+        )
+        cmd.extend(["-filter_complex", filter_complex])
+    else:
+        vf = (
             "drawbox=x=30:y=130:w=660:h=1000:color=0x1a0720@0.95:t=fill,"
             "drawbox=x=30:y=130:w=660:h=1000:color=0xff2a6d@0.55:t=2,"
-            # Título principal
             "drawtext=text='SENSEI DEL AMOR Y LA SEDUCCION':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=170,"
             "drawtext=text='Conquista · Parejas · Salir de la Friendzone':fontcolor=0xff7597:fontsize=17:x=(w-text_w)/2:y=215,"
-            # Caja de Pregunta
             "drawbox=x=60:y=270:w=600:h=230:color=0x0c0110@0.9:t=fill,"
             "drawbox=x=60:y=270:w=600:h=230:color=0xff7597@0.3:t=1,"
             "drawtext=text='CONSULTA EN VIVO DEL CHAT':fontcolor=0xff2a6d:fontsize=14:x=80:y=290,"
             "drawtext=text='Deja tu pregunta sobre tu crush o pareja':fontcolor=0xedf4f9@0.9:fontsize=19:x=80:y=330,"
-            # Llamado a la acción inferior
             "drawbox=x=60:y=1040:w=600:h=60:color=0xff2a6d@0.25:t=fill,"
             "drawtext=text='🏮 Pregunta al Sensei: Tu crush, ligar, ex parejas o celos 🏮':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1060"
-        ),
+        )
+        cmd.extend(["-vf", vf])
+
+    cmd.extend([
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-b:v", "1800k",
@@ -200,9 +232,9 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
         "-ar", "44100",
         "-f", "flv",
         rtmp_destino
-    ]
+    ])
 
-    registrar_log(f"Iniciando transmisión hacia TikTok Live: {rtmp_destino[:30]}...")
+    registrar_log(f"Iniciando transmisión hacia TikTok Live (Sensei Levitando): {rtmp_destino[:30]}...")
     return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 # ==================== WORKER DE PREGUNTAS ====================

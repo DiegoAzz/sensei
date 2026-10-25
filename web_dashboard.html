@@ -69,6 +69,12 @@
       flex-shrink: 0;
     }
 
+    @keyframes levitate {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+      100% { transform: translateY(0px); }
+    }
+
     .brand-logo-img {
       width: 100%;
       height: 100%;
@@ -77,6 +83,7 @@
       border: 2px solid var(--gold);
       box-shadow: 0 0 16px rgba(255, 42, 109, 0.6), 0 0 25px rgba(255, 215, 0, 0.25);
       display: block;
+      animation: levitate 3.4s ease-in-out infinite;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
@@ -276,6 +283,7 @@
       border: 2px solid var(--crimson);
       box-shadow: 0 0 14px rgba(255, 42, 109, 0.6);
       flex-shrink: 0;
+      animation: levitate 3.4s ease-in-out infinite;
     }
 
     .identity-details {
