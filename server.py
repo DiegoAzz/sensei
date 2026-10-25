@@ -175,10 +175,16 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
         "-re",
         "-f", "lavfi",
         # Fondo oscuro carmesí / ciruela místico
-        "-i", "color=c=0x0f0214:s=720x1280:r=30",
-        "-f", "lavfi",
-        "-i", "anullsrc=r=44100:cl=stereo"
+        "-i", "color=c=0x0f0214:s=720x1280:r=30"
     ]
+
+    musica_file = BASE_DIR / "assets" / "musica_misteriosa.mp3"
+    has_musica = musica_file.exists()
+    if has_musica:
+        # Música de meditación japonesa zen (100% libre de copyright / dominio público)
+        cmd.extend(["-stream_loop", "-1", "-i", str(musica_file)])
+    else:
+        cmd.extend(["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"])
 
     if has_logo:
         cmd.extend(["-loop", "1", "-i", str(logo_file)])
@@ -218,6 +224,9 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
             "drawtext=text='🏮 Pregunta al Sensei: Tu crush, ligar, ex parejas o celos 🏮':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1060"
         )
         cmd.extend(["-vf", vf])
+
+    if has_musica:
+        cmd.extend(["-filter:a", "volume=0.20"])
 
     cmd.extend([
         "-c:v", "libx264",
