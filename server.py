@@ -15,6 +15,15 @@ import base64
 from pathlib import Path
 from aiohttp import web
 
+from agent_manager import (
+    agent_manager,
+    verify_admin_password,
+    create_admin_session,
+    verify_session_token,
+    change_admin_password,
+    AGENT_TEMPLATES
+)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("SenseiSeduccion")
 
@@ -114,37 +123,64 @@ def parse_emocion_y_texto(raw: str, pregunta: str) -> tuple:
 
     return t, emocion
 
-async def responder_con_ia(usuario: str, pregunta: str) -> tuple:
-    api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or obtener_gemini_key_default()).strip()
+async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> tuple:
+    if not agent:
+        agent = agent_manager.get_active_agent() or {}
+
+    api_key = (agent.get("gemini_api_key") or estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or obtener_gemini_key_default()).strip()
     nombre_humano = limpiar_nombre_usuario(usuario)
+    agent_type = agent.get("type", "consultorio")
+    agent_name = agent.get("name", "El Sensei del Amor")
+    base_prompt = agent.get("system_prompt", "").strip()
 
     if api_key:
-        tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
-        prompt = f"""Eres el legendario 'Sensei del Amor y la Seducción', un maestro místico, sabio, carismático y con una personalidad vibrante y pícara en un live de TikTok.
+        if agent_type == "tienda_ventas":
+            prods = agent.get("featured_products", [])
+            cat_text = "\n".join([f"- {p['name']} ({p.get('price', '')}): {p.get('notes', '')}" for p in prods]) if prods else "Productos exclusivos disponibles."
+            cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
+
+            prompt = f"""{base_prompt}
+
+CATÁLOGO ACTUAL DE TU TIENDA:
+{cat_text}
+
+LLAMADO A LA ACCIÓN: {cta}
+
+REGLAS DE VENTA Y CONVERSIÓN EN TIKTOK LIVE:
+1. Saluda a la persona con calidez usando su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
+2. Si el espectador pregunta por recomendaciones, ocasiones (citas, oficina, fiesta), duración o precios:
+   - Recomienda con entusiasmo el producto ideal del catálogo anterior.
+   - Describe sus notas o beneficios de forma sensorial y persuasiva.
+   - Menciona el precio accesible y crea urgencia ("últimas piezas en inventario").
+   - Cierra invitando a comprar: "{cta}".
+3. Si el espectador se ríe (jaja, jeje, xd): ríete con él y mantén la vibra alegre y magnética.
+4. NUNCA digas que eres una IA o bot; eres el dueño y experto en vivo de la tienda.
+5. Al puro inicio pon la emoción entre corchetes: [VENTA], [RECOMENDACION], [RISA] o [SABIO].
+6. Máximo 3 a 4 oraciones de alto impacto para TikTok Live.
+
+Pregunta del cliente en TikTok: "{pregunta}"
+Respuesta del Experto:"""
+
+        else:
+            tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
+            prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
 
 REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
-1. TU ÚNICO UNIVERSO ES EL AMOR Y LA SEDUCCIÓN:
-   - Solo respondes sobre: conquistar, crush, ligar, salir de la friendzone, mensajes de WhatsApp/Instagram, infidelidades, desamor, celos, parejas y amor propio.
+1. TU ÚNICO UNIVERSO ES EL NICHO DE TU AGENTE ({agent.get('niche', 'Amor y Consejos')}).
 2. PROHIBIDO SALIR DEL PERSONAJE / PROHIBIDO HABLAR DE TECNOLOGÍA:
-   - Si alguien te pregunta de qué estás hecho, si eres una IA o robot, con qué software o código estás programado, dónde está tu página web o servidor, o temas fuera del amor (matemáticas, política, tecnología):
-   - NUNCA menciones que eres una IA, ni menciones a OpenAI, Gemini, ChatGPT, Python, Coolify, servidores ni programación.
-   - Desvía la pregunta con picardía, misterio o humor y regrésalo al amor. Ejemplo: "Aquí no venimos a hablar de cables ni servidores, {nombre_humano}; hablemos del cable suelto que tienes en el corazón por seguir rogándole a quien te deja en visto."
-
-REGLAS DE EMOCIÓN Y REACCIONES HUMANAS:
+   - Si alguien te pregunta de qué estás hecho, si eres una IA o robot, con qué software o código estás programado, o temas fuera de tu nicho:
+   - NUNCA menciones que eres una IA, OpenAI, Gemini, Python o servidores.
+   - Desvía la pregunta con ingenio, picardía o misterio y regrésalo a tu nicho.
 3. SIENTE LA VIBRA DEL USUARIO:
-   - Si el espectador se ríe (escribe "jajaja", "jeje", "xd" o cuenta una anécdota cómica/ridícula): ¡RÍETE CON ÉL! Comienza riéndote ("¡Jajajaja!", "¡Ay, mi querido {nombre_humano}!"), vacílalo con humor y picardía, y luego dale un remate de sabiduría profunda.
-   - Si habla de traición, infidelidad o mentiras: Muestra indignación estoica y respeto propio implacable.
-   - Si habla de timidez, friendzone o cómo hablarle a su crush: Muestra picardía, seguridad y vibra de seductor magnético.
-4. REGLA HUMANA DE SALUDO (CRUCIAL):
-   - Dirígete a la persona de forma natural por su nombre de pila: "{nombre_humano}" (ej: "¡Hola, {nombre_humano}!", "¡Escucha bien, {nombre_humano}!", "¡Atento, {nombre_humano}!").
-   - NUNCA uses el símbolo arroba (@) ni pronuncies la palabra "arroba". Habla de forma 100% humana, cálida y directa.
-   - Responde SIEMPRE en español en máximo 2 a 3 frases breves y de alto impacto para TikTok.
-   - Al puro inicio pon la etiqueta de tu emoción entre corchetes: [RISA], [SABIO], [PICANTE] o [ESTOICO].
-   - Enseña que la atracción nace de la seguridad y el amor propio, nunca de mendigar atención o rogar.
+   - Si se ríe ("jajaja", "xd"): ¡RÍETE CON ÉL! Comienza riéndote y vacílalo con humor.
+4. REGLA HUMANA DE SALUDO:
+   - Dirígete a la persona por su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
+   - Responde SIEMPRE en español en máximo 2 a 3 frases de alto impacto.
+   - Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
 Pregunta del espectador en TikTok: "{pregunta}"
-Respuesta del Sensei:"""
+Respuesta de {agent_name}:"""
 
         # Soporte para OpenAI (ChatGPT) si la clave empieza por sk-
         if api_key.startswith("sk-"):
@@ -255,10 +291,11 @@ Respuesta del Sensei:"""
         return (f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.", "SABIO")
 
 # ==================== SÍNTESIS DE VOZ (TTS) ====================
-async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO"):
+async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO", voz_override: str = None):
     import edge_tts
     import re
-    voz = estado.get("voice", "es-MX-JorgeNeural")
+    current_agent = agent_manager.get_active_agent() or {}
+    voz = voz_override or current_agent.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
 
     # Limpieza total para pronunciación 100% humana:
     # 1. Quitar cualquier '@' para que Edge-TTS JAMÁS pronuncie la palabra 'arroba'
@@ -311,27 +348,60 @@ def asegurar_fuente_tipografica() -> str:
             return str(p.resolve()).replace("\\", "/")
     return ""
 
-def actualizar_overlay_video(usuario: str = "", pregunta: str = "", respuesta: str = "", estado_tipo: str = "esperando"):
+def actualizar_overlay_video(usuario: str = "", pregunta: str = "", respuesta: str = "", estado_tipo: str = "esperando", agent: dict = None):
     import textwrap
+    if not agent:
+        agent = agent_manager.get_active_agent() or {}
+
+    tipo = agent.get("type", "consultorio")
+    b_title = agent.get("banner_title", "~ CONSULTORIO HOLOGRAFICO EN VIVO ~")
     lineas = []
+
     if estado_tipo == "esperando":
-        lineas.append("~ CONSULTORIO HOLOGRAFICO EN VIVO ~")
+        lineas.append(b_title)
         lineas.append("")
-        lineas.append("Deja tu caso en el chat de TikTok:")
-        lineas.append("Tu crush, ex parejas, celos o desamor.")
-        lineas.append("El Sensei te responde en vivo.")
+        if tipo == "tienda_ventas":
+            lineas.append("~ BOUTIQUE Y SHOWROOM EN VIVO ~")
+            lineas.append("Pregunta por tu perfume ideal en el chat:")
+            lineas.append("Notas, duracion, ocasiones y clones.")
+            lineas.append("Pide el tuyo en el enlace de la bio.")
+        else:
+            lineas.append("Deja tu caso en el chat de TikTok:")
+            lineas.append("Tu crush, ex parejas, celos o desamor.")
+            lineas.append("El Sensei te responde en vivo.")
+
+    elif estado_tipo == "venta_alerta":
+        # Animación / Sensación de venta real en directo en la tienda
+        alerta = agent_manager.generar_alerta_venta(agent.get("id"))
+        if alerta:
+            lineas.append("~ VENTA EN DIRECTO CONFIRMADA ~")
+            lineas.append(f"Cliente: {alerta['cliente']} ({alerta['ciudad']})")
+            p_wrapped = textwrap.fill(f"Pedio: {alerta['producto']}", width=40)
+            lineas.extend(p_wrapped.split("\n")[:2])
+            lineas.append(f"Precio: {alerta['precio']} (Stock: {alerta['stock']} unid.)")
+            lineas.append("Pide el tuyo en el enlace de la bio.")
+        else:
+            lineas.append(b_title)
+
     elif estado_tipo == "pensando":
-        lineas.append(f"~ CASO DE: {usuario} ~")
+        lineas.append(f"~ CONSULTA DE: {usuario} ~")
         q_wrapped = textwrap.fill(f'"{pregunta}"', width=42)
         lineas.extend(q_wrapped.split("\n")[:2])
         lineas.append("")
-        lineas.append("El Sensei esta meditando tu caso...")
+        if tipo == "tienda_ventas":
+            lineas.append("El Sommelier esta seleccionando tu fragancia...")
+        else:
+            lineas.append("El Sensei esta meditando tu caso...")
+
     elif estado_tipo == "respondiendo":
-        lineas.append(f"~ CASO DE: {usuario} ~")
+        lineas.append(f"~ CONSULTA DE: {usuario} ~")
         q_wrapped = textwrap.fill(f'"{pregunta}"', width=42)
         lineas.extend(q_wrapped.split("\n")[:2])
         lineas.append("")
-        lineas.append("CONSEJO DEL SENSEI:")
+        if tipo == "tienda_ventas":
+            lineas.append("RECOMENDACION DE LA BOUTIQUE:")
+        else:
+            lineas.append("CONSEJO DEL SENSEI:")
         ans_clean = respuesta.replace("@", "").replace("_", " ")
         a_wrapped = textwrap.fill(f'"{ans_clean}"', width=42)
         lineas.extend(a_wrapped.split("\n")[:4])
@@ -370,30 +440,47 @@ def obtener_musica_pcm():
         logger.error(f"Error cargando música PCM: {e}")
     return musica_pcm_cache
 
-def iniciar_proceso_ffmpeg(rtmp_destino: str):
+def iniciar_proceso_ffmpeg(rtmp_destino: str, agent: dict = None):
     """
-    Genera un stream vertical 720x1280 estilo Templo Oriental Neón
-    con el Sensei del Amor levitando en el aire y audio en vivo (voz + música).
+    Genera un stream vertical 720x1280 adaptado a la identidad del agente
+    (Templo Zen para amor, Boutique de lujo para perfumes, etc.)
+    con el avatar levitando en el aire y audio en vivo (voz + música).
     """
-    logo_file = BASE_DIR / "assets" / "logo_circle.png"
+    if not agent:
+        agent = agent_manager.get_active_agent() or {}
+
+    avatar_rel = agent.get("avatar", "/assets/logo_sensei.jpg").lstrip("/")
+    logo_file = BASE_DIR / avatar_rel
+    # Buscar versión circular transparente si existe
+    posible_circle = logo_file.with_name(logo_file.stem + "_circle.png")
+    if posible_circle.exists():
+        logo_file = posible_circle
+    elif not logo_file.exists():
+        logo_file = BASE_DIR / "assets" / "logo_circle.png"
     if not logo_file.exists():
         logo_file = BASE_DIR / "assets" / "logo_sensei.jpg"
 
     has_logo = logo_file.exists()
+    bg_hex = agent.get("bg_hex", "0x0f0214")
+    theme_hex = agent.get("theme_color", "#ff2a6d").replace("#", "0x")
+    accent_hex = agent.get("accent_color", "#ffd700").replace("#", "0x")
+    b_title = agent.get("banner_title", "~ EN VIVO EN TIKTOK ~")
+    b_sub = agent.get("banner_subtitle", "Deja tu pregunta en los comentarios")
+    cta = agent.get("call_to_action", "Pregunta al experto en los comentarios")
 
     cmd = [
         "ffmpeg",
         "-re",
         "-f", "lavfi",
-        # Fondo oscuro carmesí / ciruela místico
-        "-i", "color=c=0x0f0214:s=720x1280:r=30",
+        # Fondo dinámico del nicho del agente
+        "-i", f"color=c={bg_hex}:s=720x1280:r=30",
         # Audio en tiempo real por tubería stdin (Voz + Música de fondo)
         "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
     ]
 
     overlay_file = DATA_DIR / "live_overlay.txt"
     if not overlay_file.exists():
-        actualizar_overlay_video("", "", estado_tipo="esperando")
+        actualizar_overlay_video("", "", estado_tipo="esperando", agent=agent)
 
     font_path = asegurar_fuente_tipografica()
     font_param = f":fontfile={font_path}" if font_path else ""
@@ -401,39 +488,39 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
     if has_logo:
         cmd.extend(["-loop", "1", "-i", str(logo_file)])
         filter_complex = (
-            # 1. Fondo base del templo y marco
-            "[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x180420@0.95:t=fill,"
-            "drawbox=x=30:y=100:w=660:h=1060:color=0xff2a6d@0.45:t=2,"
-            # Título principal
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='~ EL SENSEI DEL AMOR ~':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=140,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Conquista · Infidelidad · Parejas · Amor Propio':fontcolor=0xff7597:fontsize=16:x=(w-text_w)/2:y=185[bg];"
+            # 1. Fondo base del marco
+            f"[0:v]drawbox=x=30:y=100:w=660:h=1060:color=0x111624@0.95:t=fill,"
+            f"drawbox=x=30:y=100:w=660:h=1060:color={theme_hex}@0.45:t=2,"
+            # Título principal del agente o tienda
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=140,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=16:x=(w-text_w)/2:y=185[bg];"
             # 2. Escalar el avatar circular
             "[2:v]scale=320:320[avatar];"
             # 3. Superponer el avatar LEVITANDO en el aire continuamente
             "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
-            # 4. Caja de consulta en vivo del chat (Holograma Láser Cyber-Zen con proyección dinámica de texto)
-            "[v1]drawbox=x=56:y=596:w=608:h=268:color=0xff2a6d@0.4:t=fill,"
-            "drawbox=x=60:y=600:w=600:h=260:color=0x0d0216@0.85:t=fill,"
+            # 4. Caja de consulta en vivo y vitrina de venta (Holograma Láser con proyección de texto)
+            f"[v1]drawbox=x=56:y=596:w=608:h=268:color={theme_hex}@0.4:t=fill,"
+            "drawbox=x=60:y=600:w=600:h=260:color=0x060911@0.85:t=fill,"
             "drawbox=x=60:y=600:w=600:h=260:color=0x00f0ff@0.7:t=2,"
-            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor=0xffd700:fontsize=17:line_spacing=6:x=85:y=625,"
+            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=625,"
             # 5. Llamado a la acción inferior con borde láser
             "drawbox=x=56:y=1036:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
-            "drawbox=x=60:y=1040:w=600:h=65:color=0x15031e@0.85:t=fill,"
-            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.85:t=2,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Pregunta al Sensei sobre tu crush, ligar o parejas':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
+            "drawbox=x=60:y=1040:w=600:h=65:color=0x0c121f@0.85:t=fill,"
+            f"drawbox=x=60:y=1040:w=600:h=65:color={theme_hex}@0.85:t=2,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1063"
         )
         cmd.extend(["-filter_complex", filter_complex])
     else:
         vf = (
-            "drawbox=x=30:y=130:w=660:h=1000:color=0x1a0720@0.95:t=fill,"
-            "drawbox=x=30:y=130:w=660:h=1000:color=0xff2a6d@0.55:t=2,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='SENSEI DEL AMOR Y LA SEDUCCION':fontcolor=0xffd700:fontsize=28:x=(w-text_w)/2:y=170,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Conquista · Parejas · Salir de la Friendzone':fontcolor=0xff7597:fontsize=17:x=(w-text_w)/2:y=215,"
+            f"drawbox=x=30:y=130:w=660:h=1000:color=0x111624@0.95:t=fill,"
+            f"drawbox=x=30:y=130:w=660:h=1000:color={theme_hex}@0.55:t=2,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_title}':fontcolor={accent_hex}:fontsize=26:x=(w-text_w)/2:y=170,"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{b_sub}':fontcolor=0x00f0ff:fontsize=17:x=(w-text_w)/2:y=215,"
             "drawbox=x=60:y=270:w=600:h=230:color=0x0c0110@0.9:t=fill,"
             "drawbox=x=60:y=270:w=600:h=230:color=0xff7597@0.3:t=1,"
-            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor=0xffd700:fontsize=17:line_spacing=6:x=85:y=295,"
+            f"drawtext=textfile=data/live_overlay.txt:reload=1{font_param}:fontcolor={accent_hex}:fontsize=17:line_spacing=6:x=85:y=295,"
             "drawbox=x=60:y=1040:w=600:h=60:color=0xff2a6d@0.25:t=fill,"
-            f"drawtext={font_param[1:] + ':' if font_param else ''}text='Pregunta al Sensei sobre tu crush, ligar o parejas':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1060"
+            f"drawtext={font_param[1:] + ':' if font_param else ''}text='{cta}':fontcolor={accent_hex}:fontsize=16:x=(w-text_w)/2:y=1060"
         )
         cmd.extend(["-vf", vf])
 
@@ -511,26 +598,33 @@ async def worker_preguntas():
     while estado["is_streaming"]:
         usuario, pregunta = await cola_preguntas.get()
         nombre_humano = limpiar_nombre_usuario(usuario)
+        current_agent = agent_manager.get_active_agent() or {}
+
         estado["active_user"] = nombre_humano
         estado["active_question"] = pregunta
 
         # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
-        actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando")
+        actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
 
-        registrar_log(f"🏮 Consulta de @{usuario}: \"{pregunta}\"", "hl")
+        tipo_ag = current_agent.get("type", "consultorio")
+        tag_icon = "🛍️ Venta" if tipo_ag == "tienda_ventas" else "🏮 Consulta"
+        registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
 
-        respuesta, emocion = await responder_con_ia(usuario, pregunta)
+        respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
         estado["active_answer"] = respuesta
         estado["active_emotion"] = emocion
-        registrar_log(f"📿 Sensei [{emocion}] responde a @{usuario}: \"{respuesta}\"", "green")
 
-        # Proyectar consejo en tiempo real en la caja holográfica del video de TikTok
-        actualizar_overlay_video(nombre_humano, pregunta, respuesta, estado_tipo="respondiendo")
+        tag_resp = "🌸 Boutique" if tipo_ag == "tienda_ventas" else f"📿 {current_agent.get('name', 'Sensei')}"
+        registrar_log(f"{tag_resp} [{emocion}] responde a {nombre_humano}: \"{respuesta}\"", "green")
+
+        # Proyectar consejo/venta en tiempo real en la caja holográfica del video de TikTok
+        actualizar_overlay_video(nombre_humano, pregunta, respuesta, estado_tipo="respondiendo", agent=current_agent)
 
         audio_tmp = DATA_DIR / "consejo_sensei.mp3"
         try:
-            await sintetizar_audio(respuesta, str(audio_tmp), emocion)
-            registrar_log(f"Voz del Sensei ({estado['voice']}) sintetizada.", "hl")
+            voz_activa = current_agent.get("voice") or estado["voice"]
+            await sintetizar_audio(respuesta, str(audio_tmp), emocion, voz_override=voz_activa)
+            registrar_log(f"Voz ({voz_activa}) sintetizada.", "hl")
 
             # Decodificar el audio a PCM y enviarlo al reproductor en vivo
             cmd_tts = [
@@ -543,7 +637,7 @@ async def worker_preguntas():
             res_tts = subprocess.run(cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             if res_tts.returncode == 0:
                 buffer_voz_pcm.extend(res_tts.stdout)
-                registrar_log(f"Sensei respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
+                registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
 
             # Esperar a que termine de reproducirse la respuesta en el Live
             while len(buffer_voz_pcm) > 0 and estado["is_streaming"]:
@@ -552,21 +646,38 @@ async def worker_preguntas():
         except Exception as e:
             registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
-        # Mantener el consejo visible 5 segundos para que la audiencia lo lea
+        # Mantener el texto visible 5 segundos para que la audiencia lo lea
         await asyncio.sleep(5)
         # Volver al estado de bienvenida en el overlay
-        actualizar_overlay_video("", "", estado_tipo="esperando")
+        actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
         # Pausa natural para la audiencia antes de atender el siguiente caso
         await asyncio.sleep(4)
         cola_preguntas.task_done()
+
+async def simulador_ventas_loop():
+    """Genera alertas y compras simuladas en la pantalla del live para tiendas físicas."""
+    while estado["is_streaming"]:
+        await asyncio.sleep(45)
+        if not estado["is_streaming"]:
+            break
+        current_agent = agent_manager.get_active_agent() or {}
+        if current_agent.get("type") == "tienda_ventas" and cola_preguntas.empty() and len(buffer_voz_pcm) == 0:
+            alerta = agent_manager.generar_alerta_venta(current_agent.get("id"))
+            if alerta:
+                actualizar_overlay_video(estado_tipo="venta_alerta", agent=current_agent)
+                registrar_log(alerta["mensaje"], "green")
+                await asyncio.sleep(12)
+                if cola_preguntas.empty() and len(buffer_voz_pcm) == 0:
+                    actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
 # ==================== CLIENTE TIKTOK LIVE ====================
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
     from TikTokLive.types.events import CommentEvent, ConnectEvent
 
-    usuario = estado["tiktok_username"].replace("@", "").strip()
+    current_agent = agent_manager.get_active_agent() or {}
+    usuario = (current_agent.get("tiktok_username") or estado["tiktok_username"]).replace("@", "").strip()
     if not usuario:
         return
 
@@ -574,22 +685,20 @@ async def escuchar_tiktok():
 
     @client.on(ConnectEvent)
     async def on_connect(event: ConnectEvent):
-        registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario}!", "green")
+        registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
 
     @client.on(CommentEvent)
     async def on_comment(event: CommentEvent):
         u = event.user.unique_id
         c = event.comment
 
-        # Palabras clave de amor, seducción, ligoteo y relaciones
-        palabras = [
+        # Palabras clave del agente activo
+        palabras = current_agent.get("keywords") or [
             "?", "¿", "crush", "ligar", "seduccion", "seducir", "friendzone", "hablarle",
-            "historia", "storie", "instagram", "whatsapp", "cita", "misterio", "atraer",
-            "ex", "infiel", "engaño", "engañó", "perdonar", "volver", "celos", "visto",
-            "casi algo", "gusta", "gusto", "novio", "novia", "sensei", "consejo"
+            "perfume", "olor", "fragancia", "precio", "comprar", "recomienda", "consejo"
         ]
 
-        if any(k in c.lower() for k in palabras) and len(c) >= 5:
+        if (any(k in c.lower() for k in palabras) or "?" in c or "¿" in c) and len(c) >= 4:
             registrar_log(f"📥 Pregunta recibida de @{u}: {c}")
             await cola_preguntas.put((u, c))
 
@@ -599,45 +708,149 @@ async def escuchar_tiktok():
         registrar_log(f"Conexión TikTokLive: {e}", "warn")
 
 # ==================== ENDPOINTS DE LA API WEB ====================
+def is_super_admin(request) -> bool:
+    token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
+    if not token:
+        token = request.query.get("token", "").strip()
+    return verify_session_token(token)
+
+async def handle_admin_login(request):
+    try:
+        data = await request.json()
+        pwd = data.get("password", "")
+        if verify_admin_password(pwd):
+            token = create_admin_session()
+            registrar_log("👑 Super Administrador ha iniciado sesión.", "green")
+            return web.json_response({"ok": True, "token": token})
+        return web.json_response({"ok": False, "error": "Contraseña de Super Administrador incorrecta."}, status=401)
+    except Exception as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=400)
+
+async def handle_admin_check(request):
+    return web.json_response({"ok": True, "isAdmin": is_super_admin(request)})
+
+async def handle_admin_change_pass(request):
+    if not is_super_admin(request):
+        return web.json_response({"ok": False, "error": "No autorizado"}, status=403)
+    data = await request.json()
+    new_p = data.get("new_password", "").strip()
+    if len(new_p) < 4:
+        return web.json_response({"ok": False, "error": "La contraseña debe tener al menos 4 caracteres"}, status=400)
+    change_admin_password(new_p)
+    return web.json_response({"ok": True})
+
+async def handle_list_agents(request):
+    return web.json_response({
+        "ok": True,
+        "active_agent_id": agent_manager.active_agent_id,
+        "agents": agent_manager.get_all_agents()
+    })
+
+async def handle_get_agent(request):
+    agent_id = request.match_info.get("id")
+    ag = agent_manager.get_agent(agent_id)
+    if not ag:
+        return web.json_response({"ok": False, "error": "Agente no encontrado"}, status=404)
+    return web.json_response({"ok": True, "agent": ag})
+
+async def handle_create_agent(request):
+    if not is_super_admin(request):
+        return web.json_response({"ok": False, "error": "Solo el Super Administrador puede crear agentes"}, status=403)
+    data = await request.json()
+    nuevo = agent_manager.create_agent(data)
+    registrar_log(f"👑 Super Admin creó nuevo agente para alquilar: '{nuevo['name']}' ({nuevo['id']})", "green")
+    return web.json_response({"ok": True, "agent": nuevo})
+
+async def handle_update_agent(request):
+    if not is_super_admin(request):
+        return web.json_response({"ok": False, "error": "Solo el Super Administrador puede editar agentes"}, status=403)
+    agent_id = request.match_info.get("id")
+    data = await request.json()
+    ok = agent_manager.update_agent(agent_id, data)
+    return web.json_response({"ok": ok})
+
+async def handle_delete_agent(request):
+    if not is_super_admin(request):
+        return web.json_response({"ok": False, "error": "Solo el Super Administrador puede eliminar agentes"}, status=403)
+    agent_id = request.match_info.get("id")
+    ok = agent_manager.delete_agent(agent_id)
+    return web.json_response({"ok": ok})
+
+async def handle_select_agent(request):
+    agent_id = request.match_info.get("id")
+    ok = agent_manager.set_active_agent(agent_id)
+    ag = agent_manager.get_active_agent()
+    if ag:
+        actualizar_overlay_video("", "", estado_tipo="esperando", agent=ag)
+        registrar_log(f"Agente activo seleccionado: {ag['name']}", "hl")
+    return web.json_response({"ok": ok, "agent": ag})
+
+async def handle_sale_alert(request):
+    agent_id = request.match_info.get("id") or agent_manager.active_agent_id
+    alerta = agent_manager.generar_alerta_venta(agent_id)
+    return web.json_response({"ok": True, "alert": alerta})
+
+async def handle_templates(request):
+    return web.json_response(AGENT_TEMPLATES)
+
 async def handle_status(request):
-    return web.json_response(estado)
+    current_agent = agent_manager.get_active_agent() or {}
+    return web.json_response({
+        **current_agent,
+        "is_streaming": estado["is_streaming"],
+        "active_agent_id": agent_manager.active_agent_id,
+        "active_user": estado.get("active_user", ""),
+        "active_emotion": estado.get("active_emotion", "SABIO"),
+        "active_question": estado.get("active_question", ""),
+        "active_answer": estado.get("active_answer", ""),
+        "is_admin": is_super_admin(request)
+    })
+
+ventas_task = None
 
 async def handle_start(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task
 
     data = await request.json()
-    estado["tiktok_username"] = data.get("tiktok_username", estado["tiktok_username"])
-    estado["rtmp_url"] = data.get("rtmp_url", estado["rtmp_url"])
-    estado["stream_key"] = data.get("stream_key", estado["stream_key"])
-    estado["voice"] = data.get("voice", estado["voice"])
-    estado["estilo"] = data.get("estilo", estado["estilo"])
-    if data.get("gemini_api_key"):
-        estado["gemini_api_key"] = data.get("gemini_api_key")
+    current_agent = agent_manager.get_active_agent() or {}
 
-    guardar_configuracion()
+    if data.get("tiktok_username"): current_agent["tiktok_username"] = data["tiktok_username"]
+    if data.get("rtmp_url"): current_agent["rtmp_url"] = data["rtmp_url"]
+    if data.get("stream_key"): current_agent["stream_key"] = data["stream_key"]
+    if data.get("voice"): current_agent["voice"] = data["voice"]
+    if data.get("estilo"): current_agent["estilo"] = data["estilo"]
+    if data.get("gemini_api_key"): current_agent["gemini_api_key"] = data["gemini_api_key"]
 
-    if not estado["rtmp_url"] or not estado["stream_key"]:
+    agent_manager.save_agents()
+
+    rtmp = (current_agent.get("rtmp_url") or "").rstrip("/")
+    sk = current_agent.get("stream_key") or ""
+
+    if not rtmp or not sk:
         return web.json_response({"ok": False, "error": "Debes ingresar la URL RTMP y la Stream Key de TikTok"})
 
-    rtmp_completo = f"{estado['rtmp_url'].rstrip('/')}/{estado['stream_key']}"
+    rtmp_completo = f"{rtmp}/{sk}"
 
     try:
-        ffmpeg_process = iniciar_proceso_ffmpeg(rtmp_completo)
+        ffmpeg_process = iniciar_proceso_ffmpeg(rtmp_completo, agent=current_agent)
         estado["is_streaming"] = True
 
         streamer_task = asyncio.create_task(audio_streamer_loop())
         worker_task = asyncio.create_task(worker_preguntas())
         tiktok_task = asyncio.create_task(escuchar_tiktok())
+        if current_agent.get("type") == "tienda_ventas":
+            ventas_task = asyncio.create_task(simulador_ventas_loop())
 
-        registrar_log("Transmisión en vivo del Sensei del Amor iniciada (Levitando y con Audio en Vivo).", "green")
+        registrar_log(f"Transmisión en vivo de '{current_agent.get('name')}' iniciada en TikTok.", "green")
         return web.json_response({"ok": True})
     except Exception as e:
         return web.json_response({"ok": False, "error": str(e)})
 
 async def handle_stop(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task
     estado["is_streaming"] = False
-    actualizar_overlay_video("", "", estado_tipo="esperando")
+    current_agent = agent_manager.get_active_agent() or {}
+    actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
     if ffmpeg_process:
         try:
@@ -654,6 +867,8 @@ async def handle_stop(request):
         tiktok_task.cancel()
     if worker_task:
         worker_task.cancel()
+    if ventas_task:
+        ventas_task.cancel()
 
     registrar_log("Transmisión finalizada por el usuario.", "warn")
     return web.json_response({"ok": True})
@@ -672,33 +887,31 @@ async def handle_audio_test(request):
 async def handle_test_comment(request):
     try:
         data = await request.json()
-        user = data.get("user", "espectador_amor")
+        user = data.get("user", "cliente_test")
         comment = data.get("comment", "")
-        voice = data.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
-        estilo = data.get("estilo") or estado.get("estilo", "sabio_directo")
+        agent_id = data.get("agent_id") or agent_manager.active_agent_id
+        current_agent = agent_manager.get_agent(agent_id) or agent_manager.get_active_agent() or {}
 
-        # Guardar clave de IA si se envio en la peticion
+        voice = data.get("voice") or current_agent.get("voice", "es-MX-JorgeNeural")
+        estilo = data.get("estilo") or current_agent.get("estilo", "sabio_directo")
+
+        # Guardar clave de IA si se envió en la petición
         if data.get("gemini_api_key"):
-            estado["gemini_api_key"] = data["gemini_api_key"].strip()
-            guardar_configuracion()
+            current_agent["gemini_api_key"] = data["gemini_api_key"].strip()
+            agent_manager.save_agents()
 
         if comment:
-            orig_estilo = estado["estilo"]
-            estado["estilo"] = estilo
-            ans, emocion = await responder_con_ia(user, comment)
-            estado["estilo"] = orig_estilo
+            ans, emocion = await responder_con_ia(user, comment, agent=current_agent)
             estado["active_emotion"] = emocion
 
             audio_file = DATA_DIR / "consejo_test.mp3"
             try:
-                orig_voice = estado["voice"]
-                estado["voice"] = voice
-                await sintetizar_audio(ans, str(audio_file), emocion)
-                estado["voice"] = orig_voice
+                await sintetizar_audio(ans, str(audio_file), emocion, voz_override=voice)
 
+                nombre_h = limpiar_nombre_usuario(user)
                 registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
-                registrar_log(f"🧪 [SENSEI {emocion}]: \"{ans}\"", "green")
-                actualizar_overlay_video(limpiar_nombre_usuario(user), comment, ans, estado_tipo="respondiendo")
+                registrar_log(f"🧪 [{current_agent.get('name')} {emocion}]: \"{ans}\"", "green")
+                actualizar_overlay_video(nombre_h, comment, ans, estado_tipo="respondiendo", agent=current_agent)
 
                 import time
                 loop_time = int(time.time() * 1000)
@@ -712,7 +925,7 @@ async def handle_test_comment(request):
                 })
             except Exception as e:
                 logger.error(f"Error generando audio sandbox: {e}")
-                registrar_log(f"🧪 [SENSEI RESPONDE]: \"{ans}\"", "green")
+                registrar_log(f"🧪 [{current_agent.get('name')} RESPONDE]: \"{ans}\"", "green")
                 return web.json_response({"ok": True, "answer": ans, "emotion": emocion, "audio_url": None, "error": str(e)})
 
         return web.json_response({"ok": False})
@@ -728,12 +941,26 @@ async def handle_index(request):
 async def start_dual_servers():
     app = web.Application()
     app.router.add_get("/", handle_index)
+    app.router.add_get("/client", handle_index)
     app.router.add_get("/api/status", handle_status)
     app.router.add_post("/api/start", handle_start)
     app.router.add_post("/api/stop", handle_stop)
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
     app.router.add_get("/api/audio-test", handle_audio_test)
+
+    # Rutas del Club de Agentes y Super Administrador
+    app.router.add_post("/api/admin/login", handle_admin_login)
+    app.router.add_get("/api/admin/check", handle_admin_check)
+    app.router.add_post("/api/admin/change-password", handle_admin_change_pass)
+    app.router.add_get("/api/agents", handle_list_agents)
+    app.router.add_post("/api/agents", handle_create_agent)
+    app.router.add_get("/api/agents/{id}", handle_get_agent)
+    app.router.add_put("/api/agents/{id}", handle_update_agent)
+    app.router.add_delete("/api/agents/{id}", handle_delete_agent)
+    app.router.add_post("/api/agents/{id}/select", handle_select_agent)
+    app.router.add_get("/api/agents/{id}/sale-alert", handle_sale_alert)
+    app.router.add_get("/api/templates", handle_templates)
 
     # Servir archivos estáticos (Logo del Sensei, imágenes, audio)
     assets_dir = BASE_DIR / "assets"

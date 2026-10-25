@@ -664,6 +664,257 @@
       background: var(--crimson);
       color: #fff;
     }
+
+    /* Club de Agentes & Super Admin Bar */
+    .admin-controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-admin-action {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 42, 109, 0.2) 100%);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+      font-family: var(--font-mono);
+    }
+    .btn-admin-action:hover {
+      background: var(--gold);
+      color: #0c0210;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .btn-admin-pill {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+    }
+    .btn-admin-pill:hover {
+      background: rgba(0, 240, 255, 0.2);
+      border-color: #00f0ff;
+      color: #00f0ff;
+    }
+    .btn-admin-pill.logout {
+      border-color: rgba(255, 42, 109, 0.4);
+      color: var(--rose);
+    }
+    .btn-admin-pill.logout:hover {
+      background: rgba(255, 42, 109, 0.3);
+      color: #fff;
+    }
+
+    .badge-admin {
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      letter-spacing: 0.5px;
+    }
+
+    .agent-select-input {
+      background: rgba(20, 5, 27, 0.95);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+    }
+    .agent-select-input option {
+      background: #14051b;
+      color: #fff;
+    }
+
+    /* Showcase de Tienda Física & Ventas en Vivo */
+    .store-showcase {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.06) 0%, rgba(10, 12, 22, 0.85) 100%);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.12);
+    }
+
+    .store-showcase-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .live-sale-toast {
+      position: relative;
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.18) 0%, rgba(255, 42, 109, 0.15) 100%);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
+      animation: salePulse 2.5s infinite alternate;
+    }
+
+    @keyframes salePulse {
+      0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+      100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .product-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.25s ease;
+    }
+    .product-card:hover {
+      background: rgba(255, 215, 0, 0.08);
+      border-color: var(--gold);
+      transform: translateY(-2px);
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.25);
+    }
+
+    .product-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(255, 215, 0, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      align-self: flex-start;
+      font-family: var(--font-mono);
+    }
+
+    .product-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .product-price {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold);
+      font-family: var(--font-mono);
+    }
+
+    .product-notes {
+      font-size: 11px;
+      color: var(--ink70);
+      line-height: 1.4;
+    }
+
+    .btn-ask-product {
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      color: #00f0ff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 4px;
+      transition: all 0.2s ease;
+    }
+    .btn-ask-product:hover {
+      background: #00f0ff;
+      color: #0c0210;
+    }
+
+    /* Modales */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 2, 9, 0.85);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #14051b;
+      border: 1px solid var(--gold);
+      box-shadow: 0 0 35px rgba(255, 42, 109, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 580px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 12px;
+    }
+
+    .modal-title {
+      font-family: var(--font-title);
+      font-size: 20px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--ink70);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .btn-close-modal:hover {
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -673,23 +924,82 @@
     <header class="dash-header">
       <div class="brand-container">
         <div class="avatar-wrapper">
-          <img src="/assets/logo_sensei.jpg" alt="Logo Sensei del Amor" class="brand-logo-img">
+          <img src="/assets/logo_sensei.jpg" alt="Avatar Agente" class="brand-logo-img" id="header-avatar-img">
           <span class="avatar-ring"></span>
         </div>
         <div class="brand-group">
-          <h1>
-            Sensei del Amor
-            <span class="badge-vps">VPS · COOLIFY 24/7</span>
+          <h1 id="header-agent-title">
+            El Sensei del Amor
+            <span class="badge-vps">CLUB DE AGENTES 24/7</span>
           </h1>
-          <p class="brand-sub">Transmisión de Consultorio de Parejas · Seducción, Infidelidad y Amor Propio</p>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
+            <p class="brand-sub" id="header-agent-sub">Transmisión de Consultorio · TikTok Live IA</p>
+            <div id="agent-selector-wrapper" style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; color: var(--gold); font-family: var(--font-mono);">Agente:</span>
+              <select id="select-active-agent" class="agent-select-input">
+                <option value="sensei-amor">⛩️ El Sensei del Amor</option>
+                <option value="perfumes-elite">🌸 Don Perfume (Boutique)</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="stream-status-pill offline" id="stream-status-badge">
-        <span class="dot-led"></span>
-        <span id="stream-status-text">TRANSMISIÓN EN ESPERA</span>
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <!-- Botones y Estado de Super Admin -->
+        <div class="admin-controls-group" id="admin-controls-area">
+          <button type="button" id="btn-open-admin-login" class="btn-admin-action">👑 Acceso Super Admin</button>
+          <div id="admin-logged-bar" style="display: none; align-items: center; gap: 8px;">
+            <span class="badge-admin">👑 SUPER ADMIN</span>
+            <button type="button" id="btn-modal-new-agent" class="btn-admin-pill">➕ Nuevo Agente</button>
+            <button type="button" id="btn-copy-client-link" class="btn-admin-pill">🔗 Link Cliente</button>
+            <button type="button" id="btn-admin-logout" class="btn-admin-pill logout">🚪 Salir</button>
+          </div>
+        </div>
+
+        <div class="stream-status-pill offline" id="stream-status-badge">
+          <span class="dot-led"></span>
+          <span id="stream-status-text">TRANSMISIÓN EN ESPERA</span>
+        </div>
       </div>
     </header>
+
+    <!-- Escaparate de Productos y Tienda Física en Vivo (Visible para Agentes de Venta) -->
+    <section class="store-showcase" id="store-showcase-section" style="display: none;">
+      <div class="store-showcase-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">🛍️</span>
+          <div>
+            <h2 style="font-family: var(--font-title); font-size: 17px; color: var(--gold);" id="store-title-text">Boutique de Fragancias en Vivo</h2>
+            <p style="font-size: 11px; color: var(--ink70);" id="store-subtitle-text">Escaparate interactivo para Live Shopping en TikTok</p>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn-admin-pill" id="btn-simular-venta" style="background: rgba(255, 215, 0, 0.15); border-color: var(--gold); color: var(--gold);">
+            🔔 Simular Compra en Directo
+          </button>
+        </div>
+      </div>
+
+      <!-- Alerta dinámica de venta en directo -->
+      <div class="live-sale-toast" id="live-sale-toast" style="display: flex;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">🛍️</span>
+          <div>
+            <span style="font-size: 10px; font-weight: 700; color: #00f0ff; letter-spacing: 0.5px; font-family: var(--font-mono);">¡NUEVA VENTA CONFIRMADA EN EL LIVE!</span>
+            <div style="font-size: 13px; font-weight: 600; color: #fff;" id="sale-toast-text">
+              Sofía R. de Madrid acaba de pedir: <strong>Asad de Lattafa</strong> ($38 USD)
+            </div>
+          </div>
+        </div>
+        <span class="product-badge" id="sale-toast-stock">¡Solo quedan 2 en stock!</span>
+      </div>
+
+      <!-- Cuadrícula de Productos Destacados -->
+      <div class="products-grid" id="store-products-grid">
+        <!-- Generado dinámicamente -->
+      </div>
+    </section>
 
     <div class="dash-grid">
       <!-- Columna de Configuración -->
@@ -840,12 +1150,173 @@
     </div>
   </div>
 
+  <!-- Modal 1: Login de Super Administrador -->
+  <div class="modal-backdrop" id="modal-admin-login">
+    <div class="modal-card" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">👑 Acceso Super Admin</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-login">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--ink70);">Ingresa la contraseña maestra para gestionar el Club de Agentes y crear nuevos agentes para alquilar.</p>
+      <div class="form-group">
+        <label class="form-label">Contraseña Maestra</label>
+        <input type="password" id="input-admin-pass" class="input-field" placeholder="Por defecto: admin123">
+        <div id="login-error-msg" style="display: none; color: #ff3366; font-size: 11px; margin-top: 4px;"></div>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <button type="button" class="btn-admin-pill" id="btn-cancel-login">Cancelar</button>
+        <button type="button" class="btn-action-primary" id="btn-submit-login" style="padding: 8px 16px;">Ingresar al Panel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Crear Nuevo Agente para Alquilar -->
+  <div class="modal-backdrop" id="modal-create-agent">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">➕ Crear Nuevo Agente (Alquiler)</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-create">&times;</button>
+      </div>
+      
+      <!-- Selector de Plantilla Rápida -->
+      <div>
+        <label class="form-label" style="color: var(--gold);">⚡ Cargar Plantilla de Nicho Preconfigurada:</label>
+        <div class="preset-pills" style="margin-top: 6px;">
+          <button type="button" class="btn-preset btn-tpl-load" data-template="tienda_perfumes">🌸 Boutique de Perfumes (Ventas)</button>
+          <button type="button" class="btn-preset btn-tpl-load" data-template="sensei_amor">⛩️ Sensei del Amor (Romance)</button>
+          <button type="button" class="btn-preset btn-tpl-load" data-template="madame_tarot">🔮 Tarot & Destino (Astrología)</button>
+          <button type="button" class="btn-preset btn-tpl-load" data-template="fitness_titan">💪 Coach Fitness (Suplementos)</button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
+        <div class="form-group">
+          <label class="form-label">Nombre del Agente</label>
+          <input type="text" id="new-agent-name" class="input-field" placeholder="ej: Don Perfume VIP">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Identificador Único (ID)</label>
+          <input type="text" id="new-agent-id" class="input-field" placeholder="ej: perfumes-vip">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Tipo de Agente</label>
+          <select id="new-agent-type" class="input-field">
+            <option value="tienda_ventas">🛍️ Tienda de Ventas (Live Shopping con simulación de compra)</option>
+            <option value="consultorio">⛩️ Consultorio de Consejos / Sabiduría</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Voz Neuronal</label>
+          <select id="new-agent-voice" class="input-field">
+            <option value="es-ES-AlvaroNeural">🇪🇸 Álvaro (España solemne / Sommelier)</option>
+            <option value="es-MX-JorgeNeural">🇲🇽 Jorge (México profundo y sabio)</option>
+            <option value="es-CO-GonzaloNeural">🇨🇴 Gonzalo (Colombia reflexivo)</option>
+            <option value="es-ES-ElviraNeural">🇪🇸 Elvira (España femenina / Mística)</option>
+            <option value="es-CO-SalomeNeural">🇨🇴 Salomé (Colombia femenina cálida)</option>
+            <option value="es-AR-TomasNeural">🇦🇷 Tomás (Argentina enérgico)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Nombre del Cliente / Arrendatario</label>
+          <input type="text" id="new-agent-client" class="input-field" placeholder="ej: Perfumes Árabes Madrid ($250/mes)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN de Acceso del Cliente</label>
+          <input type="text" id="new-agent-pin" class="input-field" placeholder="ej: 1234">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Título para la Pantalla del Video</label>
+        <input type="text" id="new-agent-banner" class="input-field" placeholder="ej: ~ BOUTIQUE DON PERFUME EN VIVO ~">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subtítulo para el Video</label>
+        <input type="text" id="new-agent-sub" class="input-field" placeholder="ej: Fragancias Árabes · Diseñador · Envíos Gratis 🛍️">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Prompt de Personalidad & Nicho</label>
+        <textarea id="new-agent-prompt" class="input-field" rows="4" placeholder="Instrucciones para la IA..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <button type="button" class="btn-admin-pill" id="btn-cancel-create">Cancelar</button>
+        <button type="button" class="btn-action-primary" id="btn-submit-create" style="padding: 8px 18px;">💾 Guardar y Desplegar Agente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Compartir Enlace del Cliente -->
+  <div class="modal-backdrop" id="modal-client-link">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔗 Enlace Exclusivo para el Cliente</h3>
+        <button type="button" class="btn-close-modal" id="btn-close-link">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--ink70);">
+        Comparte este enlace con tu cliente que alquiló el agente. En este portal el cliente verá únicamente su agente, sus transmisiones, sus ventas y su simulador sin acceso a tu panel de Super Admin:
+      </p>
+      <div class="form-group" style="margin-top: 8px;">
+        <input type="text" id="client-share-url" class="input-field" readonly style="color: var(--gold); font-weight: 600;">
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <button type="button" class="btn-action-primary" id="btn-copy-url-action">📋 Copiar Enlace</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const streamStatusBadge = document.getElementById("stream-status-badge");
     const streamStatusText = document.getElementById("stream-status-text");
     const btnIniciar = document.getElementById("btn-iniciar");
     const btnDetener = document.getElementById("btn-detener");
     const terminalLogs = document.getElementById("terminal-logs");
+
+    const headerAvatarImg = document.getElementById("header-avatar-img");
+    const headerAgentTitle = document.getElementById("header-agent-title");
+    const headerAgentSub = document.getElementById("header-agent-sub");
+    const selectActiveAgent = document.getElementById("select-active-agent");
+
+    const adminControlsArea = document.getElementById("admin-controls-area");
+    const btnOpenAdminLogin = document.getElementById("btn-open-admin-login");
+    const adminLoggedBar = document.getElementById("admin-logged-bar");
+    const btnModalNewAgent = document.getElementById("btn-modal-new-agent");
+    const btnCopyClientLink = document.getElementById("btn-copy-client-link");
+    const btnAdminLogout = document.getElementById("btn-admin-logout");
+
+    const storeShowcaseSection = document.getElementById("store-showcase-section");
+    const storeTitleText = document.getElementById("store-title-text");
+    const storeSubtitleText = document.getElementById("store-subtitle-text");
+    const storeProductsGrid = document.getElementById("store-products-grid");
+    const liveSaleToast = document.getElementById("live-sale-toast");
+    const saleToastText = document.getElementById("sale-toast-text");
+    const saleToastStock = document.getElementById("sale-toast-stock");
+    const btnSimularVenta = document.getElementById("btn-simular-venta");
+
+    const modalAdminLogin = document.getElementById("modal-admin-login");
+    const inputAdminPass = document.getElementById("input-admin-pass");
+    const loginErrorMsg = document.getElementById("login-error-msg");
+    const btnSubmitLogin = document.getElementById("btn-submit-login");
+    const btnCloseLogin = document.getElementById("btn-close-login");
+    const btnCancelLogin = document.getElementById("btn-cancel-login");
+
+    const modalCreateAgent = document.getElementById("modal-create-agent");
+    const btnCloseCreate = document.getElementById("btn-close-create");
+    const btnCancelCreate = document.getElementById("btn-cancel-create");
+    const btnSubmitCreate = document.getElementById("btn-submit-create");
+
+    const modalClientLink = document.getElementById("modal-client-link");
+    const clientShareUrl = document.getElementById("client-share-url");
+    const btnCloseLink = document.getElementById("btn-close-link");
+    const btnCopyUrlAction = document.getElementById("btn-copy-url-action");
 
     const cfgUsername = document.getElementById("cfg-username");
     const cfgRtmpUrl = document.getElementById("cfg-rtmp-url");
@@ -856,7 +1327,7 @@
 
     const testCommentInput = document.getElementById("test-comment-input");
     const btnTestEnviar = document.getElementById("btn-test-enviar");
-    const presetButtons = document.querySelectorAll(".btn-preset");
+    const presetPillsContainer = document.querySelector(".preset-pills");
 
     const bgMusicPlayer = document.getElementById("bg-music-player");
     const voicePlayer = document.getElementById("voice-player");
@@ -868,18 +1339,359 @@
     let sandboxActive = false;
     let autoChatActive = false;
     let autoChatInterval = null;
+    let currentAgent = null;
+    let allAgentsList = [];
+    let adminToken = localStorage.getItem("admin_token") || "";
 
-    const preguntasAuto = [
-      "¿Debo perdonar una infidelidad si jura que cambió?",
-      "Me deja en visto y tarda 6 horas en responder, ¿le escribo?",
-      "¿Vale la pena volver con mi ex si me busca arrepentido?",
-      "Somos casi algo hace 5 meses y dice que no busca nada serio",
-      "¿Cómo salir de la friendzone con la persona que me gusta?",
-      "Siento que mi pareja me oculta su celular y cambia las contraseñas",
-      "Mi crush no me habla pero siempre mira todas mis historias",
-      "¿Cómo aplicar contacto cero sin sufrir en el intento?"
-    ];
+    const urlParams = new URLSearchParams(window.location.search);
+    const isClientMode = urlParams.has("client") || urlParams.has("id") || window.location.pathname.startsWith("/client");
 
+    if (isClientMode && adminControlsArea) {
+      adminControlsArea.style.display = "none";
+      const selectorWrapper = document.getElementById("agent-selector-wrapper");
+      if (selectorWrapper) selectorWrapper.style.display = "none";
+    }
+
+    // ==================== GESTIÓN DE AUTENTICACIÓN ADMIN ====================
+    async function verificarAdminAuth() {
+      if (!adminToken) {
+        adminLoggedBar.style.display = "none";
+        btnOpenAdminLogin.style.display = isClientMode ? "none" : "flex";
+        return;
+      }
+      try {
+        const res = await fetch("/api/admin/check", {
+          headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        const d = await res.json();
+        if (d.isAdmin) {
+          adminLoggedBar.style.display = "flex";
+          btnOpenAdminLogin.style.display = "none";
+        } else {
+          adminToken = "";
+          localStorage.removeItem("admin_token");
+          adminLoggedBar.style.display = "none";
+          btnOpenAdminLogin.style.display = isClientMode ? "none" : "flex";
+        }
+      } catch (e) {
+        adminLoggedBar.style.display = "none";
+        btnOpenAdminLogin.style.display = isClientMode ? "none" : "flex";
+      }
+    }
+
+    btnOpenAdminLogin.addEventListener("click", () => {
+      loginErrorMsg.style.display = "none";
+      inputAdminPass.value = "";
+      modalAdminLogin.classList.add("active");
+      inputAdminPass.focus();
+    });
+
+    [btnCloseLogin, btnCancelLogin].forEach(b => {
+      if (b) b.addEventListener("click", () => modalAdminLogin.classList.remove("active"));
+    });
+
+    btnSubmitLogin.addEventListener("click", async () => {
+      const pwd = inputAdminPass.value.trim();
+      if (!pwd) return;
+      btnSubmitLogin.disabled = true;
+      try {
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: pwd })
+        });
+        const d = await res.json();
+        if (d.ok && d.token) {
+          adminToken = d.token;
+          localStorage.setItem("admin_token", adminToken);
+          modalAdminLogin.classList.remove("active");
+          addLog("👑 Acceso concedido como Super Administrador del Club de Agentes.", "green");
+          verificarAdminAuth();
+        } else {
+          loginErrorMsg.textContent = d.error || "Contraseña incorrecta";
+          loginErrorMsg.style.display = "block";
+        }
+      } catch (e) {
+        loginErrorMsg.textContent = "Error conectando: " + e.message;
+        loginErrorMsg.style.display = "block";
+      } finally {
+        btnSubmitLogin.disabled = false;
+      }
+    });
+
+    btnAdminLogout.addEventListener("click", () => {
+      adminToken = "";
+      localStorage.removeItem("admin_token");
+      verificarAdminAuth();
+      addLog("🚪 Sesión de Super Administrador finalizada.", "warn");
+    });
+
+    // ==================== GESTOR DEL CLUB DE AGENTES ====================
+    async function cargarListaAgentes() {
+      try {
+        const res = await fetch("/api/agents");
+        const d = await res.json();
+        if (d.ok && d.agents) {
+          allAgentsList = d.agents;
+          selectActiveAgent.innerHTML = "";
+          d.agents.forEach(a => {
+            const opt = document.createElement("option");
+            opt.value = a.id;
+            opt.textContent = `${a.type === 'tienda_ventas' ? '🛍️' : '⛩️'} ${a.name} (${a.client_name || 'Propio'})`;
+            if (a.id === d.active_agent_id) opt.selected = true;
+            selectActiveAgent.appendChild(opt);
+          });
+
+          // Si venimos con parámetro ?id= o ?client=
+          const forcedId = urlParams.get("id") || urlParams.get("agent");
+          if (forcedId) {
+            const match = d.agents.find(a => a.id === forcedId);
+            if (match) {
+              selectActiveAgent.value = match.id;
+            }
+          }
+
+          const active = d.agents.find(a => a.id === selectActiveAgent.value) || d.agents[0];
+          aplicarDatosAgente(active);
+        }
+      } catch (e) {
+        console.error("Error cargando agentes:", e);
+      }
+    }
+
+    function aplicarDatosAgente(agent) {
+      if (!agent) return;
+      currentAgent = agent;
+
+      // Header branding
+      if (headerAgentTitle) {
+        headerAgentTitle.innerHTML = `${agent.name} <span class="badge-vps">${agent.type === 'tienda_ventas' ? 'LIVE SHOPPING' : 'CONSULTORIO 24/7'}</span>`;
+      }
+      if (headerAgentSub) {
+        headerAgentSub.textContent = agent.niche || agent.banner_subtitle || "Transmisión en Vivo";
+      }
+      if (headerAvatarImg) {
+        headerAvatarImg.src = agent.avatar || "/assets/logo_sensei.jpg";
+      }
+
+      // Middle column branding
+      const idName = document.querySelector(".identity-name");
+      const idQuote = document.getElementById("identity-quote");
+      const avatarImg = document.getElementById("avatar-img");
+      const idHandle = document.querySelector(".identity-handle");
+
+      if (idName) idName.textContent = `${agent.type === 'tienda_ventas' ? '🌸' : '⛩️'} ${agent.name}`;
+      if (idQuote) idQuote.textContent = `"${agent.call_to_action || agent.niche}"`;
+      if (avatarImg) avatarImg.src = agent.avatar || "/assets/logo_sensei.jpg";
+      if (idHandle) idHandle.textContent = agent.tiktok_username ? `@${agent.tiktok_username.replace('@','')} · TikTok Live IA` : "TikTok Live IA 24/7";
+
+      // Config form fields
+      cfgUsername.value = agent.tiktok_username || "";
+      cfgRtmpUrl.value = agent.rtmp_url || "";
+      cfgStreamKey.value = agent.stream_key || "";
+      cfgVoice.value = agent.voice || "es-MX-JorgeNeural";
+      cfgEstilo.value = agent.estilo || "sabio_directo";
+
+      // Showcase de Tienda Física
+      if (agent.type === "tienda_ventas") {
+        storeShowcaseSection.style.display = "flex";
+        storeTitleText.textContent = agent.store_name || agent.name;
+        storeSubtitleText.textContent = agent.call_to_action || "Escaparate de productos y ventas en vivo";
+
+        // Renderizar productos
+        storeProductsGrid.innerHTML = "";
+        const prods = agent.featured_products || [];
+        prods.forEach(p => {
+          const card = document.createElement("div");
+          card.className = "product-card";
+          card.innerHTML = `
+            <div>
+              <span class="product-badge">${p.badge || 'DESTACADO'}</span>
+              <div class="product-name" style="margin-top: 6px;">${p.name}</div>
+              <div class="product-price">${p.price || ''}</div>
+              <div class="product-notes">${p.notes || ''}</div>
+            </div>
+            <button type="button" class="btn-ask-product" data-name="${p.name}">
+              🗣️ Preguntar por este producto
+            </button>
+          `;
+          card.querySelector(".btn-ask-product").addEventListener("click", () => {
+            testCommentInput.value = `¿Qué notas tiene y por qué recomiendas ${p.name}?`;
+            btnTestEnviar.click();
+          });
+          storeProductsGrid.appendChild(card);
+        });
+
+        // Configurar píldoras de prueba para perfumes
+        if (presetPillsContainer) {
+          presetPillsContainer.innerHTML = `
+            <button type="button" class="btn-preset" data-q="¿Cuál perfume me recomiendas para una cita nocturna?">🌙 Cita Nocturna</button>
+            <button type="button" class="btn-preset" data-q="¿Tienen el clon de Sauvage Elixir de diseñador?">👑 Clon Sauvage</button>
+            <button type="button" class="btn-preset" data-q="¿Qué fragancia dura más de 12 horas para oficina?">💼 Duración 12h</button>
+            <button type="button" class="btn-preset" data-q="¿Cuál es el mejor perfume femenino dulce y viral?">🌺 Femenino Viral</button>
+          `;
+          asignarEventosPills();
+        }
+
+      } else {
+        storeShowcaseSection.style.display = "none";
+        // Restaurar píldoras de amor
+        if (presetPillsContainer) {
+          presetPillsContainer.innerHTML = `
+            <button type="button" class="btn-preset" data-q="Me dejó en visto hace 3 días, ¿qué hago?">👀 Dejado en Visto</button>
+            <button type="button" class="btn-preset" data-q="¿Cómo salir de la friendzone con mi crush?">💔 Salir de Friendzone</button>
+            <button type="button" class="btn-preset" data-q="¿Debo perdonar una infidelidad si me pide perdón?">⚔️ Infidelidad</button>
+            <button type="button" class="btn-preset" data-q="Mi ex me volvió a escribir después de meses de contacto cero">🕊️ Volver con mi Ex</button>
+          `;
+          asignarEventosPills();
+        }
+      }
+    }
+
+    function asignarEventosPills() {
+      document.querySelectorAll(".preset-pills .btn-preset").forEach(btn => {
+        btn.onclick = function() {
+          const q = this.getAttribute("data-q");
+          if (q) {
+            testCommentInput.value = q;
+            btnTestEnviar.click();
+          }
+        };
+      });
+    }
+
+    selectActiveAgent.addEventListener("change", async () => {
+      const id = selectActiveAgent.value;
+      try {
+        const res = await fetch(`/api/agents/${id}/select`, { method: "POST" });
+        const d = await res.json();
+        if (d.ok && d.agent) {
+          aplicarDatosAgente(d.agent);
+          addLog(`Agente activo cambiado a: ${d.agent.name}`, "hl");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    // ==================== SIMULADOR DE VENTAS EN DIRECTO ====================
+    btnSimularVenta.addEventListener("click", async () => {
+      if (!currentAgent) return;
+      try {
+        const res = await fetch(`/api/agents/${currentAgent.id}/sale-alert`);
+        const d = await res.json();
+        if (d.ok && d.alert) {
+          saleToastText.innerHTML = `<strong>${d.alert.cliente}</strong> (${d.alert.ciudad}) acaba de pedir: <strong>${d.alert.producto}</strong> (${d.alert.precio})`;
+          saleToastStock.textContent = `¡Solo quedan ${d.alert.stock} en stock!`;
+          liveSaleToast.style.animation = "none";
+          liveSaleToast.offsetHeight; // reflow
+          liveSaleToast.style.animation = "salePulse 1s infinite alternate";
+          addLog(d.alert.mensaje, "green");
+        }
+      } catch (e) {
+        console.error("Error generando alerta de venta:", e);
+      }
+    });
+
+    // ==================== MODAL CREAR NUEVO AGENTE ====================
+    btnModalNewAgent.addEventListener("click", () => {
+      modalCreateAgent.classList.add("active");
+    });
+
+    [btnCloseCreate, btnCancelCreate].forEach(b => {
+      if (b) b.addEventListener("click", () => modalCreateAgent.classList.remove("active"));
+    });
+
+    // Cargar plantilla en el modal de creación
+    document.querySelectorAll(".btn-tpl-load").forEach(btn => {
+      btn.addEventListener("click", async function() {
+        const tplKey = this.getAttribute("data-template");
+        try {
+          const res = await fetch("/api/templates");
+          const tpls = await res.json();
+          const t = tpls[tplKey];
+          if (t) {
+            document.getElementById("new-agent-name").value = t.name || "";
+            document.getElementById("new-agent-id").value = tplKey.replace("_", "-");
+            document.getElementById("new-agent-type").value = t.type || "consultorio";
+            document.getElementById("new-agent-voice").value = t.voice || "es-ES-AlvaroNeural";
+            document.getElementById("new-agent-client").value = "Cliente Alquiler ($250/mes)";
+            document.getElementById("new-agent-pin").value = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById("new-agent-banner").value = t.banner_title || "";
+            document.getElementById("new-agent-sub").value = t.banner_subtitle || "";
+            document.getElementById("new-agent-prompt").value = t.system_prompt || "";
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    });
+
+    btnSubmitCreate.addEventListener("click", async () => {
+      const payload = {
+        name: document.getElementById("new-agent-name").value.trim(),
+        id: document.getElementById("new-agent-id").value.trim(),
+        type: document.getElementById("new-agent-type").value,
+        voice: document.getElementById("new-agent-voice").value,
+        client_name: document.getElementById("new-agent-client").value.trim(),
+        client_pin: document.getElementById("new-agent-pin").value.trim(),
+        banner_title: document.getElementById("new-agent-banner").value.trim(),
+        banner_subtitle: document.getElementById("new-agent-sub").value.trim(),
+        system_prompt: document.getElementById("new-agent-prompt").value.trim()
+      };
+
+      if (!payload.name) {
+        alert("Debes ingresar un nombre para el agente");
+        return;
+      }
+
+      btnSubmitCreate.disabled = true;
+      try {
+        const res = await fetch("/api/agents", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${adminToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.ok && d.agent) {
+          modalCreateAgent.classList.remove("active");
+          addLog(`👑 Nuevo Agente creado exitosamente: ${d.agent.name}`, "green");
+          await cargarListaAgentes();
+          selectActiveAgent.value = d.agent.id;
+          selectActiveAgent.dispatchEvent(new Event("change"));
+        } else {
+          alert("Error creando agente: " + (d.error || "Desconocido"));
+        }
+      } catch (e) {
+        alert("Error de conexión: " + e.message);
+      } finally {
+        btnSubmitCreate.disabled = false;
+      }
+    });
+
+    // ==================== MODAL ENLACE CLIENTE ====================
+    btnCopyClientLink.addEventListener("click", () => {
+      const activeId = selectActiveAgent.value || "sensei-amor";
+      const shareUrl = `${window.location.origin}/client?id=${activeId}`;
+      clientShareUrl.value = shareUrl;
+      modalClientLink.classList.add("active");
+    });
+
+    if (btnCloseLink) {
+      btnCloseLink.addEventListener("click", () => modalClientLink.classList.remove("active"));
+    }
+
+    btnCopyUrlAction.addEventListener("click", () => {
+      navigator.clipboard.writeText(clientShareUrl.value).then(() => {
+        btnCopyUrlAction.textContent = "✅ ¡Enlace Copiado!";
+        setTimeout(() => { btnCopyUrlAction.textContent = "📋 Copiar Enlace"; }, 2000);
+      });
+    });
+
+    // ==================== SIMULADOR Y CONTROLES ====================
     btnToggleSandbox.addEventListener("click", () => {
       sandboxActive = !sandboxActive;
       if (sandboxActive) {
@@ -888,7 +1700,7 @@
         sandboxAudioStatus.style.display = "flex";
         bgMusicPlayer.volume = 0.16;
         bgMusicPlayer.play().catch(e => console.log("Autoplay:", e));
-        addLog("🧪 Modo Sandbox activado. Música zen sonando en tu navegador.", "hl");
+        addLog("🧪 Modo Sandbox activado. Audio sonando en tu navegador.", "hl");
         streamStatusBadge.className = "stream-status-pill online";
         streamStatusText.textContent = "MODO SANDBOX (SIMULADOR EN VIVO)";
       } else {
@@ -928,7 +1740,21 @@
 
     function dispararPreguntaAuto() {
       if (!sandboxActive || !autoChatActive) return;
-      const randomQ = preguntasAuto[Math.floor(Math.random() * preguntasAuto.length)];
+      let qList = [
+        "¿Debo perdonar una infidelidad si jura que cambió?",
+        "Me deja en visto y tarda 6 horas en responder, ¿le escribo?",
+        "¿Vale la pena volver con mi ex si me busca arrepentido?",
+        "Somos casi algo hace 5 meses y dice que no busca nada serio"
+      ];
+      if (currentAgent && currentAgent.type === "tienda_ventas") {
+        qList = [
+          "¿Cuál perfume me recomiendas para una cita nocturna?",
+          "¿Tienen el clon de Sauvage Elixir de diseñador?",
+          "¿Qué fragancia dura más de 12 horas para ir a la oficina?",
+          "¿Tienen fragancias dulces árabes con vainilla y café?"
+        ];
+      }
+      const randomQ = qList[Math.floor(Math.random() * qList.length)];
       testCommentInput.value = randomQ;
       btnTestEnviar.click();
     }
@@ -946,18 +1772,6 @@
       try {
         const res = await fetch("/api/status");
         const data = await res.json();
-
-        cfgUsername.value = data.tiktok_username || "";
-        cfgRtmpUrl.value = data.rtmp_url || "";
-        cfgVoice.value = data.voice || "es-MX-JorgeNeural";
-        cfgEstilo.value = data.estilo || "sabio_directo";
-
-        if (data.gemini_api_key) {
-          cfgGeminiKey.value = data.gemini_api_key;
-          localStorage.setItem("sensei_ai_key", data.gemini_api_key);
-        } else if (localStorage.getItem("sensei_ai_key")) {
-          cfgGeminiKey.value = localStorage.getItem("sensei_ai_key");
-        }
 
         if (data.is_streaming) {
           actualizarUI(true);
@@ -988,7 +1802,7 @@
       const sk = cfgStreamKey.value.trim();
 
       if (!rtmp || !sk) {
-        addLog("💡 Para probar al Sensei de inmediato, usa el MODO SANDBOX de abajo.", "hl");
+        addLog("💡 Para probar al agente de inmediato, usa el MODO SANDBOX de abajo.", "hl");
         const sb = document.getElementById("sandbox-container");
         if (sb) {
           sb.scrollIntoView({ behavior: "smooth" });
@@ -1018,7 +1832,7 @@
         });
         const resp = await res.json();
         if (resp.ok) {
-          addLog("Transmisión del Sensei iniciada hacia TikTok Live.", "green");
+          addLog("Transmisión iniciada hacia TikTok Live.", "green");
           actualizarUI(true);
         } else {
           addLog("Error al iniciar: " + (resp.error || "Desconocido"), "err");
@@ -1027,7 +1841,7 @@
         addLog("Error de conexión: " + e.message, "err");
       } finally {
         btnIniciar.disabled = false;
-        btnIniciar.textContent = "🏮 Iniciar Transmisión del Sensei en TikTok";
+        btnIniciar.textContent = "🏮 Iniciar Transmisión en TikTok";
       }
     });
 
@@ -1047,11 +1861,11 @@
 
       btnTestEnviar.disabled = true;
       btnTestEnviar.textContent = "⏳ Pensando...";
-      addLog(`[CASO DE PRUEBA] @espectador_amor: "${q}"`, "hl");
+      addLog(`[CASO DE PRUEBA] @espectador_test: "${q}"`, "hl");
       testCommentInput.value = "";
 
       if (sandboxActive) {
-        sandboxStatusText.textContent = "🎙️ Sensei formulando consejo sabio...";
+        sandboxStatusText.textContent = "🎙️ Formulando respuesta experta...";
       }
 
       try {
@@ -1059,15 +1873,16 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            user: "espectador_amor", 
+            user: "espectador_test", 
             comment: q,
+            agent_id: currentAgent ? currentAgent.id : null,
             voice: cfgVoice.value,
             estilo: cfgEstilo.value,
             gemini_api_key: cfgGeminiKey.value.trim()
           })
         });
         const d = await res.json();
-        addLog(`[SENSEI RESPONDE]: "${d.answer}"`, "green");
+        addLog(`[${currentAgent ? currentAgent.name : 'AGENTE'} RESPONDE]: "${d.answer}"`, "green");
 
         const respCard = document.getElementById("sandbox-response-card");
         const respText = document.getElementById("sandbox-response-text");
@@ -1078,10 +1893,11 @@
         const emo = (d.emotion || "SABIO").toUpperCase();
         if (emotionPill) {
           emotionPill.className = "emotion-pill " + emo.toLowerCase();
-          if (emo === "RISA") emotionPill.textContent = "😂 ¡SENSEI RIÉNDOSE!";
-          else if (emo === "PICANTE") emotionPill.textContent = "🔥 SENSEI PICANTE";
-          else if (emo === "ESTOICO") emotionPill.textContent = "⛩️ SENSEI ESTOICO";
-          else emotionPill.textContent = "📿 SENSEI SABIO";
+          if (emo === "RISA") emotionPill.textContent = "😂 ¡RIÉNDOSE!";
+          else if (emo === "VENTA") emotionPill.textContent = "🛍️ OFERTA EN VIVO";
+          else if (emo === "RECOMENDACION") emotionPill.textContent = "🌸 RECOMENDACIÓN TOP";
+          else if (emo === "PICANTE") emotionPill.textContent = "🔥 PICANTE";
+          else emotionPill.textContent = "📿 MODO SABIO";
         }
 
         if (respCard && respText && d.answer) {
@@ -1102,7 +1918,7 @@
               else avatarStage.classList.remove("laughing");
             }
 
-            if (avatarImg) {
+            if (avatarImg && currentAgent && currentAgent.id === "sensei-amor") {
               if (lipSyncTimer) clearInterval(lipSyncTimer);
               let articulando = false;
               lipSyncTimer = setInterval(() => {
@@ -1121,8 +1937,8 @@
               clearInterval(lipSyncTimer);
               lipSyncTimer = null;
             }
-            if (avatarImg) {
-              avatarImg.src = "/assets/logo_sensei.jpg";
+            if (avatarImg && currentAgent) {
+              avatarImg.src = currentAgent.avatar || "/assets/logo_sensei.jpg";
             }
             if (avatarStage) {
               avatarStage.classList.remove("speaking", "laughing");
@@ -1137,8 +1953,8 @@
           }
 
           if (sandboxActive) {
-            bgMusicPlayer.volume = 0.07; // Bajar música de fondo mientras habla
-            sandboxStatusText.textContent = (emo === "RISA" ? "😂 Sensei riéndose al aire..." : "🗣️ Sensei hablando en vivo...");
+            bgMusicPlayer.volume = 0.07;
+            sandboxStatusText.textContent = (emo === "RISA" ? "😂 Riéndose al aire..." : "🗣️ Hablando en vivo...");
           }
 
           activarAnimacionBoca();
@@ -1152,8 +1968,8 @@
           voicePlayer.onended = () => {
             apagarAnimacionBoca();
             if (sandboxActive) {
-              bgMusicPlayer.volume = 0.16; // Restaurar música zen
-              sandboxStatusText.textContent = "Música zen activa · Listo para siguiente caso";
+              bgMusicPlayer.volume = 0.16;
+              sandboxStatusText.textContent = "Audio activo · Listo para siguiente caso";
             }
           };
         }
@@ -1163,13 +1979,6 @@
         btnTestEnviar.disabled = false;
         btnTestEnviar.textContent = "Preguntar";
       }
-    });
-
-    presetButtons.forEach(btn => {
-      btn.addEventListener("click", function() {
-        testCommentInput.value = this.getAttribute("data-q");
-        btnTestEnviar.click();
-      });
     });
 
     setInterval(async () => {
@@ -1182,7 +1991,6 @@
       } catch (e) {}
     }, 2000);
 
-    // Cargar y guardar clave de IA en localStorage para no escribirla nunca más
     const storedKey = localStorage.getItem("sensei_ai_key");
     if (storedKey && !cfgGeminiKey.value) {
       cfgGeminiKey.value = storedKey;
@@ -1191,10 +1999,9 @@
       localStorage.setItem("sensei_ai_key", cfgGeminiKey.value.trim());
     });
 
-    // Precargar sprites del avatar para sincronización instantánea
-    const p1 = new Image(); p1.src = "/assets/logo_sensei_talk.jpg";
-    const p2 = new Image(); p2.src = "/assets/logo_sensei_laugh.jpg";
-
+    asignarEventosPills();
+    verificarAdminAuth();
+    cargarListaAgentes();
     cargarEstado();
   </script>
 </body>
