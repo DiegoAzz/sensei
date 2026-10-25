@@ -396,50 +396,11 @@
       box-shadow: 0 0 14px rgba(255, 42, 109, 0.6);
       flex-shrink: 0;
       animation: levitate 3.4s ease-in-out infinite;
+      transition: filter 0.2s ease;
     }
 
-    /* Boca animada realista sobre el avatar */
-    .avatar-mouth {
-      position: absolute;
-      top: 59%;
-      left: 50%;
-      transform: translate(-50%, -50%) scaleY(0.2);
-      width: 14px;
-      height: 9px;
-      background: #25050a;
-      border-radius: 50%;
-      border: 1px solid rgba(255, 117, 151, 0.5);
-      box-shadow: inset 0 2px 0 #fff0ea, inset 0 -2px 0 #b33939; /* Dientes superiores y lengua */
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-      z-index: 2;
-    }
-
-    .avatar-stage.speaking .avatar-mouth {
-      opacity: 1;
-      animation: mouthTalk 0.2s infinite alternate ease-in-out;
-    }
-
-    .avatar-stage.laughing .avatar-mouth {
-      opacity: 1;
-      width: 19px;
-      height: 12px;
-      border-radius: 40% 40% 60% 60%;
-      box-shadow: inset 0 3px 0 #ffffff, inset 0 -3px 0 #cc3344;
-      animation: mouthLaugh 0.15s infinite alternate ease-in-out;
-    }
-
-    @keyframes mouthTalk {
-      0% { transform: translate(-50%, -50%) scaleY(0.2) scaleX(0.85); }
-      40% { transform: translate(-50%, -50%) scaleY(1.35) scaleX(1.15); }
-      70% { transform: translate(-50%, -50%) scaleY(0.5) scaleX(0.95); }
-      100% { transform: translate(-50%, -50%) scaleY(1.1) scaleX(1.05); }
-    }
-
-    @keyframes mouthLaugh {
-      0% { transform: translate(-50%, -50%) scaleY(0.8) scaleX(1.1); }
-      100% { transform: translate(-50%, -50%) scaleY(1.7) scaleX(1.35); }
+    .avatar-stage.speaking .identity-avatar {
+      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
     }
 
     /* Emociones del Sensei */
@@ -694,7 +655,6 @@
           <div class="avatar-stage" id="avatar-stage">
             <div class="avatar-glow-ring" id="avatar-glow"></div>
             <img src="/assets/logo_sensei.jpg" alt="Avatar Sensei" class="identity-avatar" id="avatar-img">
-            <div class="avatar-mouth" id="avatar-mouth"></div>
           </div>
           <div class="identity-details">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -967,15 +927,38 @@
         if (d.audio_url) {
           voicePlayer.src = d.audio_url;
 
+          let lipSyncTimer = null;
+          const avatarImg = document.getElementById("avatar-img");
+
           function activarAnimacionBoca() {
             if (avatarStage) {
               avatarStage.classList.add("speaking");
               if (emo === "RISA") avatarStage.classList.add("laughing");
               else avatarStage.classList.remove("laughing");
             }
+
+            if (avatarImg) {
+              if (lipSyncTimer) clearInterval(lipSyncTimer);
+              let articulando = false;
+              lipSyncTimer = setInterval(() => {
+                articulando = !articulando;
+                if (articulando) {
+                  avatarImg.src = (emo === "RISA" ? "/assets/logo_sensei_laugh.jpg" : "/assets/logo_sensei_talk.jpg");
+                } else {
+                  avatarImg.src = "/assets/logo_sensei.jpg";
+                }
+              }, 170);
+            }
           }
 
           function apagarAnimacionBoca() {
+            if (lipSyncTimer) {
+              clearInterval(lipSyncTimer);
+              lipSyncTimer = null;
+            }
+            if (avatarImg) {
+              avatarImg.src = "/assets/logo_sensei.jpg";
+            }
             if (avatarStage) {
               avatarStage.classList.remove("speaking", "laughing");
             }
@@ -1042,6 +1025,10 @@
     cfgGeminiKey.addEventListener("input", () => {
       localStorage.setItem("sensei_ai_key", cfgGeminiKey.value.trim());
     });
+
+    // Precargar sprites del avatar para sincronización instantánea
+    const p1 = new Image(); p1.src = "/assets/logo_sensei_talk.jpg";
+    const p2 = new Image(); p2.src = "/assets/logo_sensei_laugh.jpg";
 
     cargarEstado();
   </script>
