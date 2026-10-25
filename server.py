@@ -47,9 +47,12 @@ if CONFIG_FILE.exists():
 
 cola_preguntas = asyncio.Queue()
 buffer_logs = []
+buffer_voz_pcm = bytearray()
+musica_pcm_cache = b""
 ffmpeg_process = None
 tiktok_task = None
 worker_task = None
+streamer_task = None
 
 def registrar_log(texto: str, tipo: str = "normal"):
     logger.info(texto)
@@ -158,11 +161,35 @@ async def sintetizar_audio(texto: str, salida_path: str):
     comunicador = edge_tts.Communicate(texto, voz, rate="+0%", pitch="-2Hz")
     await comunicador.save(salida_path)
 
-# ==================== MOTOR DE STREAMING FFMPEG ====================
+# ==================== MOTOR DE AUDIO Y STREAMING ====================
+def obtener_musica_pcm():
+    global musica_pcm_cache
+    if musica_pcm_cache:
+        return musica_pcm_cache
+
+    musica_file = BASE_DIR / "assets" / "musica_misteriosa.mp3"
+    if not musica_file.exists():
+        return b""
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(musica_file),
+        "-f", "s16le", "-ar", "44100", "-ac", "2",
+        "-filter:a", "volume=0.20",
+        "pipe:1"
+    ]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        musica_pcm_cache = res.stdout
+        logger.info(f"Música de fondo cargada en memoria: {len(musica_pcm_cache)} bytes PCM.")
+    except Exception as e:
+        logger.error(f"Error cargando música PCM: {e}")
+    return musica_pcm_cache
+
 def iniciar_proceso_ffmpeg(rtmp_destino: str):
     """
     Genera un stream vertical 720x1280 estilo Templo Oriental Neón
-    con el Sensei del Amor levitando suavemente en el aire de forma continua y misteriosa.
+    con el Sensei del Amor levitando en el aire y audio en vivo (voz + música).
     """
     logo_file = BASE_DIR / "assets" / "logo_circle.png"
     if not logo_file.exists():
@@ -175,16 +202,10 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
         "-re",
         "-f", "lavfi",
         # Fondo oscuro carmesí / ciruela místico
-        "-i", "color=c=0x0f0214:s=720x1280:r=30"
+        "-i", "color=c=0x0f0214:s=720x1280:r=30",
+        # Audio en tiempo real por tubería stdin (Voz + Música de fondo)
+        "-f", "s16le", "-ar", "44100", "-ac", "2", "-i", "pipe:0"
     ]
-
-    musica_file = BASE_DIR / "assets" / "musica_misteriosa.mp3"
-    has_musica = musica_file.exists()
-    if has_musica:
-        # Música de meditación japonesa zen (100% libre de copyright / dominio público)
-        cmd.extend(["-stream_loop", "-1", "-i", str(musica_file)])
-    else:
-        cmd.extend(["-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo"])
 
     if has_logo:
         cmd.extend(["-loop", "1", "-i", str(logo_file)])
@@ -225,9 +246,6 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
         )
         cmd.extend(["-vf", vf])
 
-    if has_musica:
-        cmd.extend(["-filter:a", "volume=0.20"])
-
     cmd.extend([
         "-c:v", "libx264",
         "-preset", "veryfast",
@@ -244,7 +262,58 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
     ])
 
     registrar_log(f"Iniciando transmisión hacia TikTok Live (Sensei Levitando): {rtmp_destino[:30]}...")
-    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+# ==================== STREAMER DE AUDIO EN VIVO ====================
+async def audio_streamer_loop():
+    """
+    Envía continuamente audio mezclado a FFmpeg por stdin en tiempo real:
+    - Música de fondo misteriosa continua a volumen suave (20%).
+    - Cuando el Sensei responde, mezcla su voz (100%) sobre la música.
+    """
+    global ffmpeg_process
+    chunk_size = 17640  # 0.1 segundo de audio (44100 * 2 canales * 2 bytes / 10)
+    silence_chunk = b"\x00" * chunk_size
+    pcm_musica = obtener_musica_pcm()
+    music_len = len(pcm_musica)
+    music_offset = 0
+
+    while estado["is_streaming"] and ffmpeg_process and ffmpeg_process.poll() is None:
+        # Obtener fragmento de música
+        if music_len > 0:
+            if music_offset + chunk_size <= music_len:
+                m_chunk = pcm_musica[music_offset:music_offset+chunk_size]
+                music_offset += chunk_size
+            else:
+                rem = music_len - music_offset
+                m_chunk = pcm_musica[music_offset:] + pcm_musica[:chunk_size - rem]
+                music_offset = chunk_size - rem
+        else:
+            m_chunk = silence_chunk
+
+        # Obtener fragmento de voz del Sensei si está hablando
+        if len(buffer_voz_pcm) > 0:
+            if len(buffer_voz_pcm) >= chunk_size:
+                v_chunk = bytes(buffer_voz_pcm[:chunk_size])
+                del buffer_voz_pcm[:chunk_size]
+            else:
+                v_chunk = bytes(buffer_voz_pcm) + b"\x00" * (chunk_size - len(buffer_voz_pcm))
+                buffer_voz_pcm.clear()
+
+            # Mezclar voz (100%) con música de fondo (20%)
+            try:
+                import audioop
+                final_chunk = audioop.add(v_chunk, m_chunk, 2)
+            except Exception:
+                final_chunk = v_chunk
+        else:
+            final_chunk = m_chunk
+
+        try:
+            ffmpeg_process.stdin.write(final_chunk)
+            await asyncio.sleep(0.09)
+        except Exception:
+            break
 
 # ==================== WORKER DE PREGUNTAS ====================
 async def worker_preguntas():
@@ -257,17 +326,35 @@ async def worker_preguntas():
 
         respuesta = await responder_con_ia(usuario, pregunta)
         estado["active_answer"] = respuesta
-        registrar_log(f"📿 Sensei responde: \"{respuesta}\"", "green")
+        registrar_log(f"📿 Sensei responde a @{usuario}: \"{respuesta}\"", "green")
 
         audio_tmp = DATA_DIR / "consejo_sensei.mp3"
         try:
             await sintetizar_audio(respuesta, str(audio_tmp))
             registrar_log(f"Voz del Sensei ({estado['voice']}) sintetizada.", "hl")
+
+            # Decodificar el audio a PCM y enviarlo al reproductor en vivo
+            cmd_tts = [
+                "ffmpeg", "-y",
+                "-i", str(audio_tmp),
+                "-f", "s16le", "-ar", "44100", "-ac", "2",
+                "-filter:a", "volume=1.15",
+                "pipe:1"
+            ]
+            res_tts = subprocess.run(cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            if res_tts.returncode == 0:
+                buffer_voz_pcm.extend(res_tts.stdout)
+                registrar_log(f"Sensei respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
+
+            # Esperar a que termine de reproducirse la respuesta en el Live
+            while len(buffer_voz_pcm) > 0 and estado["is_streaming"]:
+                await asyncio.sleep(0.5)
+
         except Exception as e:
-            registrar_log(f"Error generando TTS: {e}", "err")
+            registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
         # Pausa natural para la audiencia
-        await asyncio.sleep(7)
+        await asyncio.sleep(6)
         cola_preguntas.task_done()
 
 # ==================== CLIENTE TIKTOK LIVE ====================
@@ -312,7 +399,7 @@ async def handle_status(request):
     return web.json_response(estado)
 
 async def handle_start(request):
-    global ffmpeg_process, tiktok_task, worker_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task
 
     data = await request.json()
     estado["tiktok_username"] = data.get("tiktok_username", estado["tiktok_username"])
@@ -334,22 +421,30 @@ async def handle_start(request):
         ffmpeg_process = iniciar_proceso_ffmpeg(rtmp_completo)
         estado["is_streaming"] = True
 
+        streamer_task = asyncio.create_task(audio_streamer_loop())
         worker_task = asyncio.create_task(worker_preguntas())
         tiktok_task = asyncio.create_task(escuchar_tiktok())
 
-        registrar_log("Transmisión en vivo del Sensei del Amor y la Seducción iniciada.", "green")
+        registrar_log("Transmisión en vivo del Sensei del Amor iniciada (Levitando y con Audio en Vivo).", "green")
         return web.json_response({"ok": True})
     except Exception as e:
         return web.json_response({"ok": False, "error": str(e)})
 
 async def handle_stop(request):
-    global ffmpeg_process, tiktok_task, worker_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task
     estado["is_streaming"] = False
 
     if ffmpeg_process:
-        ffmpeg_process.terminate()
+        try:
+            if ffmpeg_process.stdin:
+                ffmpeg_process.stdin.close()
+            ffmpeg_process.terminate()
+        except Exception:
+            pass
         ffmpeg_process = None
 
+    if streamer_task:
+        streamer_task.cancel()
     if tiktok_task:
         tiktok_task.cancel()
     if worker_task:
