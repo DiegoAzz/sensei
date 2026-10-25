@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel de Control · Sensei del Amor (TikTok Live 24/7)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0210;
+      --card-bg: #14051b;
+      --card-inner: #0a010e;
+      --crimson: #ff2a6d;
+      --gold: #ffd700;
+      --rose: #ff7597;
+      --ink: #fcf1f4;
+      --ink70: rgba(252, 241, 244, 0.75);
+      --ink45: rgba(252, 241, 244, 0.45);
+      --line: rgba(255, 42, 109, 0.2);
+      --font-title: 'Cinzel', serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-main: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-main);
+      padding: 30px 20px;
+      display: flex;
+      justify-content: center;
+      background-image: radial-gradient(circle at 50% 10%, rgba(255, 42, 109, 0.15) 0%, transparent 60%);
+    }
+
+    .dashboard-container {
+      width: 100%;
+      max-width: 1040px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Header */
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-group h1 {
+      font-family: var(--font-title);
+      font-size: 26px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-vps {
+      background: rgba(255, 42, 109, 0.15);
+      border: 1px solid var(--crimson);
+      color: var(--rose);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--ink70);
+      margin-top: 4px;
+    }
+
+    .stream-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .stream-status-pill.offline {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      color: var(--ink45);
+    }
+
+    .stream-status-pill.online {
+      background: rgba(255, 42, 109, 0.2);
+      border: 1px solid var(--crimson);
+      color: var(--crimson);
+      box-shadow: 0 0 16px rgba(255, 42, 109, 0.3);
+    }
+
+    .dot-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Grid */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    @media (min-width: 860px) {
+      .dash-grid {
+        grid-template-columns: 1.15fr 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-title {
+      font-family: var(--font-title);
+      font-size: 19px;
+      color: var(--gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--rose);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-field {
+      background: var(--card-inner);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 11px 14px;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: var(--crimson);
+      box-shadow: 0 0 10px rgba(255, 42, 109, 0.2);
+    }
+
+    .btn-action-primary {
+      background: linear-gradient(135deg, #ff2a6d, #b80042);
+      color: #fff;
+      border: none;
+      padding: 15px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 18px rgba(255, 42, 109, 0.35);
+    }
+
+    .btn-action-primary:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-action-danger {
+      background: rgba(255, 51, 102, 0.15);
+      border: 1px solid #ff3366;
+      color: #ff3366;
+      padding: 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action-danger:hover {
+      background: #ff3366;
+      color: #fff;
+    }
+
+    /* Terminal de Logs en vivo */
+    .logs-terminal {
+      background: #060108;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      height: 420px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--ink70);
+    }
+
+    .log-line.hl { color: var(--rose); }
+    .log-line.green { color: var(--gold); }
+    .log-line.warn { color: #ffab00; }
+    .log-line.err { color: #ff3366; }
+
+    /* Preguntas frecuentes de amor para test */
+    .test-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--line);
+      padding: 16px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preset-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn-preset {
+      background: rgba(255, 42, 109, 0.1);
+      border: 1px solid rgba(255, 42, 109, 0.3);
+      color: var(--ink);
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-preset:hover {
+      background: var(--crimson);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dash-header">
+      <div class="brand-group">
+        <h1>
+          ⛩️ Sensei del Amor
+          <span class="badge-vps">VPS · COOLIFY 24/7</span>
+        </h1>
+        <p class="brand-sub">Transmisión de Consultorio de Parejas · Infidelidad, Desamor y Amor Propio</p>
+      </div>
+
+      <div class="stream-status-pill offline" id="stream-status-badge">
+        <span class="dot-led"></span>
+        <span id="stream-status-text">TRANSMISIÓN EN ESPERA</span>
+      </div>
+    </header>
+
+    <div class="dash-grid">
+      <!-- Columna de Configuración -->
+      <section class="card">
+        <div class="card-title">
+          <span>Configuración del Consultorio</span>
+          <span style="font-size: 12px; color: var(--gold); font-family: var(--font-mono);">EN DIRECTO</span>
+        </div>
+
+        <form id="stream-form" class="card" style="padding:0; border:none; background:transparent;">
+          <div class="form-group">
+            <label class="form-label">Tu Usuario de TikTok (el que transmite)</label>
+            <input type="text" id="cfg-username" class="input-field" placeholder="ej: el_sensei_del_amor">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Servidor RTMP de TikTok</label>
+            <input type="text" id="cfg-rtmp-url" class="input-field" placeholder="ej: rtmp://live-push.tiktok.com/live">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Clave de Transmisión (Stream Key)</label>
+            <input type="password" id="cfg-stream-key" class="input-field" placeholder="Pega aquí tu clave de emisión">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Estilo del Consejo del Sensei</label>
+            <select id="cfg-estilo" class="input-field">
+              <option value="sabio_directo">Sabio y Firme (Amor propio y dignidad)</option>
+              <option value="verdades_filtro">Verdades sin Filtro (Directo a la llaga / Picante)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Voz Neuronal del Sensei</label>
+            <select id="cfg-voice" class="input-field">
+              <option value="es-MX-JorgeNeural">Sensei Jorge (Voz masculina profunda y sabia)</option>
+              <option value="es-ES-AlvaroNeural">Sensei Álvaro (Español solemne)</option>
+              <option value="es-CO-GonzaloNeural">Sensei Gonzalo (Colombiano reflexivo)</option>
+              <option value="es-CO-SalomeNeural">Sensei Salomé (Voz femenina consejera)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Clave API de Gemini (Opcional para respuestas ilimitadas)</label>
+            <input type="password" id="cfg-gemini-key" class="input-field" placeholder="Pega tu clave gratuita de Google AI Studio">
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button type="button" class="btn-action-primary" id="btn-iniciar" style="flex: 1;">
+              🏮 Iniciar Transmisión del Sensei en TikTok
+            </button>
+            <button type="button" class="btn-action-danger" id="btn-detener" style="display: none;">
+              ⏹ Finalizar Live
+            </button>
+          </div>
+        </form>
+
+        <!-- Prueba de Consultas -->
+        <div class="test-box">
+          <label class="form-label">Simular Pregunta del Chat</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="test-comment-input" class="input-field" style="flex: 1;" placeholder="¿Debo perdonar una infidelidad si jura que cambió?">
+            <button type="button" class="btn-action-primary" id="btn-test-enviar" style="padding: 10px 16px;">
+              Preguntar
+            </button>
+          </div>
+          <div class="preset-pills">
+            <button class="btn-preset" data-q="¿Debo perdonar una infidelidad?">¿Perdonar infidelidad?</button>
+            <button class="btn-preset" data-q="¿Vale la pena volver con mi ex si me busca?">¿Volver con mi ex?</button>
+            <button class="btn-preset" data-q="Me deja en visto y tarda horas en responder">Me deja en visto</button>
+            <button class="btn-preset" data-q="Somos casi algo hace 6 meses y no formaliza">Somos casi algo</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Columna de Bitácora -->
+      <section class="card">
+        <div class="card-title">
+          <span>Consultorio en Vivo</span>
+          <span style="font-size: 11px; color: var(--crimson); font-family: var(--font-mono);">● EN DIRECTO</span>
+        </div>
+
+        <div class="logs-terminal" id="terminal-logs">
+          <div class="log-line hl">[SENSEI] Contenedor de Coolify iniciado en el VPS.</div>
+          <div class="log-line">[SENSEI] Base de sabiduría de relaciones y motor de voz listos.</div>
+          <div class="log-line green">[SENSEI] Pega tu Stream Key de TikTok y enciende el consultorio.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const streamStatusBadge = document.getElementById("stream-status-badge");
+    const streamStatusText = document.getElementById("stream-status-text");
+    const btnIniciar = document.getElementById("btn-iniciar");
+    const btnDetener = document.getElementById("btn-detener");
+    const terminalLogs = document.getElementById("terminal-logs");
+
+    const cfgUsername = document.getElementById("cfg-username");
+    const cfgRtmpUrl = document.getElementById("cfg-rtmp-url");
+    const cfgStreamKey = document.getElementById("cfg-stream-key");
+    const cfgEstilo = document.getElementById("cfg-estilo");
+    const cfgVoice = document.getElementById("cfg-voice");
+    const cfgGeminiKey = document.getElementById("cfg-gemini-key");
+
+    const testCommentInput = document.getElementById("test-comment-input");
+    const btnTestEnviar = document.getElementById("btn-test-enviar");
+    const presetButtons = document.querySelectorAll(".btn-preset");
+
+    function addLog(text, type = "normal") {
+      const time = new Date().toTimeString().split(" ")[0];
+      const div = document.createElement("div");
+      div.className = `log-line ${type}`;
+      div.textContent = `[${time}] ${text}`;
+      terminalLogs.appendChild(div);
+      terminalLogs.scrollTop = terminalLogs.scrollHeight;
+    }
+
+    async function cargarEstado() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+
+        cfgUsername.value = data.tiktok_username || "";
+        cfgRtmpUrl.value = data.rtmp_url || "";
+        cfgVoice.value = data.voice || "es-MX-JorgeNeural";
+        cfgEstilo.value = data.estilo || "sabio_directo";
+
+        if (data.is_streaming) {
+          actualizarUI(true);
+        } else {
+          actualizarUI(false);
+        }
+      } catch (e) {
+        console.error("Error cargando estado:", e);
+      }
+    }
+
+    function actualizarUI(streaming) {
+      if (streaming) {
+        streamStatusBadge.className = "stream-status-pill online";
+        streamStatusText.textContent = "CONSULTORIO EN VIVO EN TIKTOK";
+        btnIniciar.style.display = "none";
+        btnDetener.style.display = "block";
+      } else {
+        streamStatusBadge.className = "stream-status-pill offline";
+        streamStatusText.textContent = "TRANSMISIÓN EN ESPERA";
+        btnIniciar.style.display = "flex";
+        btnDetener.style.display = "none";
+      }
+    }
+
+    btnIniciar.addEventListener("click", async () => {
+      btnIniciar.disabled = true;
+      btnIniciar.textContent = "⏳ Iniciando Live...";
+
+      const payload = {
+        tiktok_username: cfgUsername.value.trim(),
+        rtmp_url: cfgRtmpUrl.value.trim(),
+        stream_key: cfgStreamKey.value.trim(),
+        voice: cfgVoice.value,
+        estilo: cfgEstilo.value,
+        gemini_api_key: cfgGeminiKey.value.trim()
+      };
+
+      try {
+        const res = await fetch("/api/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const resp = await res.json();
+        if (resp.ok) {
+          addLog("Transmisión del Sensei iniciada hacia TikTok Live.", "green");
+          actualizarUI(true);
+        } else {
+          addLog("Error al iniciar: " + (resp.error || "Desconocido"), "err");
+        }
+      } catch (e) {
+        addLog("Error de conexión: " + e.message, "err");
+      } finally {
+        btnIniciar.disabled = false;
+        btnIniciar.textContent = "🏮 Iniciar Transmisión del Sensei en TikTok";
+      }
+    });
+
+    btnDetener.addEventListener("click", async () => {
+      try {
+        await fetch("/api/stop", { method: "POST" });
+        addLog("Live finalizado por el usuario.", "warn");
+        actualizarUI(false);
+      } catch (e) {
+        addLog("Error al detener: " + e.message, "err");
+      }
+    });
+
+    btnTestEnviar.addEventListener("click", async () => {
+      const q = testCommentInput.value.trim();
+      if (!q) return;
+
+      addLog(`[CASO DE PRUEBA] @espectador_amor: "${q}"`, "hl");
+      testCommentInput.value = "";
+
+      try {
+        const res = await fetch("/api/test-comment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user: "espectador_amor", comment: q })
+        });
+        const d = await res.json();
+        addLog(`[SENSEI RESPONDE]: "${d.answer}"`, "green");
+      } catch (e) {
+        addLog("Error al procesar: " + e.message, "err");
+      }
+    });
+
+    presetButtons.forEach(btn => {
+      btn.addEventListener("click", function() {
+        testCommentInput.value = this.getAttribute("data-q");
+        btnTestEnviar.click();
+      });
+    });
+
+    setInterval(async () => {
+      try {
+        const res = await fetch("/api/logs");
+        const logs = await res.json();
+        if (logs.length > 0) {
+          logs.forEach(l => addLog(l.text, l.type));
+        }
+      } catch (e) {}
+    }, 2000);
+
+    cargarEstado();
+  </script>
+</body>
+</html>

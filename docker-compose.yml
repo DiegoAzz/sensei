@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  sensei-del-amor:
+    build: .
+    container_name: tiktok-sensei-amor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - sensei_data:/app/data
+    environment:
+      - PORT=8080
+      - TIKTOK_USERNAME=${TIKTOK_USERNAME:-}
+      - TIKTOK_RTMP_URL=${TIKTOK_RTMP_URL:-}
+      - TIKTOK_STREAM_KEY=${TIKTOK_STREAM_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - AGENT_NAME=${AGENT_NAME:-Sensei del Amor}
+      - VOICE=${VOICE:-es-MX-JorgeNeural}
+      - ESTILO_CONSEJO=${ESTILO_CONSEJO:-sabio_directo}
+
+volumes:
+  sensei_data:
