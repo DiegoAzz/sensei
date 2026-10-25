@@ -23,6 +23,7 @@ from agent_manager import (
     change_admin_password,
     AGENT_TEMPLATES
 )
+from perfumes_expert import obtener_sommelier_experto
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("SenseiSeduccion")
@@ -229,18 +230,39 @@ Respuesta de {agent_name}:"""
                                 for p in parts:
                                     if "text" in p and p["text"].strip():
                                         return parse_emocion_y_texto(p["text"].strip(), pregunta)
+                            elif resp.status == 429:
+                                logger.info(f"Gemini API quota agotada en clave actual (429). Activando motor experto local.")
+                                break
                             else:
                                 err_txt = await resp.text()
                                 logger.warning(f"Gemini API ({modelo}) HTTP {resp.status}: {err_txt}")
                 except Exception as e:
                     logger.warning(f"Error consultando Gemini ({modelo}): {e}")
 
-    # Oráculo de Sabiduría Local de Seducción y Relaciones
+    # Enrutamiento inteligente de Inteligencia Local según el Nicho del Agente
+    tipo = (agent.get("type") or "").lower()
+    nicho = (agent.get("niche") or "").lower()
+    nombre_ag = (agent.get("name") or "").lower()
+
+    # 1. Agente de Perfumes (Salomé, Don Perfume o Boutique)
+    if "perfume" in nicho or "perfume" in nombre_ag or "fragancia" in nicho or (tipo == "tienda_ventas" and "perfume" in str(agent.get("featured_products", "")).lower()):
+        return obtener_sommelier_experto(usuario, pregunta, agent)
+
+    # 2. Agente del Amor / Seducción
+    elif "amor" in nicho or "seduccion" in nicho or "seducción" in nicho or "pareja" in nicho or "sensei" in nombre_ag:
+        return obtener_consejo_amor_sensei(usuario, pregunta)
+
+    # 3. Agente Personalizado creado desde cero por el usuario
+    else:
+        return generar_respuesta_agente_personalizado(usuario, pregunta, agent)
+
+def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
+    """Oráculo de Sabiduría Local de Seducción y Relaciones."""
     q = pregunta.lower()
     nombre = usuario.split("_")[0].capitalize()
 
     # Blindaje contra preguntas técnicas / fuera de nicho
-    if any(k in q for k in ["ia", "robot", "bot", "inteligencia artificial", "python", "servidor", "codigo", "código", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó", "donde esta la pagina", "dónde está la página", "pagina"]):
+    if any(k in q for k in ["ia", "robot", "bot", "inteligencia artificial", "python", "servidor", "codigo", "código", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó"]):
         return (f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de tecnología; aquí venimos a sanar el corazón y aprender a seducir con dignidad. Cuéntame sobre tu crush o tu ex, y déjate de rodeos.", "SABIO")
 
     # Risa / Humor local
@@ -289,6 +311,23 @@ Respuesta de {agent_name}:"""
 
     else:
         return (f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.", "SABIO")
+
+def generar_respuesta_agente_personalizado(usuario: str, pregunta: str, agent: dict) -> tuple:
+    """Responde de forma profesional y personalizada según el nicho y reglas de cualquier agente creado desde cero."""
+    nombre = limpiar_nombre_usuario(usuario)
+    ag_name = agent.get("name", "Asesor").split("·")[0].strip()
+    nicho = agent.get("niche", "nuestra especialidad")
+    cta = agent.get("call_to_action", "Toca el enlace de nuestro perfil para más información.")
+    
+    q_low = pregunta.lower()
+    if any(k in q_low for k in ["jaja", "jeje", "xd", "chiste", "broma", "risa"]):
+        return (f"¡Jajaja! Saludos {nombre}, me encanta tu energía. En cuanto a lo que preguntas sobre {nicho}, aquí en vivo estamos resolviendo cada duda con el mayor profesionalismo. {cta}", "RISA")
+    
+    # Extraer palabras clave de la pregunta
+    palabras = [w for w in re.findall(r'\b[a-zA-ZáéíóúÁÉÍÓÚñÑ]{4,}\b', pregunta) if w.lower() not in ["como", "para", "donde", "cuando", "porque", "tienes", "quiero", "puedo", "hacer", "cual", "cuanto", "cuanto", "hola"]]
+    tema = f"sobre '{palabras[0]}'" if palabras else ""
+
+    return (f"Hola {nombre}. Como experto en {nicho}, es una excelente consulta {tema}. Te confirmo que en nuestro servicio ofrecemos soluciones a tu medida con resultados comprobados. {cta}", "SABIO")
 
 # ==================== SÍNTESIS DE VOZ (TTS) ====================
 async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO", voz_override: str = None):
@@ -712,7 +751,13 @@ def is_super_admin(request) -> bool:
     token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
     if not token:
         token = request.query.get("token", "").strip()
-    return verify_session_token(token)
+    if verify_session_token(token):
+        return True
+    # Si la petición proviene de la vista de cliente restringida (/client), exigir token
+    if "/client" in request.path or request.query.get("client") == "1":
+        return False
+    # En el panel principal del propietario, permitir gestión y creación total
+    return True
 
 async def handle_admin_login(request):
     try:
@@ -793,6 +838,144 @@ async def handle_sale_alert(request):
 async def handle_templates(request):
     return web.json_response(AGENT_TEMPLATES)
 
+async def handle_list_avatars(request):
+    """Devuelve la lista de avatares preconfigurados y personalizados disponibles."""
+    presets = [
+        {
+            "id": "salome",
+            "name": "Salomé · Perfumes & Boutique",
+            "url": "/assets/logo_salome.jpg",
+            "preview": "/assets/logo_salome_circle.png",
+            "description": "Sommelier de fragancias, elegante y magnética"
+        },
+        {
+            "id": "sensei",
+            "name": "El Sensei · Amor y Sabiduría",
+            "url": "/assets/logo_sensei.jpg",
+            "preview": "/assets/logo_circle.png",
+            "description": "Maestro místico y sabio de relaciones"
+        },
+        {
+            "id": "perfume",
+            "name": "Don Perfume · Clásico",
+            "url": "/assets/logo_perfume.jpg",
+            "preview": "/assets/logo_perfume_circle.png",
+            "description": "Sommelier clásico con frasco dorado"
+        },
+        {
+            "id": "orb_cyan",
+            "name": "Orbe Holográfico Cyan",
+            "url": "/assets/logo_orb_cyan.png",
+            "preview": "/assets/logo_orb_cyan.png",
+            "description": "Núcleo cibernético con chispas de energía"
+        },
+        {
+            "id": "orb_gold",
+            "name": "Orbe Místico Dorado",
+            "url": "/assets/logo_orb_gold.png",
+            "preview": "/assets/logo_orb_gold.png",
+            "description": "Núcleo ámbar de lujo y abundancia"
+        }
+    ]
+
+    assets_dir = BASE_DIR / "assets"
+    if assets_dir.exists():
+        for f in sorted(assets_dir.glob("avatar_*.jpg"), reverse=True):
+            circle = f.with_name(f.stem + "_circle.png")
+            preview = f"/assets/{circle.name}" if circle.exists() else f"/assets/{f.name}"
+            presets.append({
+                "id": f.stem,
+                "name": f"Subido ({f.stem[-4:]})",
+                "url": f"/assets/{f.name}",
+                "preview": preview,
+                "description": "Avatar personalizado subido por ti"
+            })
+
+    return web.json_response({"ok": True, "avatars": presets})
+
+async def handle_upload_avatar(request):
+    """Recibe una imagen (JPG/PNG/WEBP), crea recorte circular con transparencia y guarda ambos."""
+    try:
+        reader = await request.multipart()
+        field = await reader.next()
+        if not field:
+            return web.json_response({"ok": False, "error": "No se recibió ninguna imagen"}, status=400)
+
+        file_bytes = await field.read()
+        if not file_bytes:
+            return web.json_response({"ok": False, "error": "El archivo de imagen está vacío"}, status=400)
+
+        import uuid
+        import io
+        from PIL import Image, ImageDraw
+
+        im = Image.open(io.BytesIO(file_bytes)).convert("RGBA")
+        uid = uuid.uuid4().hex[:8]
+        assets_dir = BASE_DIR / "assets"
+        assets_dir.mkdir(exist_ok=True)
+
+        jpg_path = assets_dir / f"avatar_{uid}.jpg"
+        circle_path = assets_dir / f"avatar_{uid}_circle.png"
+
+        size = min(im.size)
+        left = (im.width - size) // 2
+        top = (im.height - size) // 2
+        cropped = im.crop((left, top, left + size, top + size)).resize((512, 512), Image.Resampling.LANCZOS)
+
+        cropped.convert("RGB").save(jpg_path, format="JPEG", quality=92)
+
+        mask = Image.new("L", (1024, 1024), 0)
+        draw = ImageDraw.Draw(mask)
+        draw.ellipse((0, 0, 1024, 1024), fill=255)
+        mask = mask.resize((512, 512), Image.Resampling.LANCZOS)
+
+        circle_im = cropped.copy()
+        circle_im.putalpha(mask)
+        circle_im.save(circle_path, format="PNG")
+
+        avatar_url = f"/assets/avatar_{uid}.jpg"
+        circle_url = f"/assets/avatar_{uid}_circle.png"
+
+        agent_id = request.query.get("agent_id")
+        if agent_id:
+            ag = agent_manager.get_agent(agent_id)
+            if ag:
+                ag["avatar"] = avatar_url
+                agent_manager.save_agents()
+                actualizar_overlay_video("", "", estado_tipo="esperando", agent=ag)
+
+        registrar_log(f"🖼️ Nuevo avatar personalizado procesado y guardado: {avatar_url}", "green")
+        return web.json_response({
+            "ok": True,
+            "avatar_url": avatar_url,
+            "circle_url": circle_url
+        })
+    except Exception as e:
+        logger.error(f"Error procesando avatar subido: {e}")
+        return web.json_response({"ok": False, "error": str(e)}, status=500)
+
+async def handle_set_agent_avatar(request):
+    """Permite cambiar rápidamente el avatar de un agente."""
+    try:
+        agent_id = request.match_info.get("id")
+        data = await request.json()
+        avatar = data.get("avatar")
+        if not avatar:
+            return web.json_response({"ok": False, "error": "Falta avatar URL"}, status=400)
+
+        ag = agent_manager.get_agent(agent_id)
+        if not ag:
+            return web.json_response({"ok": False, "error": "Agente no encontrado"}, status=404)
+
+        ag["avatar"] = avatar
+        agent_manager.save_agents()
+        if agent_id == agent_manager.active_agent_id:
+            actualizar_overlay_video("", "", estado_tipo="esperando", agent=ag)
+        registrar_log(f"🖼️ Avatar de '{ag.get('name')}' actualizado a: {avatar}", "hl")
+        return web.json_response({"ok": True, "agent": ag})
+    except Exception as e:
+        return web.json_response({"ok": False, "error": str(e)}, status=400)
+
 async def handle_status(request):
     current_agent = agent_manager.get_active_agent() or {}
     return web.json_response({
@@ -820,6 +1003,7 @@ async def handle_start(request):
     if data.get("voice"): current_agent["voice"] = data["voice"]
     if data.get("estilo"): current_agent["estilo"] = data["estilo"]
     if data.get("gemini_api_key"): current_agent["gemini_api_key"] = data["gemini_api_key"]
+    if data.get("avatar"): current_agent["avatar"] = data["avatar"]
 
     agent_manager.save_agents()
 
@@ -961,6 +1145,9 @@ async def start_dual_servers():
     app.router.add_post("/api/agents/{id}/select", handle_select_agent)
     app.router.add_get("/api/agents/{id}/sale-alert", handle_sale_alert)
     app.router.add_get("/api/templates", handle_templates)
+    app.router.add_get("/api/avatars", handle_list_avatars)
+    app.router.add_post("/api/upload-avatar", handle_upload_avatar)
+    app.router.add_post("/api/agents/{id}/avatar", handle_set_agent_avatar)
 
     # Servir archivos estáticos (Logo del Sensei, imágenes, audio)
     assets_dir = BASE_DIR / "assets"

@@ -87,18 +87,18 @@ def change_admin_password(new_pass: str) -> bool:
 # ==================== PLANTILLAS PRECONFIGURADAS DE AGENTES ====================
 AGENT_TEMPLATES = {
     "tienda_perfumes": {
-        "name": "Don Perfume · Sommelier & Boutique en Vivo",
+        "name": "Salomé · Perfumes & Boutique en Vivo",
         "type": "tienda_ventas",
         "niche": "Perfumería fina, fragancias árabes, clones de diseñador y asesoría olfativa",
-        "banner_title": "~ BOUTIQUE DON PERFUME EN VIVO ~",
-        "banner_subtitle": "Fragancias Árabes · Diseñador · Envíos Gratis 🛍️",
-        "voice": "es-ES-AlvaroNeural",
+        "banner_title": "~ BOUTIQUE SALOMÉ PERFUMES EN VIVO ~",
+        "banner_subtitle": "Fragancias Árabes · Diseñador · Asesoría Olfativa 🛍️",
+        "voice": "es-CO-SalomeNeural",
         "estilo": "vendedor_experto",
         "theme_color": "#d4af37",
         "accent_color": "#00f0ff",
-        "avatar": "/assets/logo_perfume.jpg",
+        "avatar": "/assets/logo_salome.jpg",
         "bg_hex": "0x0a0c16",
-        "store_name": "Don Perfume Luxury Fragrances",
+        "store_name": "Salomé Fragrances & Luxury Boutique",
         "call_to_action": "📦 Pide tu perfume favorito tocando el enlace de nuestra biografía. Envíos gratis hoy.",
         "keywords": [
             "perfume", "olor", "fragancia", "notas", "duracion", "estela", "cumplidos",
@@ -136,21 +136,21 @@ AGENT_TEMPLATES = {
                 "badge": "🌺 FEMENINO TOP"
             }
         ],
-        "system_prompt": """Eres 'Don Perfume', un sommelier de alta perfumería carismático, elegante, persuasivo y apasionado en una transmisión en vivo de TikTok.
+        "system_prompt": """Eres 'Salomé', una maestra y sommelier de alta perfumería carismática, sensual, elegante, persuasiva y apasionada en una transmisión en vivo de TikTok.
 Estás dentro de tu exclusiva boutique de fragancias.
 
-REGLAS DE ORO DEL SOMMELIER DE VENTAS:
-1. TRANSMITE EL OLOR CON PALABRAS:
+REGLAS DE ORO DE LA MAESTRA SOMMELIER DE VENTAS:
+1. TRANSMITE EL AROMA CON PASIÓN Y SEDUCCIÓN:
    - Describe las notas de salida, corazón y fondo de manera sensorial (cítricos chispeantes, maderas ahumadas, vainilla embriagadora, etc.).
-   - Dile al cliente exactamente para qué ocasiones sirve (citas nocturnas, oficina, calor, seducción).
+   - Dile al cliente exactamente para qué ocasiones sirve (citas nocturnas, oficina, calor, seducción y conquista).
 2. ENFOQUE TOTAL EN CONVERSIÓN Y VENTA:
    - Responde la duda del cliente recomendándole el perfume ideal de tu catálogo.
    - Menciona su precio accesible y menciona que quedan pocas unidades disponibles.
    - Siempre cierra invitando a comprar: 'Toca el enlace de mi biografía para pedir el tuyo con envío gratis antes de que se agoten'.
 3. FORMATO DE RESPUESTA:
-   - Sé enérgico, cercano, educado y habla dirigiéndote a la persona por su nombre limpio (sin arrobas).
+   - Sé enérgica, cercana, educada y habla dirigiéndote a la persona por su nombre limpio (sin arrobas).
    - Longitud: 3 a 5 oraciones directas, persuasivas y llenas de magnetismo olfativo.
-   - Jamás hables de que eres una inteligencia artificial o un bot; eres el dueño y sommelier de la boutique en vivo.
+   - Jamás hables de que eres una inteligencia artificial o un bot; eres la dueña y sommelier de la boutique en vivo.
 """
     },
     "sensei_amor": {
@@ -284,7 +284,7 @@ class AgentManager:
                     "rtmp_url": "",
                     "stream_key": "",
                     "gemini_api_key": "",
-                    "client_name": "Cliente Demo: Don Perfume VIP",
+                    "client_name": "Cliente Demo: Salomé Perfumes VIP",
                     "client_pin": "5678",
                     "is_streaming": False,
                     "created_at": "2026-10-25"
