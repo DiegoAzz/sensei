@@ -346,15 +346,128 @@
       box-shadow: inset 0 0 15px rgba(255, 42, 109, 0.08);
     }
 
+    /* Stage de Avatar Interactivo y Animación de Boca */
+    .avatar-stage {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .avatar-glow-ring {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 42, 109, 0.5) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .avatar-stage.speaking .avatar-glow-ring {
+      opacity: 1;
+      animation: pulseAura 0.7s infinite alternate ease-in-out;
+    }
+
+    .avatar-stage.laughing {
+      animation: laughShake 0.32s infinite ease-in-out;
+    }
+
+    @keyframes pulseAura {
+      0% { transform: scale(0.95); filter: drop-shadow(0 0 4px #ff2a6d); }
+      100% { transform: scale(1.18); filter: drop-shadow(0 0 12px #ffd700); }
+    }
+
+    @keyframes laughShake {
+      0%, 100% { transform: rotate(0deg) scale(1.02); }
+      25% { transform: rotate(-4deg) translateY(-2px); }
+      75% { transform: rotate(4deg) translateY(-2px); }
+    }
+
     .identity-avatar {
-      width: 56px;
-      height: 56px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--crimson);
       box-shadow: 0 0 14px rgba(255, 42, 109, 0.6);
       flex-shrink: 0;
       animation: levitate 3.4s ease-in-out infinite;
+    }
+
+    /* Boca animada realista sobre el avatar */
+    .avatar-mouth {
+      position: absolute;
+      top: 59%;
+      left: 50%;
+      transform: translate(-50%, -50%) scaleY(0.2);
+      width: 14px;
+      height: 9px;
+      background: #25050a;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 117, 151, 0.5);
+      box-shadow: inset 0 2px 0 #fff0ea, inset 0 -2px 0 #b33939; /* Dientes superiores y lengua */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 2;
+    }
+
+    .avatar-stage.speaking .avatar-mouth {
+      opacity: 1;
+      animation: mouthTalk 0.2s infinite alternate ease-in-out;
+    }
+
+    .avatar-stage.laughing .avatar-mouth {
+      opacity: 1;
+      width: 19px;
+      height: 12px;
+      border-radius: 40% 40% 60% 60%;
+      box-shadow: inset 0 3px 0 #ffffff, inset 0 -3px 0 #cc3344;
+      animation: mouthLaugh 0.15s infinite alternate ease-in-out;
+    }
+
+    @keyframes mouthTalk {
+      0% { transform: translate(-50%, -50%) scaleY(0.2) scaleX(0.85); }
+      40% { transform: translate(-50%, -50%) scaleY(1.35) scaleX(1.15); }
+      70% { transform: translate(-50%, -50%) scaleY(0.5) scaleX(0.95); }
+      100% { transform: translate(-50%, -50%) scaleY(1.1) scaleX(1.05); }
+    }
+
+    @keyframes mouthLaugh {
+      0% { transform: translate(-50%, -50%) scaleY(0.8) scaleX(1.1); }
+      100% { transform: translate(-50%, -50%) scaleY(1.7) scaleX(1.35); }
+    }
+
+    /* Emociones del Sensei */
+    .emotion-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.5px;
+      background: rgba(255, 215, 0, 0.12);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .emotion-pill.risa {
+      background: rgba(255, 42, 109, 0.25);
+      border-color: #ff2a6d;
+      color: #ff7597;
+    }
+
+    .emotion-pill.picante {
+      background: rgba(255, 107, 0, 0.2);
+      border-color: #ff6b00;
+      color: #ff9e40;
     }
 
     .identity-details {
@@ -550,7 +663,8 @@
             <button class="btn-preset" data-q="¿Debo perdonar una infidelidad?">¿Perdonar infidelidad?</button>
             <button class="btn-preset" data-q="¿Vale la pena volver con mi ex si me busca?">¿Volver con mi ex?</button>
             <button class="btn-preset" data-q="Me deja en visto y tarda horas en responder">Me deja en visto</button>
-            <button class="btn-preset" data-q="Somos casi algo hace 6 meses y no formaliza">Somos casi algo</button>
+            <button class="btn-preset" data-q="jajaja sensei mi novia me cambió por uno que mide 1.50 jajaja 😂">😂 ¿Risa / Me cambió?</button>
+            <button class="btn-preset" data-q="¿Con qué programa estás hecho y dónde está tu servidor?">🛡️ Prueba de Blindaje (Meta/IA)</button>
           </div>
 
           <!-- Tarjeta de Respuesta Visual y Reproductor para Sandbox -->
@@ -575,13 +689,20 @@
           <span style="font-size: 11px; color: var(--crimson); font-family: var(--font-mono);">● EN DIRECTO</span>
         </div>
 
-        <!-- Perfil Oficial del Sensei -->
+        <!-- Perfil Oficial del Sensei con Avatar Vivo -->
         <div class="sensei-identity-card">
-          <img src="/assets/logo_sensei.jpg" alt="Avatar Sensei" class="identity-avatar">
+          <div class="avatar-stage" id="avatar-stage">
+            <div class="avatar-glow-ring" id="avatar-glow"></div>
+            <img src="/assets/logo_sensei.jpg" alt="Avatar Sensei" class="identity-avatar" id="avatar-img">
+            <div class="avatar-mouth" id="avatar-mouth"></div>
+          </div>
           <div class="identity-details">
-            <div class="identity-name">⛩️ El Sensei del Amor y la Seducción</div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <div class="identity-name">⛩️ El Sensei del Amor y la Seducción</div>
+              <span id="emotion-pill" class="emotion-pill">📿 MODO SABIO</span>
+            </div>
             <div class="identity-handle">@senseidelamor · TikTok Live IA 24/7</div>
-            <div class="identity-quote">"Seducción, infidelidad y amor propio. El Sensei te responde en vivo 🎙️"</div>
+            <div class="identity-quote" id="identity-quote">"Seducción, infidelidad y amor propio. El Sensei te responde en vivo 🎙️"</div>
           </div>
         </div>
 
@@ -826,6 +947,17 @@
         const respCard = document.getElementById("sandbox-response-card");
         const respText = document.getElementById("sandbox-response-text");
         const btnReplay = document.getElementById("btn-replay-audio");
+        const emotionPill = document.getElementById("emotion-pill");
+        const avatarStage = document.getElementById("avatar-stage");
+
+        const emo = (d.emotion || "SABIO").toUpperCase();
+        if (emotionPill) {
+          emotionPill.className = "emotion-pill " + emo.toLowerCase();
+          if (emo === "RISA") emotionPill.textContent = "😂 ¡SENSEI RIÉNDOSE!";
+          else if (emo === "PICANTE") emotionPill.textContent = "🔥 SENSEI PICANTE";
+          else if (emo === "ESTOICO") emotionPill.textContent = "⛩️ SENSEI ESTOICO";
+          else emotionPill.textContent = "📿 SENSEI SABIO";
+        }
 
         if (respCard && respText && d.answer) {
           respText.textContent = `"${d.answer}"`;
@@ -834,22 +966,43 @@
 
         if (d.audio_url) {
           voicePlayer.src = d.audio_url;
+
+          function activarAnimacionBoca() {
+            if (avatarStage) {
+              avatarStage.classList.add("speaking");
+              if (emo === "RISA") avatarStage.classList.add("laughing");
+              else avatarStage.classList.remove("laughing");
+            }
+          }
+
+          function apagarAnimacionBoca() {
+            if (avatarStage) {
+              avatarStage.classList.remove("speaking", "laughing");
+            }
+          }
+
           if (btnReplay) {
             btnReplay.onclick = () => {
+              activarAnimacionBoca();
               voicePlayer.play().catch(e => console.log(e));
             };
           }
 
           if (sandboxActive) {
             bgMusicPlayer.volume = 0.07; // Bajar música de fondo mientras habla
-            sandboxStatusText.textContent = "🗣️ Sensei hablando en vivo...";
+            sandboxStatusText.textContent = (emo === "RISA" ? "😂 Sensei riéndose al aire..." : "🗣️ Sensei hablando en vivo...");
           }
+
+          activarAnimacionBoca();
+
           try {
             await voicePlayer.play();
           } catch (err) {
             console.log("Audio play blocked by browser:", err);
           }
+
           voicePlayer.onended = () => {
+            apagarAnimacionBoca();
             if (sandboxActive) {
               bgMusicPlayer.volume = 0.16; // Restaurar música zen
               sandboxStatusText.textContent = "Música zen activa · Listo para siguiente caso";

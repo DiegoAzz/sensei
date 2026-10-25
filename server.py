@@ -42,6 +42,7 @@ estado = {
     "agent_name": os.environ.get("AGENT_NAME", "Sensei del Amor y la Seducción"),
     "estilo": os.environ.get("ESTILO_CONSEJO", "sabio_directo"),
     "active_user": "",
+    "active_emotion": "SABIO",
     "active_question": "Esperando consultas de amor y seducción...",
     "active_answer": "Deja en el chat tu caso sobre tu crush, ligar, pareja o desamor."
 }
@@ -86,17 +87,47 @@ def guardar_configuracion():
         logger.error(f"Error al guardar config: {e}")
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
-async def responder_con_ia(usuario: str, pregunta: str) -> str:
+def parse_emocion_y_texto(raw: str, pregunta: str) -> tuple:
+    emocion = "SABIO"
+    t = raw.strip()
+    if t.startswith("[") and "]" in t:
+        tag, rest = t[1:].split("]", 1)
+        emocion = tag.strip().upper()
+        t = rest.strip()
+
+    # Si el espectador se estaba riendo o cuenta algo comico, detectar risa
+    q_low = pregunta.lower()
+    if any(k in q_low for k in ["jaja", "jeje", "xd", "gracioso", "chiste", "risa", "broma", "burla"]) and emocion in ["SABIO", "GENERAL"]:
+        emocion = "RISA"
+
+    return t, emocion
+
+async def responder_con_ia(usuario: str, pregunta: str) -> tuple:
     api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or obtener_gemini_key_default()).strip()
 
     if api_key:
         tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
-        prompt = f"""Eres el 'Sensei del Amor y la Seducción', un maestro y mentor de relaciones, seducción, psicología de la atracción, cómo hablarle a un crush, salir de la friendzone, mensajes de texto e infidelidades en un live de TikTok.
-Tu estilo: {tono}.
-Reglas estrictas:
-1. Responde SIEMPRE en español en máximo 2 a 3 frases breves y de alto impacto.
-2. Saluda brevemente al usuario @{usuario} por su nombre al comenzar.
-3. Enseña que la atracción nace de la seguridad, el misterio y el amor propio, nunca de mendigar atención o rogar.
+        prompt = f"""Eres el legendario 'Sensei del Amor y la Seducción', un maestro místico, sabio, carismático y con una personalidad vibrante y pícara en un live de TikTok.
+Tu estilo general: {tono}.
+
+REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
+1. TU ÚNICO UNIVERSO ES EL AMOR Y LA SEDUCCIÓN:
+   - Solo respondes sobre: conquistar, crush, ligar, salir de la friendzone, mensajes de WhatsApp/Instagram, infidelidades, desamor, celos, parejas y amor propio.
+2. PROHIBIDO SALIR DEL PERSONAJE / PROHIBIDO HABLAR DE TECNOLOGÍA:
+   - Si alguien te pregunta de qué estás hecho, si eres una IA o robot, con qué software o código estás programado, dónde está tu página web o servidor, o temas fuera del amor (matemáticas, política, tecnología):
+   - NUNCA menciones que eres una IA, ni menciones a OpenAI, Gemini, ChatGPT, Python, Coolify, servidores ni programación.
+   - Desvía la pregunta con picardía, misterio o humor y regrésalo al amor. Ejemplo: "Aquí no venimos a hablar de cables ni servidores, @usuario; hablemos del cable suelto que tienes en el corazón por seguir rogándole a quien te deja en visto."
+
+REGLAS DE EMOCIÓN Y REACCIONES HUMANAS:
+3. SIENTE LA VIBRA DEL USUARIO:
+   - Si el espectador se ríe (escribe "jajaja", "jeje", "xd" o cuenta una anécdota cómica/ridícula): ¡RÍETE CON ÉL! Comienza riéndote ("¡Jajajaja!", "¡Ay, mi querido @{usuario}!"), vacílalo con humor y picardía, y luego dale un remate de sabiduría profunda.
+   - Si habla de traición, infidelidad o mentiras: Muestra indignación estoica y respeto propio implacable.
+   - Si habla de timidez, friendzone o cómo hablarle a su crush: Muestra picardía, seguridad y vibra de seductor magnético.
+4. FORMATO:
+   - Al puro inicio pon la etiqueta de tu emoción entre corchetes: [RISA], [SABIO], [PICANTE] o [ESTOICO].
+   - Saluda brevemente a @{usuario} por su nombre al comenzar.
+   - Responde SIEMPRE en español en máximo 2 a 3 frases breves y de alto impacto para TikTok.
+   - Enseña que la atracción nace de la seguridad y el amor propio, nunca de mendigar atención o rogar.
 
 Pregunta del espectador en TikTok: "{pregunta}"
 Respuesta del Sensei:"""
@@ -113,14 +144,15 @@ Respuesta del Sensei:"""
                 payload = {
                     "model": "gpt-4o-mini",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.8,
+                    "temperature": 0.85,
                     "max_tokens": 160
                 }
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
                         if resp.status == 200:
                             d = await resp.json()
-                            return d["choices"][0]["message"]["content"].strip()
+                            raw_ans = d["choices"][0]["message"]["content"].strip()
+                            return parse_emocion_y_texto(raw_ans, pregunta)
             except Exception as e:
                 logger.warning(f"Error consultando OpenAI API: {e}")
 
@@ -134,7 +166,7 @@ Respuesta del Sensei:"""
                     payload = {
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
-                            "temperature": 0.8,
+                            "temperature": 0.85,
                             "maxOutputTokens": 2048,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
@@ -146,7 +178,7 @@ Respuesta del Sensei:"""
                                 parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
                                 for p in parts:
                                     if "text" in p and p["text"].strip():
-                                        return p["text"].strip()
+                                        return parse_emocion_y_texto(p["text"].strip(), pregunta)
                             else:
                                 err_txt = await resp.text()
                                 logger.warning(f"Gemini API ({modelo}) HTTP {resp.status}: {err_txt}")
@@ -157,54 +189,77 @@ Respuesta del Sensei:"""
     q = pregunta.lower()
     nombre = usuario.split("_")[0].capitalize()
 
+    # Blindaje contra preguntas técnicas / fuera de nicho
+    if any(k in q for k in ["ia", "robot", "bot", "inteligencia artificial", "python", "servidor", "codigo", "código", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó", "donde esta la pagina", "dónde está la página", "pagina"]):
+        return (f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de tecnología; aquí venimos a sanar el corazón y aprender a seducir con dignidad. Cuéntame sobre tu crush o tu ex, y déjate de rodeos.", "SABIO")
+
+    # Risa / Humor local
+    if any(k in q for k in ["jaja", "jeje", "xd", "chiste", "gracioso", "broma"]):
+        return (f"¡Jajaja! Ay, {nombre}, te ríes para no llorar, pero la verdad es clara: si estás aquí preguntando es porque esa persona te mueve el piso. ¡Párate firme, ríete del pasado y que el chiste no sea tu dignidad!", "RISA")
+
     # 1. Salir de la Friendzone
-    if any(k in q for k in ["friendzone", "amigo", "amiga", "hermano", "zona de amigos"]):
-        return f"Escucha bien, {nombre}. Para salir de la friendzone debes romper el papel de 'amigo incondicional': toma distancia, deja de estar disponible a toda hora y demuestra intención clara sin miedo al rechazo."
+    elif any(k in q for k in ["friendzone", "amigo", "amiga", "hermano", "zona de amigos"]):
+        return (f"Escucha bien, {nombre}. Para salir de la friendzone debes romper el papel de 'amigo incondicional': toma distancia, deja de estar disponible a toda hora y demuestra intención clara sin miedo al rechazo.", "SABIO")
 
     # 2. Cómo hablarle a la crush / Iniciar conversación
     elif any(k in q for k in ["hablarle", "iniciar", "acercarme", "que le digo", "qué le digo", "romper el hielo"]):
-        return f"Hola {nombre}. Nunca empieces con un soso 'hola, qué haces'. Haz una observación divertida sobre lo que está pasando a su alrededor o hazle un cumplido genuino a su actitud; la naturalidad siempre conquista."
+        return (f"Hola {nombre}. Nunca empieces con un soso 'hola, qué haces'. Haz una observación divertida sobre lo que está pasando a su alrededor o hazle un cumplido genuino a su actitud; la naturalidad siempre conquista.", "PICANTE")
 
     # 3. Responder historias de Instagram / WhatsApp
     elif any(k in q for k in ["historia", "storie", "responderle", "instagram", "mensaje", "escribirle"]):
-        return f"Atento, {nombre}. Jamás respondas con un fueguito o un 'qué hermosa'. Comenta algo ingenioso que abra debate o hazle una pregunta que despierte su curiosidad; dale una razón real para querer contestarte."
+        return (f"Atento, {nombre}. Jamás respondas con un fueguito o un 'qué hermosa'. Comenta algo ingenioso que abra debate o hazle una pregunta que despierte su curiosidad; dale una razón real para querer contestarte.", "PICANTE")
 
     # 4. Generar misterio y atracción
     elif any(k in q for k in ["misterio", "atraer", "atractivo", "interesar", "gustarle"]):
-        return f"El secreto de la seducción, {nombre}, es no entregar todo el libro en la primera página. Deja las charlas en su punto más alto y ten metas apasionantes; lo que es escaso se valora, lo regalado aburre."
+        return (f"El secreto de la seducción, {nombre}, es no entregar todo el libro en la primera página. Deja las charlas en su punto más alto y ten metas apasionantes; lo que es escaso se valora, lo regalado aburre.", "SABIO")
 
     # 5. Primera cita
     elif any(k in q for k in ["primera cita", "cita", "invitarla", "invitarlo", "adonde", "a dónde"]):
-        return f"Para tu primera cita, {nombre}, evita cenas formales y aburridas. Elige un plan dinámico donde puedan caminar, reírse y compartir un café; el objetivo no es impresionarle con dinero, sino conectar con tu personalidad."
+        return (f"Para tu primera cita, {nombre}, evita cenas formales y aburridas. Elige un plan dinámico donde puedan caminar, reírse y compartir un café; el objetivo no es impresionarle con dinero, sino conectar con tu personalidad.", "PICANTE")
 
     # 6. Saber si le gustas / Señales
     elif any(k in q for k in ["le gusto", "señal", "señales", "interesada", "interesado"]):
-        return f"Aprende esto, {nombre}: quien tiene interés verdadero busca pretextos para hablarte y facilita verse. Si tienes que dudar o siempre hay una excusa para no salir, la respuesta ya es un no."
+        return (f"Aprende esto, {nombre}: quien tiene interés verdadero busca pretextos para hablarte y facilita verse. Si tienes que dudar o siempre hay una excusa para no salir, la respuesta ya es un no.", "ESTOICO")
 
     # 7. Infidelidades
     elif any(k in q for k in ["infiel", "engañó", "engaño", "cuerno", "traicion", "traición", "otra"]):
-        return f"Escucha, {nombre}. La infidelidad no es un descuido, es una decisión consciente. Quien te traiciona una vez te demuestra que no respeta tu valor; ten dignidad y sal de ahí."
+        return (f"Escucha, {nombre}. La infidelidad no es un descuido, es una decisión consciente. Quien te traiciona una vez te demuestra que no respeta tu valor; ten dignidad y sal de ahí.", "ESTOICO")
 
     # 8. Volver con el ex
     elif any(k in q for k in ["volver", "ex", "regresar", "extraño", "bloqueo", "bloquear"]):
-        return f"Querido {nombre}, volver con tu ex es como comprar tu propia ropa usada esperando que huela a nuevo. Recuerda por qué terminó la historia y aplica contacto cero absoluto."
+        return (f"Querido {nombre}, volver con tu ex es como comprar tu propia ropa usada esperando que huela a nuevo. Recuerda por qué terminó la historia y aplica contacto cero absoluto.", "SABIO")
 
     # 9. Dejar en visto / Ghosting
     elif any(k in q for k in ["visto", "ignora", "escribe", "tarda", "frio", "fría"]):
-        return f"Aprende esto, {nombre}: la falta de interés también es una respuesta clara. Quien te quiere te busca, quien no, te pone pretextos. No mendigues la atención de nadie."
+        return (f"Aprende esto, {nombre}: la falta de interés también es una respuesta clara. Quien te quiere te busca, quien no, te pone pretextos. No mendigues la atención de nadie.", "ESTOICO")
 
     # 10. Los "Casi Algo"
     elif any(k in q for k in ["casi algo", "formalizar", "amigos con derecho", "etiqueta"]):
-        return f"Atento, {nombre}. Si ya llevan meses y te dice que 'no busca nada serio', lo que te dice es que no lo busca contigo. Retira tu cariño de donde no hay compromiso."
+        return (f"Atento, {nombre}. Si ya llevan meses y te dice que 'no busca nada serio', lo que te dice es que no lo busca contigo. Retira tu cariño de donde no hay compromiso.", "SABIO")
 
     else:
-        return f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas."
+        return (f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.", "SABIO")
 
 # ==================== SÍNTESIS DE VOZ (TTS) ====================
-async def sintetizar_audio(texto: str, salida_path: str):
+async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO"):
     import edge_tts
     voz = estado.get("voice", "es-MX-JorgeNeural")
-    comunicador = edge_tts.Communicate(texto, voz, rate="+0%", pitch="-2Hz")
+
+    # Ajustar tono según la emoción
+    if emocion == "RISA":
+        rate = "+5%"
+        pitch = "+2Hz"
+    elif emocion in ["ESTOICO", "INDIGNADO"]:
+        rate = "-2%"
+        pitch = "-3Hz"
+    elif emocion == "PICANTE":
+        rate = "+3%"
+        pitch = "+0Hz"
+    else:
+        rate = "+0%"
+        pitch = "-2Hz"
+
+    comunicador = edge_tts.Communicate(texto, voz, rate=rate, pitch=pitch)
     await comunicador.save(salida_path)
 
 # ==================== MOTOR DE AUDIO Y STREAMING ====================
@@ -370,13 +425,14 @@ async def worker_preguntas():
 
         registrar_log(f"🏮 Consulta de @{usuario}: \"{pregunta}\"", "hl")
 
-        respuesta = await responder_con_ia(usuario, pregunta)
+        respuesta, emocion = await responder_con_ia(usuario, pregunta)
         estado["active_answer"] = respuesta
-        registrar_log(f"📿 Sensei responde a @{usuario}: \"{respuesta}\"", "green")
+        estado["active_emotion"] = emocion
+        registrar_log(f"📿 Sensei [{emocion}] responde a @{usuario}: \"{respuesta}\"", "green")
 
         audio_tmp = DATA_DIR / "consejo_sensei.mp3"
         try:
-            await sintetizar_audio(respuesta, str(audio_tmp))
+            await sintetizar_audio(respuesta, str(audio_tmp), emocion)
             registrar_log(f"Voz del Sensei ({estado['voice']}) sintetizada.", "hl")
 
             # Decodificar el audio a PCM y enviarlo al reproductor en vivo
@@ -526,18 +582,19 @@ async def handle_test_comment(request):
         if comment:
             orig_estilo = estado["estilo"]
             estado["estilo"] = estilo
-            ans = await responder_con_ia(user, comment)
+            ans, emocion = await responder_con_ia(user, comment)
             estado["estilo"] = orig_estilo
+            estado["active_emotion"] = emocion
 
             audio_file = DATA_DIR / "consejo_test.mp3"
             try:
                 orig_voice = estado["voice"]
                 estado["voice"] = voice
-                await sintetizar_audio(ans, str(audio_file))
+                await sintetizar_audio(ans, str(audio_file), emocion)
                 estado["voice"] = orig_voice
 
                 registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
-                registrar_log(f"🧪 [SENSEI HABLA]: \"{ans}\"", "green")
+                registrar_log(f"🧪 [SENSEI {emocion}]: \"{ans}\"", "green")
 
                 import time
                 loop_time = int(time.time() * 1000)
@@ -546,12 +603,13 @@ async def handle_test_comment(request):
                     "user": user,
                     "question": comment,
                     "answer": ans,
+                    "emotion": emocion,
                     "audio_url": f"/api/audio-test?v={loop_time}"
                 })
             except Exception as e:
                 logger.error(f"Error generando audio sandbox: {e}")
                 registrar_log(f"🧪 [SENSEI RESPONDE]: \"{ans}\"", "green")
-                return web.json_response({"ok": True, "answer": ans, "audio_url": None, "error": str(e)})
+                return web.json_response({"ok": True, "answer": ans, "emotion": emocion, "audio_url": None, "error": str(e)})
 
         return web.json_response({"ok": False})
     except Exception as e:
