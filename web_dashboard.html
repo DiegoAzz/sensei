@@ -1041,6 +1041,411 @@
       box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
       color: #fff;
     }
+
+    /* =========================================================
+       DISEÑO RESPONSIVO MÓVIL Y TABLET (SUPER ADMIN EN EL CELULAR)
+       ========================================================= */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px 8px;
+        background-attachment: fixed;
+      }
+
+      .dashboard-container {
+        gap: 16px;
+      }
+
+      /* Cabecera Móvil */
+      .dash-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+        padding-bottom: 14px;
+      }
+
+      .brand-container {
+        width: 100%;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .avatar-wrapper {
+        width: 48px;
+        height: 48px;
+      }
+
+      .brand-group {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .brand-group h1 {
+        font-size: 18px;
+        flex-wrap: wrap;
+        gap: 6px;
+        line-height: 1.25;
+      }
+
+      .badge-vps {
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+
+      .brand-sub {
+        font-size: 11px;
+      }
+
+      #agent-selector-wrapper {
+        width: 100%;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 215, 0, 0.35);
+        border-radius: 8px;
+        padding: 6px 10px;
+        box-sizing: border-box;
+      }
+
+      .agent-select-input {
+        flex: 1;
+        width: 100%;
+        font-size: 15px !important;
+        padding: 8px 10px !important;
+        min-height: 42px;
+      }
+
+      /* Controles Super Admin Móvil */
+      .admin-controls-group {
+        width: 100%;
+      }
+
+      .btn-admin-action {
+        width: 100%;
+        justify-content: center;
+        padding: 12px 16px;
+        font-size: 13px;
+        min-height: 44px;
+      }
+
+      #admin-logged-bar {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+      }
+
+      #admin-logged-bar .badge-admin {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 6px;
+        font-size: 11px;
+      }
+
+      #admin-logged-bar .btn-admin-pill {
+        flex: 1 1 calc(50% - 6px);
+        min-height: 42px;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 9px 12px;
+        border-radius: 8px;
+      }
+
+      #admin-logged-bar .btn-admin-pill.logout {
+        flex: 1 1 100%;
+      }
+
+      .stream-status-pill {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 12px;
+      }
+
+      /* Escaparate de Tienda en el Móvil */
+      .store-showcase {
+        padding: 14px 12px;
+        border-radius: 12px;
+      }
+
+      .store-showcase-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+      }
+
+      .store-showcase-header > div:last-child {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px;
+      }
+
+      #btn-manage-products {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        min-height: 44px;
+      }
+
+      #btn-simular-venta {
+        width: 100%;
+        justify-content: center;
+        padding: 10px;
+        font-size: 12px;
+        min-height: 40px;
+      }
+
+      .live-sale-toast {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+      }
+
+      .products-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .product-card {
+        padding: 12px;
+      }
+
+      .btn-ask-product {
+        min-height: 42px;
+        width: 100%;
+        justify-content: center;
+        font-size: 12px;
+        padding: 10px;
+        margin-top: 8px;
+      }
+
+      /* Tarjetas del Dashboard y Formularios en Móvil */
+      .card {
+        padding: 16px 12px;
+        border-radius: 12px;
+        gap: 14px;
+      }
+
+      .card-title {
+        font-size: 17px;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      /* Prevenir auto-zoom en iOS Safari y facilitar escritura */
+      .input-field,
+      input[type="text"],
+      input[type="password"],
+      select,
+      textarea {
+        font-size: 16px !important;
+        padding: 12px 14px !important;
+        min-height: 44px;
+        box-sizing: border-box;
+      }
+
+      textarea.input-field {
+        min-height: 100px;
+      }
+
+      .form-row-2col,
+      .modal-form-grid-2,
+      .modal-form-grid-3,
+      .catalog-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+
+      .btn-action-primary,
+      .btn-action-danger {
+        min-height: 46px;
+        font-size: 14px;
+        padding: 12px 16px;
+        font-weight: 700;
+        justify-content: center;
+      }
+
+      #btn-save-agent-config {
+        min-height: 46px;
+        font-size: 14px;
+        padding: 12px;
+      }
+
+      #btn-open-catalog-manager {
+        min-height: 40px;
+        padding: 9px 14px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .avatar-presets-grid {
+        grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+        gap: 8px;
+      }
+
+      .avatar-preset-card {
+        padding: 6px;
+      }
+
+      .btn-avatar-upload {
+        min-height: 42px;
+        font-size: 12px;
+        padding: 10px;
+      }
+
+      /* Modals en Móvil (100% Pantalla Cómoda para el Teléfono) */
+      .modal-backdrop {
+        padding: 8px 6px;
+        align-items: center;
+      }
+
+      .modal-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 94vh !important;
+        padding: 16px 12px !important;
+        border-radius: 12px !important;
+        gap: 14px;
+      }
+
+      .modal-header {
+        padding-bottom: 10px;
+      }
+
+      .modal-title {
+        font-size: 16px;
+        flex-wrap: wrap;
+      }
+
+      .btn-close-modal {
+        font-size: 28px;
+        padding: 4px 8px;
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-footer-responsive,
+      .form-btn-actions {
+        flex-direction: column-reverse !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+
+      .modal-footer-responsive button,
+      .form-btn-actions button {
+        width: 100% !important;
+        justify-content: center !important;
+        min-height: 44px !important;
+        font-size: 14px !important;
+      }
+
+      /* Lista de Productos en Modal */
+      #modal-products-list > div {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 12px 10px !important;
+      }
+
+      #modal-products-list > div > div:last-child {
+        display: flex !important;
+        width: 100% !important;
+        gap: 8px !important;
+      }
+
+      #modal-products-list .btn-edit-p {
+        flex: 1 !important;
+        justify-content: center !important;
+        min-height: 38px !important;
+        font-size: 12px !important;
+      }
+
+      #modal-products-list .btn-del-p {
+        width: 48px !important;
+        min-height: 38px !important;
+        justify-content: center !important;
+      }
+
+      /* Píldoras de plantillas en modales */
+      .preset-pills {
+        gap: 6px;
+      }
+
+      .preset-pills .btn-preset {
+        font-size: 12px;
+        padding: 8px 10px;
+        min-height: 38px;
+      }
+
+      #modal-create-agent .preset-pills .btn-preset {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      /* Sandbox en Móvil */
+      .test-box {
+        padding: 14px 12px;
+      }
+
+      #btn-toggle-sandbox {
+        width: 100%;
+        justify-content: center;
+        min-height: 42px;
+        margin-top: 6px;
+      }
+
+      #sandbox-audio-status {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      #btn-auto-chat {
+        width: 100%;
+        justify-content: center;
+        min-height: 38px;
+      }
+
+      .sandbox-input-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+
+      #test-comment-input {
+        width: 100% !important;
+      }
+
+      #btn-test-enviar {
+        width: 100% !important;
+        min-height: 44px !important;
+        justify-content: center !important;
+      }
+
+      .sensei-identity-card {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 10px;
+      }
+
+      .identity-details {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1227,7 +1632,7 @@
           </div>
 
           <!-- Nicho y Llamado a la Acción -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">Nicho o Especialidad</label>
               <input type="text" id="cfg-niche" class="input-field" placeholder="ej: Perfumes Árabes o Videojuegos y Apps">
@@ -1239,7 +1644,7 @@
           </div>
 
           <!-- Títulos de Pantalla de Transmisión -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-row-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group">
               <label class="form-label">Título en Pantalla del Stream</label>
               <input type="text" id="cfg-banner-title" class="input-field" placeholder="ej: ~ SALOMÉ PERFUMES EN VIVO ~">
@@ -1305,7 +1710,7 @@
             <button type="button" id="btn-auto-chat" class="btn-mini-auto">🤖 Auto-Preguntas: OFF</button>
           </div>
 
-          <div style="display: flex; gap: 8px;">
+          <div class="sandbox-input-row" style="display: flex; gap: 8px;">
             <input type="text" id="test-comment-input" class="input-field" style="flex: 1;" placeholder="¿Debo perdonar una infidelidad si jura que cambió?">
             <button type="button" class="btn-action-primary" id="btn-test-enviar" style="padding: 10px 16px;">
               Preguntar
@@ -1389,7 +1794,7 @@
         <input type="password" id="input-admin-pass" class="input-field" placeholder="Por defecto: admin123">
         <div id="login-error-msg" style="display: none; color: #ff3366; font-size: 11px; margin-top: 4px;"></div>
       </div>
-      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+      <div class="modal-footer-responsive" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
         <button type="button" class="btn-admin-pill" id="btn-cancel-login">Cancelar</button>
         <button type="button" class="btn-action-primary" id="btn-submit-login" style="padding: 8px 16px;">Ingresar al Panel</button>
       </div>
@@ -1418,7 +1823,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
+      <div class="modal-form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
         <div class="form-group">
           <label class="form-label">Nombre del Agente</label>
           <input type="text" id="new-agent-name" class="input-field" placeholder="ej: TechMaster o Asesor Inmobiliario">
@@ -1434,7 +1839,7 @@
         <input type="text" id="new-agent-niche" class="input-field" placeholder="ej: Desarrollo de Videojuegos, Apps y Software a Medida">
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+      <div class="modal-form-grid-3" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label class="form-label">Tipo de Agente</label>
           <select id="new-agent-type" class="input-field">
@@ -1463,7 +1868,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="modal-form-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
         <div class="form-group">
           <label class="form-label">Nombre del Cliente / Arrendatario</label>
           <input type="text" id="new-agent-client" class="input-field" placeholder="ej: Perfumes Árabes Madrid ($250/mes)">
@@ -1508,7 +1913,7 @@
         <textarea id="new-agent-prompt" class="input-field" rows="4" placeholder="Instrucciones para la IA..."></textarea>
       </div>
 
-      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+      <div class="modal-footer-responsive" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
         <button type="button" class="btn-admin-pill" id="btn-cancel-create">Cancelar</button>
         <button type="button" class="btn-action-primary" id="btn-submit-create" style="padding: 8px 18px;">💾 Guardar y Desplegar Agente</button>
       </div>
@@ -1528,7 +1933,7 @@
       <div class="form-group" style="margin-top: 8px;">
         <input type="text" id="client-share-url" class="input-field" readonly style="color: var(--gold); font-weight: 600;">
       </div>
-      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+      <div class="modal-footer-responsive" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
         <button type="button" class="btn-action-primary" id="btn-copy-url-action">📋 Copiar Enlace</button>
       </div>
     </div>
@@ -1567,7 +1972,7 @@
           ➕ Añadir Nuevo Producto al Catálogo
         </span>
         <input type="hidden" id="prod-edit-id" value="">
-        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div class="catalog-form-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
           <div class="form-group">
             <label class="form-label">Nombre del Producto / Modelo</label>
             <input type="text" id="prod-input-name" class="input-field" placeholder="ej: Nike Air Jordan 1 High">
@@ -1592,7 +1997,7 @@
             💡 La IA revisará exactamente las <strong>Tallas Disponibles</strong> para confirmar en vivo si el cliente pregunta por su número o talla.
           </span>
         </div>
-        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <div class="form-btn-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
           <button type="button" class="btn-admin-pill" id="btn-cancel-edit-prod" style="display: none;">Cancelar Edición</button>
           <button type="button" class="btn-action-primary" id="btn-save-single-prod" style="padding: 9px 18px; font-size: 13px;">
             ➕ Añadir Producto a la Lista
@@ -1612,7 +2017,7 @@
       </div>
 
       <!-- Botones de Guardar / Cerrar -->
-      <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 14px;">
+      <div class="modal-footer-responsive" style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--line); padding-top: 14px;">
         <button type="button" class="btn-admin-pill" id="btn-close-products-footer">Cerrar</button>
         <button type="button" class="btn-action-primary" id="btn-save-all-products" style="padding: 10px 20px;">
           💾 Guardar Todo el Catálogo en el Agente
