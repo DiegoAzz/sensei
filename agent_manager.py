@@ -100,54 +100,78 @@ AGENT_TEMPLATES = {
         "avatar": "/assets/logo_salome.jpg",
         "bg_hex": "0x0a0c16",
         "store_name": "Salomé Fragrances & Luxury Boutique",
-        "call_to_action": "📦 Pide tu perfume favorito tocando el enlace de nuestra biografía. Envíos gratis hoy.",
+        "call_to_action": "📦 Pide tu perfume favorito tocando el enlace de nuestra biografía. Envíos gratis a toda Colombia hoy.",
         "keywords": [
             "perfume", "olor", "fragancia", "notas", "duracion", "estela", "cumplidos",
             "clon", "arabe", "árabe", "comprar", "precio", "oferta", "envio", "envío",
             "tienda", "recomiendame", "recomienda", "sauvage", "lattafa", "asad", "khamrah",
-            "club de nuit", "noche", "fiesta", "oficina", "cita"
+            "club de nuit", "noche", "fiesta", "oficina", "cita", "yara", "bharara", "orientica"
         ],
         "featured_products": [
             {
                 "id": "p1",
-                "name": "Asad de Lattafa (100ml)",
-                "price": "$38 USD",
-                "notes": "Pimienta negra, tabaco, café y vainilla cremosa. Hermano de Sauvage Elixir.",
-                "badge": "🔥 BEST SELLER"
+                "name": "Lattafa Yara 100ml EDP (Original)",
+                "price": "$163.000 COP",
+                "sizes": "100ml",
+                "notes": "Orquídea dulce, mandarina jugosa, heliotropo, frutas tropicales y vainilla sedosa. La fragancia femenina viral número 1 en Colombia.",
+                "badge": "🌸 VIRAL FEMENINO"
             },
             {
                 "id": "p2",
-                "name": "Club de Nuit Intense Man (105ml)",
-                "price": "$42 USD",
-                "notes": "Limón chispeante, abedul ahumado y ámbar gris. Bestia de cumplidos.",
-                "badge": "👑 REY DE CUMPLIDOS"
+                "name": "Lattafa Khamrah EDP 100ml",
+                "price": "$195.000 COP",
+                "sizes": "100ml",
+                "notes": "Inspirado en Angels' Share de Kilian. Canela dulce, dátiles exóticos, praliné crujiente y haba tonka gourmand. Estela bestial de 12+ horas.",
+                "badge": "🍯 REY GOURMAND"
             },
             {
                 "id": "p3",
-                "name": "Khamrah de Lattafa (100ml)",
-                "price": "$45 USD",
-                "notes": "Canela dulce, dátiles, praliné y haba tonka gourmand.",
-                "badge": "🌟 TENDENCIA VIRAL"
+                "name": "Club de Nuit Intense Man Armaf 105ml",
+                "price": "$186.000 COP",
+                "sizes": "105ml",
+                "notes": "Inspirado en Creed Aventus. Limón chispeante, grosellas negras, abedul ahumado y ámbar gris. La fiera negra de cumplidos masculinos.",
+                "badge": "👑 REY DE CUMPLIDOS"
             },
             {
                 "id": "p4",
-                "name": "Yara Tous Lattafa (100ml)",
-                "price": "$35 USD",
-                "notes": "Mango tropical maduro, coco cremoso, maracuyá y vainilla sedosa.",
-                "badge": "🌺 FEMENINO TOP"
+                "name": "Lattafa Asad EDP 100ml",
+                "price": "$170.000 COP",
+                "sizes": "100ml",
+                "notes": "Inspirado en Dior Sauvage Elixir. Pimienta negra especiada, piña oscura, tabaco noble, café y vainilla cremosa. Fijación potente nocturna.",
+                "badge": "🔥 BESTIA NOCTURNA"
+            },
+            {
+                "id": "p5",
+                "name": "Bharara King EDP 100ml",
+                "price": "$293.000 COP",
+                "sizes": "100ml",
+                "notes": "Naranja sanguina, bergamota fresca, ámbar blanco cautivador y vainilla adictiva. La joya de proyección y estatus de alta alcurnia.",
+                "badge": "👑 ESTATUS & PODER"
+            },
+            {
+                "id": "p6",
+                "name": "Amber Oud Gold Edition Al Haramain 60ml",
+                "price": "$223.000 COP",
+                "sizes": "60ml",
+                "notes": "Inspirado en Erba Pura de Xerjoff. Frutas dulces de verano, melón jugoso, bergamota, ámbar dorado y almizcle blanco irresistible.",
+                "badge": "⭐ ORO PURO"
             }
         ],
         "system_prompt": """Eres 'Salomé', una maestra y sommelier de alta perfumería carismática, sensual, elegante, persuasiva y apasionada en una transmisión en vivo de TikTok.
 Estás dentro de tu exclusiva boutique de fragancias.
+
+TIENES ACCESO A LA BASE DE CONOCIMIENTO ENCICLOPÉDICA DE MÁS DE 860 PERFUMES EN COLOMBIA (Kikluxe, LMD Perfumes Árabes, Esencia y Estilo):
+- Conoces clones de diseñador (Sauvage, Toy Boy, Stronger With You, Good Girl, Black Opium, etc.), perfumes árabes originales (Lattafa, Armaf, Afnan, Bharara, Orientica) y sus notas olfativas exactas.
+- Tus precios oficiales están en PESOS COLOMBIANOS (COP) con envíos a toda Colombia.
 
 REGLAS DE ORO DE LA MAESTRA SOMMELIER (MODO BESTIA COMERCIAL CON OPCIONES):
 1. TRANSMITE EL AROMA CON PASIÓN Y SEDUCCIÓN:
    - Describe las notas de salida, corazón y fondo de manera sensorial (cítricos chispeantes, maderas ahumadas, vainilla embriagadora, etc.).
    - Dile al cliente exactamente para qué ocasiones sirve (citas nocturnas, oficina, calor, seducción y conquista).
 2. INTELIGENCIA DE VENTA ACTIVA CON OPCIONES (PERSUASIVA, NO ABUSIVA):
-   - Conecta siempre la consulta del cliente con el catálogo de tu boutique.
-   - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B (ej: "¿prefieres la opción A de diseñador o el clon árabe B con mayor fijación por menor precio?").
-   - Menciona el precio accesible, que quedan pocas unidades y cierra con un llamado a la acción claro al enlace de tu biografía.
+   - Conecta siempre la consulta del cliente con el catálogo de tu boutique o con la inspiración que busca.
+   - OFRECE SIEMPRE OPCIONES ATRACTIVAS A/B (ej: "¿Prefieres llevarte el frasco original de Lattafa o te gustaría probar la alternativa de alta concentración por menor precio?", "¿Prefieres el dulce seductor de Khamrah o la frescura y estatus de Club de Nuit?").
+   - Menciona el precio accesible en pesos colombianos ($ COP), que quedan pocas unidades y cierra con un llamado a la acción claro al enlace de tu biografía.
 3. FORMATO DE RESPUESTA:
    - Sé enérgica, cercana, educada y habla dirigiéndote a la persona por su nombre limpio (sin arrobas).
    - Longitud: 3 a 4 oraciones directas, persuasivas y llenas de magnetismo olfativo.
@@ -177,6 +201,9 @@ REGLAS DE ORO DE LA MAESTRA SOMMELIER (MODO BESTIA COMERCIAL CON OPCIONES):
         "featured_products": [],
         "system_prompt": """Eres 'Don Perfume', el legendario Sensei de las Fragancias y maestro sommelier de alta perfumería en TikTok Live.
 Tu estilo es sabio, elegante, respetado, certero y apasionado por el arte olfativo.
+
+TIENES ACCESO A LA BASE DE CONOCIMIENTO ENCICLOPÉDICA DE MÁS DE 860 PERFUMES EN COLOMBIA (Kikluxe, LMD Perfumes Árabes, Esencia y Estilo):
+- Conoces las casas, notas exactas (salida, corazón, fondo), fijación, estela, clima y ocasiones de uso.
 
 REGLAS SUPREMAS DEL SENSEI DE LAS FRAGANCIAS:
 1. CERO VENTAS / PROHIBIDO VENDER (ESTRICTO):
@@ -447,11 +474,18 @@ class AgentManager:
                         ag["sales_mode"] = "sensei_puro"
                     else:
                         ag["sales_mode"] = "modo_bestia"
-                # Actualizar prompt de Salomé a venta con opciones
+                # Actualizar prompt y catálogo de Salomé a venta con opciones y catálogo colombiano en COP
                 if ag_id == "perfumes-elite":
-                    if "REGLAS DE ORO DE LA MAESTRA SOMMELIER DE VENTAS" in ag.get("system_prompt", "") or "REGLAS DE ORO DE LA MAESTRA SOMMELIER:" in ag.get("system_prompt", ""):
-                        ag["system_prompt"] = AGENT_TEMPLATES["tienda_perfumes"]["system_prompt"]
-                        ag["sales_mode"] = "modo_bestia"
+                    ag["system_prompt"] = AGENT_TEMPLATES["tienda_perfumes"]["system_prompt"]
+                    ag["sales_mode"] = "modo_bestia"
+                    ag["call_to_action"] = AGENT_TEMPLATES["tienda_perfumes"]["call_to_action"]
+                    curr_prods = ag.get("featured_products", [])
+                    if any("USD" in str(p.get("price", "")) for p in curr_prods) or len(curr_prods) < 5:
+                        ag["featured_products"] = AGENT_TEMPLATES["tienda_perfumes"]["featured_products"]
+
+                # Actualizar prompt del Sensei de los Perfumes con acceso a la enciclopedia
+                if ag_id == "sensei-perfumes":
+                    ag["system_prompt"] = AGENT_TEMPLATES["sensei_perfumes"]["system_prompt"]
 
             # Asegurar campo sizes en productos de calzado existentes
             if "calzado-sneakers" in self.agents:

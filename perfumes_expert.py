@@ -5,8 +5,66 @@ Conocimiento enciclopédico de esencias, notas olfativas, clones de diseñador,
 rendimiento y recomendaciones en vivo para transmisiones de TikTok Live Shopping.
 """
 
+import os
 import re
 import random
+import json
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+KB_PATHS = [
+    BASE_DIR / "data" / "perfumes_knowledge_base.json",
+    BASE_DIR / "assets" / "perfumes_knowledge_base.json"
+]
+
+PERFUMES_CATALOG = []
+for p in KB_PATHS:
+    if p.exists():
+        try:
+            with open(p, "r", encoding="utf-8") as f:
+                PERFUMES_CATALOG = json.load(f)
+                break
+        except Exception:
+            pass
+
+def buscar_en_catalogo_perfumes(pregunta: str, limit: int = 3) -> list:
+    """Busca en la enciclopedia de más de 860 perfumes (Kikluxe, LMD, Esencia y Estilo) por nombre, inspiración, casa o notas."""
+    if not PERFUMES_CATALOG:
+        return []
+
+    stop_words = {
+        "como", "para", "donde", "cuando", "porque", "tienen", "quiero", "puedo", 
+        "cual", "cuanto", "precio", "perfume", "perfumes", "fragancia", "fragancias",
+        "aroma", "aromas", "olor", "huelen", "huele", "bueno", "mejor", "hola", "buenas",
+        "tienes", "venden", "vendes", "amigo", "hermano", "amiga"
+    }
+    q_words = [w for w in re.findall(r"\b[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]{3,}\b", pregunta.lower()) if w not in stop_words]
+    if not q_words:
+        return []
+
+    results = []
+    for item in PERFUMES_CATALOG:
+        score = 0
+        name = item.get("name", "").lower()
+        insp = item.get("inspiration", "").lower()
+        house = item.get("house", "").lower()
+        notes = item.get("notes", "").lower()
+
+        for w in q_words:
+            if w in name:
+                score += 7
+            if w in insp:
+                score += 6
+            if w in house:
+                score += 4
+            if w in notes:
+                score += 1
+
+        if score > 0:
+            results.append((score, item))
+
+    results.sort(key=lambda x: x[0], reverse=True)
+    return [r[1] for r in results[:limit]]
 
 PERFUMES_DB = {
     "sauvage": {
@@ -280,6 +338,57 @@ def obtener_sommelier_experto(usuario: str, pregunta: str, agent: dict) -> tuple
                         f"Dime, {nombre}, ¿tú prefieres fragancias así de intensas y cumplidoras, o buscas algo más discreto para el día a día?"
                     )
                     return (texto, "RECOMENDACION")
+
+    # 1.5 BÚSQUEDA PROFUNDA EN EL CATÁLOGO (KIKLUXE / LMD / ESENCIA Y ESTILO - 860+ REFERENCIAS)
+    catalog_matches = buscar_en_catalogo_perfumes(pregunta, limit=2)
+    if catalog_matches:
+        top_perf = catalog_matches[0]
+        p_name = top_perf.get("name")
+        p_insp = top_perf.get("inspiration")
+        p_house = top_perf.get("house")
+        p_price = top_perf.get("price")
+        p_notes = top_perf.get("notes")
+        p_size = top_perf.get("sizes")
+
+        desc_insp = f" (inspirado en {p_insp})" if (p_insp and p_insp.lower() not in p_name.lower()) else ""
+        casa_txt = f" de {p_house}" if p_house else ""
+        notas_txt = f" Destaca por notas de {p_notes}." if p_notes else ""
+        precio_txt = f" por solo {p_price}" if p_price else ""
+        talla_txt = f" en presentación {p_size}" if p_size else ""
+
+        if sales_mode == "sensei_puro":
+            texto = (
+                f"¡Excelente consulta, {nombre}! {p_name}{desc_insp}{casa_txt} es una composición notable.{notas_txt} "
+                f"Tiene una evolución fascinante en piel. ¿Para qué ocasión o clima buscas usar esta fragancia?"
+            )
+            return (texto, "SABIO")
+
+        elif sales_mode == "modo_bestia":
+            if len(catalog_matches) > 1:
+                alt = catalog_matches[1]
+                alt_desc = f"{alt['name']} ({alt.get('price', '')})"
+                opciones_cierre = f"¿Prefieres llevarte {p_name} {precio_txt} o te gustaría probar la alternativa {alt_desc}?"
+            else:
+                opciones_cierre = f"¿Prefieres apartar tu frasco de {p_name} {precio_txt} antes de que se agote el stock hoy?"
+
+            texto = (
+                f"¡Gran elección, {nombre}! Tenemos disponible {p_name}{desc_insp}{talla_txt}{precio_txt}.{notas_txt} "
+                f"{opciones_cierre} Pídelo ya tocando el enlace de mi perfil. {cta}"
+            )
+            return (texto, "VENTA")
+
+        else:
+            if quiere_comprar:
+                texto = (
+                    f"¡Hola {nombre}! {p_name}{desc_insp}{talla_txt} está disponible {precio_txt} con despacho inmediato y alta fijación.{notas_txt} {cta}"
+                )
+                return (texto, "VENTA")
+            else:
+                texto = (
+                    f"¡Excelente gusto, {nombre}! {p_name}{desc_insp}{casa_txt} es de lo más cotizado.{notas_txt} "
+                    f"¿Tú prefieres aromas con este perfil o buscas algo más fresco para el día a día?"
+                )
+                return (texto, "RECOMENDACION")
 
     # 2. CONSULTAS POR OCASIÓN Y CONQUISTA
     # A) Cita nocturna / Seducción / Romance

@@ -24,7 +24,7 @@ from agent_manager import (
     change_admin_password,
     AGENT_TEMPLATES
 )
-from perfumes_expert import obtener_sommelier_experto
+from perfumes_expert import obtener_sommelier_experto, buscar_en_catalogo_perfumes
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("SenseiSeduccion")
@@ -151,9 +151,20 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
 
     # 1. MODO SENSEI DEL PERFUME (0% VENTAS - PURA SABIDURÍA OLFATIVA)
     if sales_mode == "sensei_puro" and ("perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower() or "fragancia" in (agent.get("niche") or "").lower()):
+        kb_matches = buscar_en_catalogo_perfumes(pregunta, limit=3)
+        kb_text = ""
+        if kb_matches:
+            kb_lines = []
+            for item in kb_matches:
+                insp_str = f" (Inspiración/Equivalente: {item['inspiration']})" if item.get('inspiration') and item['inspiration'].lower() not in item['name'].lower() else ""
+                house_str = f" | Casa: {item['house']}" if item.get('house') else ""
+                notes_str = f" | Notas: {item['notes']}" if item.get('notes') else ""
+                kb_lines.append(f"- {item['name']}{insp_str}{house_str}{notes_str}")
+            kb_text = "\nINFORMACIÓN TÉCNICA Y NOTAS DEL CATÁLOGO (Kikluxe, LMD, Esencia y Estilo Colombia):\n" + "\n".join(kb_lines) + "\n"
+
         prompt = f"""{base_prompt}
 Tu rol en este Live: El legendario Sensei de las Fragancias (0% VENTAS, MÁXIMA SABIDURÍA Y AUTORIDAD OLFATIVA).
-
+{kb_text}
 REGLAS DE ORO DEL SENSEI DE LOS PERFUMES (ESTRICTO):
 1. Saluda al espectador con calidez y respeto usando su nombre limpio: "{nombre_humano}".
 2. CERO VENTAS / TERMINANTEMENTE PROHIBIDO VENDER:
@@ -178,10 +189,25 @@ Respuesta del Sensei de los Perfumes:"""
         for p in prods:
             item_str = f"- {p['name']} ({p.get('price', '')})"
             if p.get("sizes"):
-                item_str += f" | Tallas: {p['sizes']}"
+                item_str += f" | Tallas/Presentación: {p['sizes']}"
             if p.get("notes"):
                 item_str += f": {p['notes']}"
             cat_lines.append(item_str)
+
+        # Si el agente es de perfumería, incorporar referencias relevantes de la base de datos colombiana (Kikluxe, LMD, Esencia y Estilo)
+        if "perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower() or "fragancia" in (agent.get("niche") or "").lower():
+            kb_matches = buscar_en_catalogo_perfumes(pregunta, limit=2)
+            for km in kb_matches:
+                if not any(km.get("name", "").lower() in cl.lower() for cl in cat_lines):
+                    km_str = f"- {km['name']} ({km.get('price', '$160.000 COP')})"
+                    if km.get("sizes"):
+                        km_str += f" | Tallas/Presentación: {km['sizes']}"
+                    if km.get("inspiration") and km["inspiration"].lower() not in km["name"].lower():
+                        km_str += f" (Inspiración: {km['inspiration']})"
+                    if km.get("notes"):
+                        km_str += f": {km['notes']}"
+                    cat_lines.append(km_str)
+
         cat_text = "\n".join(cat_lines) if cat_lines else "Productos exclusivos disponibles."
         cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
 
@@ -215,10 +241,25 @@ Respuesta en Modo Bestia Comercial:"""
         for p in prods:
             item_str = f"- {p['name']} ({p.get('price', '')})"
             if p.get("sizes"):
-                item_str += f" | Tallas: {p['sizes']}"
+                item_str += f" | Tallas/Presentación: {p['sizes']}"
             if p.get("notes"):
                 item_str += f": {p['notes']}"
             cat_lines.append(item_str)
+
+        # Si el agente es de perfumería, incorporar referencias relevantes de la base de datos colombiana
+        if "perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower() or "fragancia" in (agent.get("niche") or "").lower():
+            kb_matches = buscar_en_catalogo_perfumes(pregunta, limit=2)
+            for km in kb_matches:
+                if not any(km.get("name", "").lower() in cl.lower() for cl in cat_lines):
+                    km_str = f"- {km['name']} ({km.get('price', '$160.000 COP')})"
+                    if km.get("sizes"):
+                        km_str += f" | Tallas/Presentación: {km['sizes']}"
+                    if km.get("inspiration") and km["inspiration"].lower() not in km["name"].lower():
+                        km_str += f" (Inspiración: {km['inspiration']})"
+                    if km.get("notes"):
+                        km_str += f": {km['notes']}"
+                    cat_lines.append(km_str)
+
         cat_text = "\n".join(cat_lines) if cat_lines else "Productos exclusivos disponibles."
         cta = agent.get("call_to_action", "Pide el tuyo en el enlace de la bio.")
 
