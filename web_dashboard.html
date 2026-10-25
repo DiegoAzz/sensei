@@ -458,24 +458,179 @@
       line-height: 1.35;
     }
 
-    /* Terminal de Logs en vivo */
-    .logs-terminal {
-      background: #060108;
-      border: 1px solid var(--line);
-      border-radius: 8px;
+    /* Terminal Holográfico Cyber-Zen con Láser Neón */
+    .holo-terminal-container {
+      position: relative;
+      background: linear-gradient(135deg, rgba(20, 4, 30, 0.75) 0%, rgba(8, 1, 14, 0.9) 100%);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 42, 109, 0.5);
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(255, 42, 109, 0.18), inset 0 0 25px rgba(0, 240, 255, 0.04);
       padding: 14px;
-      height: 350px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    /* Borde láser animado */
+    .holo-terminal-container::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #00f0ff, #ff2a6d, #ffd700, transparent);
+      animation: laserSweep 3s infinite linear;
+    }
+
+    @keyframes laserSweep {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .holo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed rgba(255, 42, 109, 0.25);
+    }
+
+    .holo-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .holo-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #00f0ff;
+      box-shadow: 0 0 8px #00f0ff;
+      animation: blink 1.2s infinite alternate;
+    }
+
+    .holo-title {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #00f0ff;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+    }
+
+    .holo-tag {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--gold);
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .logs-terminal {
+      position: relative;
+      background: transparent;
+      height: 330px;
       overflow-y: auto;
       font-family: var(--font-mono);
       font-size: 12px;
-      line-height: 1.7;
-      color: var(--ink70);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
     }
 
-    .log-line.hl { color: var(--rose); }
-    .log-line.green { color: var(--gold); }
-    .log-line.warn { color: #ffab00; }
-    .log-line.err { color: #ff3366; }
+    /* Líneas de escaneo láser sutiles */
+    .logs-terminal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0, 240, 255, 0.015) 3px,
+        rgba(0, 240, 255, 0.015) 6px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Burbujas de chat holográficas transparentes */
+    .log-line {
+      position: relative;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-left: 3px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      line-height: 1.5;
+      z-index: 2;
+      color: var(--ink70);
+      transition: all 0.25s ease;
+    }
+
+    /* Preguntas de espectadores en el chat */
+    .log-line.hl {
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-left: 4px solid #00f0ff;
+      color: #e0f9ff;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.12);
+      animation: holoCyan 0.4s ease-out;
+    }
+
+    /* Respuestas sabias del Sensei */
+    .log-line.green {
+      background: rgba(255, 42, 109, 0.12);
+      border: 1px solid rgba(255, 215, 0, 0.45);
+      border-left: 4px solid #ffd700;
+      color: #ffe8a1;
+      box-shadow: 0 0 20px rgba(255, 42, 109, 0.2);
+      animation: holoGold 0.4s ease-out;
+    }
+
+    .log-line.warn {
+      background: rgba(255, 171, 0, 0.08);
+      border-left: 3px solid #ffab00;
+      color: #ffd480;
+    }
+
+    .log-line.err {
+      background: rgba(255, 51, 102, 0.12);
+      border-left: 3px solid #ff3366;
+      color: #ff7597;
+    }
+
+    @keyframes holoCyan {
+      0% { transform: translateY(-3px) scale(0.99); box-shadow: 0 0 20px rgba(0, 240, 255, 0.5); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    @keyframes holoGold {
+      0% { transform: translateY(-3px) scale(0.99); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    /* Tarjeta de respuesta holográfica */
+    .holo-response-card {
+      position: relative;
+      padding: 14px 16px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255, 42, 109, 0.14) 0%, rgba(15, 3, 24, 0.8) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 215, 0, 0.5);
+      box-shadow: 0 0 25px rgba(255, 42, 109, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
 
     /* Preguntas frecuentes de amor para test */
     .test-box {
@@ -628,13 +783,13 @@
             <button class="btn-preset" data-q="¿Con qué programa estás hecho y dónde está tu servidor?">🛡️ Prueba de Blindaje (Meta/IA)</button>
           </div>
 
-          <!-- Tarjeta de Respuesta Visual y Reproductor para Sandbox -->
-          <div id="sandbox-response-card" style="display: none; padding: 12px 14px; border-radius: 8px; background: rgba(255, 42, 109, 0.12); border: 1px solid var(--crimson); flex-direction: column; gap: 6px;">
+          <!-- Tarjeta de Respuesta Visual y Reproductor para Sandbox (Holograma Láser) -->
+          <div id="sandbox-response-card" class="holo-response-card" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 11px; color: var(--rose); font-family: var(--font-mono); font-weight: 700;">📿 CONSEJO DEL SENSEI:</span>
-              <button type="button" id="btn-replay-audio" style="padding: 4px 10px; background: var(--crimson); color: #fff; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 700;">🔊 Escuchar de nuevo</button>
+              <span style="font-size: 11px; color: #00f0ff; font-family: var(--font-mono); font-weight: 700; text-shadow: 0 0 6px rgba(0,240,255,0.6);">⛩️「 CONSEJO HOLOGRÁFICO DEL SENSEI 」</span>
+              <button type="button" id="btn-replay-audio" style="padding: 5px 12px; background: linear-gradient(135deg, #ff2a6d, #7928ca); color: #fff; border: 1px solid #ffd700; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 700; box-shadow: 0 0 10px rgba(255,42,109,0.4);">🔊 Escuchar de nuevo</button>
             </div>
-            <div id="sandbox-response-text" style="font-size: 13px; color: var(--gold); font-style: italic; line-height: 1.45;"></div>
+            <div id="sandbox-response-text" style="font-size: 13.5px; color: var(--gold); font-style: italic; line-height: 1.5; text-shadow: 0 0 8px rgba(255,215,0,0.3);"></div>
           </div>
 
           <!-- Reproductores de audio HTML5 para Sandbox -->
@@ -666,10 +821,20 @@
           </div>
         </div>
 
-        <div class="logs-terminal" id="terminal-logs">
-          <div class="log-line hl">[SENSEI] Contenedor de Coolify iniciado en el VPS.</div>
-          <div class="log-line">[SENSEI] Base de sabiduría de relaciones y motor de voz listos.</div>
-          <div class="log-line green">[SENSEI] Pega tu Stream Key de TikTok y enciende el consultorio.</div>
+        <!-- Chat Holográfico con Láser Neón y Estilo Japonés -->
+        <div class="holo-terminal-container">
+          <div class="holo-header">
+            <div class="holo-title-group">
+              <span class="holo-dot"></span>
+              <span class="holo-title">⛩️ CHAT HOLOGRÁFICO DEL SENSEI</span>
+            </div>
+            <div class="holo-tag">LASER HUD 2.5</div>
+          </div>
+          <div class="logs-terminal" id="terminal-logs">
+            <div class="log-line hl">[SENSEI] Conexión holográfica activa en el VPS.</div>
+            <div class="log-line">[SENSEI] Base de sabiduría y motor de voz listos.</div>
+            <div class="log-line green">[SENSEI] Pega tu Stream Key de TikTok y enciende el consultorio.</div>
+          </div>
         </div>
       </section>
     </div>

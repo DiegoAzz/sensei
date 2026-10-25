@@ -345,15 +345,17 @@ def iniciar_proceso_ffmpeg(rtmp_destino: str):
             "[2:v]scale=320:320[avatar];"
             # 3. Superponer el avatar LEVITANDO en el aire continuamente
             "[bg][avatar]overlay=x=(W-w)/2:y='235+14*sin(2*PI*t/3.2)'[v1];"
-            # 4. Caja de consulta en vivo del chat
-            "[v1]drawbox=x=60:y=600:w=600:h=260:color=0x09010e@0.9:t=fill,"
-            "drawbox=x=60:y=600:w=600:h=260:color=0xff7597@0.3:t=1,"
-            "drawtext=text='● CONSULTORIO EN VIVO · TIKTOK LIVE':fontcolor=0xff2a6d:fontsize=14:x=80:y=620,"
-            "drawtext=text='Escribe tu pregunta sobre tu crush o pareja':fontcolor=0xedf4f9@0.9:fontsize=18:x=80:y=660,"
-            # 5. Llamado a la acción inferior
-            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.25:t=fill,"
-            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.8:t=2,"
-            "drawtext=text='★ Pregunta al Sensei: Tu crush, ligar, ex parejas o celos ★':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
+            # 4. Caja de consulta en vivo del chat (Holograma Láser Cyber-Zen)
+            "[v1]drawbox=x=56:y=596:w=608:h=268:color=0xff2a6d@0.4:t=fill,"
+            "drawbox=x=60:y=600:w=600:h=260:color=0x0d0216@0.78:t=fill,"
+            "drawbox=x=60:y=600:w=600:h=260:color=0x00f0ff@0.7:t=2,"
+            "drawtext=text='~ CONSULTORIO HOLOGRAFICO EN VIVO ~':fontcolor=0xffd700:fontsize=15:x=(w-text_w)/2:y=618,"
+            "drawtext=text='Deja tu caso en el chat: El Sensei te responde en vivo':fontcolor=0x00f0ff@0.9:fontsize=17:x=(w-text_w)/2:y=655,"
+            # 5. Llamado a la acción inferior con borde láser
+            "drawbox=x=56:y=1036:w=608:h=73:color=0x00f0ff@0.3:t=fill,"
+            "drawbox=x=60:y=1040:w=600:h=65:color=0x15031e@0.85:t=fill,"
+            "drawbox=x=60:y=1040:w=600:h=65:color=0xff2a6d@0.85:t=2,"
+            "drawtext=text='[ Pregunta al Sensei: Tu crush, ligar, ex parejas o celos ]':fontcolor=0xffd700:fontsize=16:x=(w-text_w)/2:y=1063"
         )
         cmd.extend(["-filter_complex", filter_complex])
     else:
