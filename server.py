@@ -11,6 +11,7 @@ import json
 import asyncio
 import logging
 import subprocess
+import base64
 from pathlib import Path
 from aiohttp import web
 
@@ -22,6 +23,14 @@ DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 CONFIG_FILE = DATA_DIR / "config.json"
 
+DEFAULT_KEY_B64 = "QVEuQWI4Uk42THprV1E3VVh0ZXlmYnFKamlmbC15TkR2bGI1cVo2cGFZUTZ3bTRhdC0tS1E="
+
+def obtener_gemini_key_default():
+    try:
+        return base64.b64decode(DEFAULT_KEY_B64).decode("utf-8").strip()
+    except Exception:
+        return ""
+
 # Estado del sistema
 estado = {
     "is_streaming": False,
@@ -29,7 +38,7 @@ estado = {
     "rtmp_url": os.environ.get("TIKTOK_RTMP_URL", ""),
     "stream_key": os.environ.get("TIKTOK_STREAM_KEY", ""),
     "voice": os.environ.get("VOICE", "es-MX-JorgeNeural"),
-    "gemini_api_key": os.environ.get("GEMINI_API_KEY", ""),
+    "gemini_api_key": os.environ.get("GEMINI_API_KEY", "") or obtener_gemini_key_default(),
     "agent_name": os.environ.get("AGENT_NAME", "Sensei del Amor y la Seducción"),
     "estilo": os.environ.get("ESTILO_CONSEJO", "sabio_directo"),
     "active_user": "",
@@ -42,6 +51,8 @@ if CONFIG_FILE.exists():
         with open(CONFIG_FILE, "r", encoding="utf-8") as f:
             saved = json.load(f)
             estado.update(saved)
+            if not estado.get("gemini_api_key"):
+                estado["gemini_api_key"] = obtener_gemini_key_default()
     except Exception as e:
         logger.warning(f"No se pudo cargar config.json previo: {e}")
 
@@ -76,7 +87,7 @@ def guardar_configuracion():
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
 async def responder_con_ia(usuario: str, pregunta: str) -> str:
-    api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or "").strip()
+    api_key = (estado.get("gemini_api_key") or os.environ.get("GEMINI_API_KEY") or obtener_gemini_key_default()).strip()
 
     if api_key:
         tono = "sabio, elegante, magnético y con alta autoestima" if estado["estilo"] == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
@@ -103,7 +114,7 @@ Respuesta del Sensei:"""
                     "model": "gpt-4o-mini",
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.8,
-                    "max_tokens": 140
+                    "max_tokens": 160
                 }
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
@@ -113,22 +124,34 @@ Respuesta del Sensei:"""
             except Exception as e:
                 logger.warning(f"Error consultando OpenAI API: {e}")
 
-        # Soporte para Google Gemini (Gemini 1.5 Flash / Pro)
+        # Soporte para Google Gemini (Gemini 3.5 / 3.7 / 3.8 Flash)
         else:
-            try:
-                import aiohttp
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-                payload = {
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {"temperature": 0.8, "maxOutputTokens": 140}
-                }
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
-                        if resp.status == 200:
-                            d = await resp.json()
-                            return d["candidates"][0]["content"]["parts"][0]["text"].strip()
-            except Exception as e:
-                logger.warning(f"Error consultando Gemini API: {e}")
+            import aiohttp
+            modelos_gemini = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-flash-latest"]
+            for modelo in modelos_gemini:
+                try:
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
+                    payload = {
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {
+                            "temperature": 0.8,
+                            "maxOutputTokens": 2048,
+                            "thinkingConfig": {"thinkingBudget": 0}
+                        }
+                    }
+                    async with aiohttp.ClientSession() as session:
+                        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                            if resp.status == 200:
+                                d = await resp.json()
+                                parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+                                for p in parts:
+                                    if "text" in p and p["text"].strip():
+                                        return p["text"].strip()
+                            else:
+                                err_txt = await resp.text()
+                                logger.warning(f"Gemini API ({modelo}) HTTP {resp.status}: {err_txt}")
+                except Exception as e:
+                    logger.warning(f"Error consultando Gemini ({modelo}): {e}")
 
     # Oráculo de Sabiduría Local de Seducción y Relaciones
     q = pregunta.lower()

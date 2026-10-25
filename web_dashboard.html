@@ -506,7 +506,8 @@
 
           <div class="form-group">
             <label class="form-label">Clave API de IA (Gemini o ChatGPT / OpenAI)</label>
-            <input type="password" id="cfg-gemini-key" class="input-field" placeholder="Pega tu clave de Gemini (AIza...) o de OpenAI (sk-...)">
+            <input type="password" id="cfg-gemini-key" class="input-field" placeholder="Clave IA lista en el servidor">
+            <span style="font-size: 11px; color: var(--gold); display: block; margin-top: 4px;">✓ Clave Gemini integrada en el proyecto. No necesitas pegarla de nuevo.</span>
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -517,10 +518,15 @@
               ⏹ Finalizar Live
             </button>
           </div>
+
+          <div style="font-size: 12px; color: #ffe8a1; background: rgba(255, 215, 0, 0.08); border: 1px dashed rgba(255, 215, 0, 0.35); border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.45;">
+            ✨ <strong>¿Quieres probarlo ya sin transmitir en TikTok?</strong><br>
+            Baja al <strong>MODO SANDBOX</strong> de abajo 👇. Escucha al Sensei en vivo con su voz neuronal y música zen sin necesitar clave de TikTok ni seguidores.
+          </div>
         </form>
 
         <!-- Modo Sandbox (Simulador en Vivo) -->
-        <div class="test-box">
+        <div class="test-box" id="sandbox-container" style="transition: box-shadow 0.3s ease;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <label class="form-label" style="margin: 0;">🧪 MODO SANDBOX (SIMULADOR EN VIVO)</label>
             <button type="button" id="btn-toggle-sandbox" class="btn-sandbox-toggle">▶ Encender Sandbox con Audio</button>
@@ -700,6 +706,13 @@
         cfgVoice.value = data.voice || "es-MX-JorgeNeural";
         cfgEstilo.value = data.estilo || "sabio_directo";
 
+        if (data.gemini_api_key) {
+          cfgGeminiKey.value = data.gemini_api_key;
+          localStorage.setItem("sensei_ai_key", data.gemini_api_key);
+        } else if (localStorage.getItem("sensei_ai_key")) {
+          cfgGeminiKey.value = localStorage.getItem("sensei_ai_key");
+        }
+
         if (data.is_streaming) {
           actualizarUI(true);
         } else {
@@ -725,6 +738,20 @@
     }
 
     btnIniciar.addEventListener("click", async () => {
+      const rtmp = cfgRtmpUrl.value.trim();
+      const sk = cfgStreamKey.value.trim();
+
+      if (!rtmp || !sk) {
+        addLog("💡 Para probar al Sensei de inmediato, usa el MODO SANDBOX de abajo.", "hl");
+        const sb = document.getElementById("sandbox-container");
+        if (sb) {
+          sb.scrollIntoView({ behavior: "smooth" });
+          sb.style.boxShadow = "0 0 25px rgba(255, 42, 109, 0.75)";
+          setTimeout(() => { sb.style.boxShadow = "none"; }, 2500);
+        }
+        return;
+      }
+
       btnIniciar.disabled = true;
       btnIniciar.textContent = "⏳ Iniciando Live...";
 
@@ -853,6 +880,15 @@
         }
       } catch (e) {}
     }, 2000);
+
+    // Cargar y guardar clave de IA en localStorage para no escribirla nunca más
+    const storedKey = localStorage.getItem("sensei_ai_key");
+    if (storedKey && !cfgGeminiKey.value) {
+      cfgGeminiKey.value = storedKey;
+    }
+    cfgGeminiKey.addEventListener("input", () => {
+      localStorage.setItem("sensei_ai_key", cfgGeminiKey.value.trim());
+    });
 
     cargarEstado();
   </script>
