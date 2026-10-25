@@ -347,6 +347,18 @@ async def start_dual_servers():
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
 
+    # Servir archivos estáticos (Logo del Sensei, imágenes, audio)
+    assets_dir = BASE_DIR / "assets"
+    assets_dir.mkdir(exist_ok=True)
+    app.router.add_static("/assets", assets_dir)
+
+    async def handle_favicon(request):
+        fav = assets_dir / "logo_sensei.jpg"
+        if fav.exists():
+            return web.FileResponse(fav)
+        return web.Response(status=404)
+    app.router.add_get("/favicon.ico", handle_favicon)
+
     runner = web.AppRunner(app)
     await runner.setup()
 
