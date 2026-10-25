@@ -264,6 +264,77 @@
       color: #fff;
     }
 
+    /* Sandbox Styles */
+    .btn-sandbox-toggle {
+      background: linear-gradient(135deg, #7928ca, #ff0080);
+      color: #fff;
+      border: none;
+      padding: 9px 15px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 15px rgba(255, 0, 128, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-sandbox-toggle:hover {
+      filter: brightness(1.2);
+    }
+    .btn-sandbox-toggle.active {
+      background: #00f2fe;
+      color: #000;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.6);
+    }
+
+    .sandbox-status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(121, 40, 202, 0.15);
+      border: 1px solid rgba(255, 0, 128, 0.35);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--rose);
+      font-family: var(--font-mono);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #00f2fe;
+      box-shadow: 0 0 8px #00f2fe;
+      animation: pulseAnim 1.5s infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .btn-mini-auto {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: all 0.2s ease;
+    }
+    .btn-mini-auto.active {
+      background: #00f2fe;
+      color: #000;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+    }
+
     .sensei-identity-card {
       display: flex;
       align-items: center;
@@ -448,9 +519,21 @@
           </div>
         </form>
 
-        <!-- Prueba de Consultas -->
+        <!-- Modo Sandbox (Simulador en Vivo) -->
         <div class="test-box">
-          <label class="form-label">Simular Pregunta del Chat</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <label class="form-label" style="margin: 0;">🧪 MODO SANDBOX (SIMULADOR EN VIVO)</label>
+            <button type="button" id="btn-toggle-sandbox" class="btn-sandbox-toggle">▶ Encender Sandbox con Audio</button>
+          </div>
+
+          <div id="sandbox-audio-status" class="sandbox-status-bar" style="display: none;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="pulse-dot"></span>
+              <span id="sandbox-status-text">Música zen activa · Listo para hablar</span>
+            </div>
+            <button type="button" id="btn-auto-chat" class="btn-mini-auto">🤖 Auto-Preguntas: OFF</button>
+          </div>
+
           <div style="display: flex; gap: 8px;">
             <input type="text" id="test-comment-input" class="input-field" style="flex: 1;" placeholder="¿Debo perdonar una infidelidad si jura que cambió?">
             <button type="button" class="btn-action-primary" id="btn-test-enviar" style="padding: 10px 16px;">
@@ -463,6 +546,10 @@
             <button class="btn-preset" data-q="Me deja en visto y tarda horas en responder">Me deja en visto</button>
             <button class="btn-preset" data-q="Somos casi algo hace 6 meses y no formaliza">Somos casi algo</button>
           </div>
+
+          <!-- Reproductores de audio HTML5 para Sandbox -->
+          <audio id="bg-music-player" loop src="/assets/musica_misteriosa.mp3" preload="auto"></audio>
+          <audio id="voice-player" preload="auto"></audio>
         </div>
       </section>
 
@@ -509,6 +596,81 @@
     const testCommentInput = document.getElementById("test-comment-input");
     const btnTestEnviar = document.getElementById("btn-test-enviar");
     const presetButtons = document.querySelectorAll(".btn-preset");
+
+    const bgMusicPlayer = document.getElementById("bg-music-player");
+    const voicePlayer = document.getElementById("voice-player");
+    const btnToggleSandbox = document.getElementById("btn-toggle-sandbox");
+    const sandboxAudioStatus = document.getElementById("sandbox-audio-status");
+    const sandboxStatusText = document.getElementById("sandbox-status-text");
+    const btnAutoChat = document.getElementById("btn-auto-chat");
+
+    let sandboxActive = false;
+    let autoChatActive = false;
+    let autoChatInterval = null;
+
+    const preguntasAuto = [
+      "¿Debo perdonar una infidelidad si jura que cambió?",
+      "Me deja en visto y tarda 6 horas en responder, ¿le escribo?",
+      "¿Vale la pena volver con mi ex si me busca arrepentido?",
+      "Somos casi algo hace 5 meses y dice que no busca nada serio",
+      "¿Cómo salir de la friendzone con la persona que me gusta?",
+      "Siento que mi pareja me oculta su celular y cambia las contraseñas",
+      "Mi crush no me habla pero siempre mira todas mis historias",
+      "¿Cómo aplicar contacto cero sin sufrir en el intento?"
+    ];
+
+    btnToggleSandbox.addEventListener("click", () => {
+      sandboxActive = !sandboxActive;
+      if (sandboxActive) {
+        btnToggleSandbox.textContent = "⏹ Desactivar Sandbox";
+        btnToggleSandbox.classList.add("active");
+        sandboxAudioStatus.style.display = "flex";
+        bgMusicPlayer.volume = 0.16;
+        bgMusicPlayer.play().catch(e => console.log("Autoplay:", e));
+        addLog("🧪 Modo Sandbox activado. Música zen sonando en tu navegador.", "hl");
+        streamStatusBadge.className = "stream-status-pill online";
+        streamStatusText.textContent = "MODO SANDBOX (SIMULADOR EN VIVO)";
+      } else {
+        btnToggleSandbox.textContent = "▶ Encender Sandbox con Audio";
+        btnToggleSandbox.classList.remove("active");
+        sandboxAudioStatus.style.display = "none";
+        bgMusicPlayer.pause();
+        voicePlayer.pause();
+        if (autoChatActive) {
+          btnAutoChat.click();
+        }
+        addLog("🧪 Modo Sandbox apagado.", "warn");
+        streamStatusBadge.className = "stream-status-pill offline";
+        streamStatusText.textContent = "TRANSMISIÓN EN ESPERA";
+      }
+    });
+
+    btnAutoChat.addEventListener("click", () => {
+      if (!sandboxActive) {
+        btnToggleSandbox.click();
+      }
+      autoChatActive = !autoChatActive;
+      if (autoChatActive) {
+        btnAutoChat.textContent = "🤖 Auto-Preguntas: ON (18s)";
+        btnAutoChat.classList.add("active");
+        addLog("🤖 Simulador de chat automático encendido. Lanzará preguntas reales cada 18s.", "green");
+        setTimeout(dispararPreguntaAuto, 1500);
+        autoChatInterval = setInterval(dispararPreguntaAuto, 18000);
+      } else {
+        btnAutoChat.textContent = "🤖 Auto-Preguntas: OFF";
+        btnAutoChat.classList.remove("active");
+        clearInterval(autoChatInterval);
+        autoChatInterval = null;
+        addLog("🤖 Simulador de chat automático detenido.", "warn");
+      }
+    });
+
+    function dispararPreguntaAuto() {
+      if (!sandboxActive || !autoChatActive) return;
+      const randomQ = preguntasAuto[Math.floor(Math.random() * preguntasAuto.length)];
+      testCommentInput.value = randomQ;
+      btnTestEnviar.click();
+    }
 
     function addLog(text, type = "normal") {
       const time = new Date().toTimeString().split(" ")[0];
@@ -601,19 +763,52 @@
       const q = testCommentInput.value.trim();
       if (!q) return;
 
+      btnTestEnviar.disabled = true;
+      btnTestEnviar.textContent = "⏳ Pensando...";
       addLog(`[CASO DE PRUEBA] @espectador_amor: "${q}"`, "hl");
       testCommentInput.value = "";
+
+      if (sandboxActive) {
+        sandboxStatusText.textContent = "🎙️ Sensei formulando consejo sabio...";
+      }
 
       try {
         const res = await fetch("/api/test-comment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user: "espectador_amor", comment: q })
+          body: JSON.stringify({ 
+            user: "espectador_amor", 
+            comment: q,
+            voice: cfgVoice.value,
+            estilo: cfgEstilo.value
+          })
         });
         const d = await res.json();
         addLog(`[SENSEI RESPONDE]: "${d.answer}"`, "green");
+
+        if (d.audio_url) {
+          voicePlayer.src = d.audio_url;
+          if (sandboxActive) {
+            bgMusicPlayer.volume = 0.07; // Bajar música de fondo mientras habla
+            sandboxStatusText.textContent = "🗣️ Sensei hablando en vivo...";
+          }
+          try {
+            await voicePlayer.play();
+          } catch (err) {
+            console.log("Audio play blocked:", err);
+          }
+          voicePlayer.onended = () => {
+            if (sandboxActive) {
+              bgMusicPlayer.volume = 0.16; // Restaurar música zen
+              sandboxStatusText.textContent = "Música zen activa · Listo para siguiente caso";
+            }
+          };
+        }
       } catch (e) {
         addLog("Error al procesar: " + e.message, "err");
+      } finally {
+        btnTestEnviar.disabled = false;
+        btnTestEnviar.textContent = "Preguntar";
       }
     });
 

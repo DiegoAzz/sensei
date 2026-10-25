@@ -458,15 +458,48 @@ async def handle_logs(request):
     buffer_logs.clear()
     return web.json_response(logs_a_enviar)
 
+async def handle_audio_test(request):
+    audio_file = DATA_DIR / "consejo_test.mp3"
+    if audio_file.exists():
+        return web.FileResponse(audio_file)
+    return web.Response(status=404)
+
 async def handle_test_comment(request):
     data = await request.json()
     user = data.get("user", "discipulo_test")
     comment = data.get("comment", "")
+    voice = data.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
+    estilo = data.get("estilo") or estado.get("estilo", "sabio_directo")
 
     if comment:
-        await cola_preguntas.put((user, comment))
+        orig_estilo = estado["estilo"]
+        estado["estilo"] = estilo
         ans = await responder_con_ia(user, comment)
-        return web.json_response({"ok": True, "answer": ans})
+        estado["estilo"] = orig_estilo
+
+        audio_file = DATA_DIR / "consejo_test.mp3"
+        try:
+            orig_voice = estado["voice"]
+            estado["voice"] = voice
+            await sintetizar_audio(ans, str(audio_file))
+            estado["voice"] = orig_voice
+
+            registrar_log(f"🧪 [SANDBOX] @{user}: \"{comment}\"", "hl")
+            registrar_log(f"🧪 [SENSEI HABLA]: \"{ans}\"", "green")
+
+            loop_time = int(asyncio.get_event_loop().time() * 1000)
+            return web.json_response({
+                "ok": True,
+                "user": user,
+                "question": comment,
+                "answer": ans,
+                "audio_url": f"/api/audio-test?v={loop_time}"
+            })
+        except Exception as e:
+            logger.error(f"Error generando audio sandbox: {e}")
+            registrar_log(f"🧪 [SENSEI RESPONDE]: \"{ans}\"", "green")
+            return web.json_response({"ok": True, "answer": ans, "audio_url": None, "error": str(e)})
+
     return web.json_response({"ok": False})
 
 async def handle_index(request):
@@ -482,6 +515,7 @@ async def start_dual_servers():
     app.router.add_post("/api/stop", handle_stop)
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
+    app.router.add_get("/api/audio-test", handle_audio_test)
 
     # Servir archivos estáticos (Logo del Sensei, imágenes, audio)
     assets_dir = BASE_DIR / "assets"
