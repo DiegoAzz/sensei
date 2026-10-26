@@ -99,25 +99,26 @@
       opacity: 1;
     }
 
-    /* Capa de Avatar Estático si no hay video */
+    /* Capa de Avatar Estático Levitando */
     .avatar-static-layer {
       position: absolute;
       top: 13%;
       left: 0;
       right: 0;
-      height: 28%;
+      height: 22%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 2;
+      z-index: 10;
+      pointer-events: none;
       transition: opacity 0.4s ease;
     }
 
     .avatar-orb-wrapper {
       position: relative;
-      width: 155px;
-      height: 155px;
+      width: 135px;
+      height: 135px;
       animation: levitate 3.6s ease-in-out infinite;
     }
 
@@ -320,7 +321,7 @@
       position: absolute;
       left: 12px;
       right: 12px;
-      top: 38%;
+      top: 36%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -501,16 +502,16 @@
 
   <div class="stream-viewport">
 
-    <!-- CAPA 1: PRESENTADOR (VIDEOS HÍBRIDOS O AVATAR ESTÁTICO) -->
+    <!-- CAPA 1: PRESENTADOR (VIDEOS HÍBRIDOS O AVATAR ESTÁTICO LEVITANDO) -->
     <div class="presenter-container">
-      <video id="video-idle" class="presenter-video" loop muted playsinline autoplay></video>
-      <video id="video-talking" class="presenter-video" loop muted playsinline></video>
+      <video id="video-idle" class="presenter-video" loop muted playsinline autoplay style="display: none;"></video>
+      <video id="video-talking" class="presenter-video" loop muted playsinline style="display: none;"></video>
 
-      <!-- Capa de Fallback si no tiene video loops configurados -->
-      <div id="avatar-static-layer" class="avatar-static-layer" style="display: none;">
+      <!-- Capa de Avatar Estático Levitando (Siempre visible con El Sensei) -->
+      <div id="avatar-static-layer" class="avatar-static-layer" style="display: flex;">
         <div class="avatar-orb-wrapper">
           <div class="avatar-orb-glow"></div>
-          <img id="avatar-static-img" class="avatar-orb-img" src="/assets/logo_salome.jpg" alt="Avatar">
+          <img id="avatar-static-img" class="avatar-orb-img" src="/assets/logo_sensei.jpg" alt="El Sensei">
         </div>
       </div>
     </div>
@@ -736,6 +737,8 @@
             avatarStaticLayer.style.display = "flex";
             if (data.avatar) {
               avatarStaticImg.src = data.avatar;
+            } else {
+              avatarStaticImg.src = "/assets/logo_sensei.jpg";
             }
           }
         }
