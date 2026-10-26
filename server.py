@@ -1018,6 +1018,8 @@ async def simulador_ventas_loop():
                     actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
 # ==================== CLIENTE TIKTOK LIVE ====================
+historial_comentarios_recientes = collections.deque(maxlen=80)
+
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
     from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent
@@ -1042,11 +1044,19 @@ async def escuchar_tiktok():
                 try:
                     u = event.user.unique_id
                     c = event.comment.strip()
-                    if not c:
+                    if not c or len(c) < 2:
                         return
+
+                    # Filtro anti-duplicados estricto: evita responder el mismo comentario dos veces si TikTok lo retransmite
+                    clave_comentario = f"{u.lower()}:{c.lower()}"
+                    if clave_comentario in historial_comentarios_recientes:
+                        return
+                    historial_comentarios_recientes.append(clave_comentario)
+
                     registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
-                    # Mantener el live fresco: si hay más de 5 preguntas acumuladas, descartar solo la más vieja
-                    if cola_preguntas.qsize() >= 5:
+
+                    # Mantener el live fresco: si hay más de 4 preguntas acumuladas, descartar solo la más vieja
+                    if cola_preguntas.qsize() >= 4:
                         try:
                             cola_preguntas.get_nowait()
                             cola_preguntas.task_done()
@@ -1060,8 +1070,8 @@ async def escuchar_tiktok():
             async def on_disconnect(event: DisconnectEvent):
                 registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
-            # process_connect_events=True permite capturar la pregunta que el usuario recién escribió
-            await client.connect(process_connect_events=True)
+            # process_connect_events=False: IGNORA comentarios históricos viejos y solo toma los nuevos en vivo
+            await client.connect(process_connect_events=False)
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -1353,6 +1363,13 @@ async def handle_start(request):
     es_rtmp_real = bool(rtmp and sk and not ("127.0.0.1" in rtmp or "localhost" in rtmp or sk == "****"))
 
     estado["is_streaming"] = True
+    historial_comentarios_recientes.clear()
+    while not cola_preguntas.empty():
+        try:
+            cola_preguntas.get_nowait()
+            cola_preguntas.task_done()
+        except Exception:
+            break
 
     if es_rtmp_real:
         rtmp_completo = f"{rtmp}/{sk}"

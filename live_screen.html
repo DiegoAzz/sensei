@@ -523,7 +523,6 @@
     <button class="audio-toggle-btn" id="btn-unmute" onclick="activarAudio()">
       🔊 Escuchar Audio
     </button>
-    <audio id="live-speech-audio" preload="auto" playsinline></audio>
     <!-- MÚSICA MÍSTICA DE FONDO (CONTINUA EN TIKTOK LIVE) -->
     <audio id="bg-music" src="/assets/musica_misteriosa.mp3" loop preload="auto"></audio>
 
@@ -613,7 +612,6 @@
     const salePopup = document.getElementById("sale-popup");
     const salePopupDesc = document.getElementById("sale-popup-desc");
     const btnUnmute = document.getElementById("btn-unmute");
-    const liveSpeechAudio = document.getElementById("live-speech-audio");
     const bgMusic = document.getElementById("bg-music");
     if (bgMusic) {
       bgMusic.volume = 0.16;
@@ -625,15 +623,29 @@
     let currentTalkSrc = "";
     let lastSaleId = null;
     let lastAudioVersion = 0;
+    let initialAudioLoaded = false;
+    let currentSpeechAudio = null;
+
+    function reproducirVozSensei(audioUrl) {
+      if (currentSpeechAudio) {
+        try {
+          currentSpeechAudio.pause();
+          currentSpeechAudio.currentTime = 0;
+          currentSpeechAudio.src = "";
+        } catch(e) {}
+      }
+      currentSpeechAudio = new Audio(audioUrl);
+      currentSpeechAudio.volume = 1.0;
+      currentSpeechAudio.play().catch(e => {
+        console.warn("Aviso play voz:", e);
+      });
+    }
 
     function activarAudio() {
       vidIdle.muted = false;
       vidTalking.muted = false;
       if (bgMusic && bgMusic.paused) {
         bgMusic.play().catch(() => {});
-      }
-      if (liveSpeechAudio) {
-        liveSpeechAudio.play().catch(() => {});
       }
       btnUnmute.style.opacity = "0";
       setTimeout(() => { btnUnmute.style.display = "none"; }, 350);
@@ -752,30 +764,13 @@
           }
         }
 
-        // 2. Reproducir audio de respuesta en tiempo real (para TikTok LIVE Studio / OBS)
-        if (data.audio_version && data.audio_version !== lastAudioVersion) {
+        // 2. Reproducir audio de respuesta en tiempo real (anti-eco y sin repetir al actualizar)
+        if (!initialAudioLoaded) {
+          initialAudioLoaded = true;
+          lastAudioVersion = data.audio_version || 0;
+        } else if (data.audio_version && data.audio_version !== lastAudioVersion) {
           lastAudioVersion = data.audio_version;
-          const audioUrl = `/api/live-audio?v=${data.audio_version}`;
-          
-          try {
-            const player = new Audio();
-            player.src = audioUrl;
-            player.volume = 1.0;
-            player.autoplay = true;
-            const playPromise = player.play();
-            if (playPromise !== undefined) {
-              playPromise.catch(err => {
-                console.warn("Audio intento principal:", err);
-                if (liveSpeechAudio) {
-                  liveSpeechAudio.src = audioUrl;
-                  liveSpeechAudio.currentTime = 0;
-                  liveSpeechAudio.play().catch(e => console.warn("Audio fallback:", e));
-                }
-              });
-            }
-          } catch(err) {
-            console.error("Error reproduciendo audio:", err);
-          }
+          reproducirVozSensei(`/api/live-audio?v=${data.audio_version}`);
         }
 
         // 3. Control de Estado de Habla (Talking vs Idle) con Ducking de Música
