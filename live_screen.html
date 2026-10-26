@@ -102,20 +102,22 @@
     /* Capa de Avatar Estático si no hay video */
     .avatar-static-layer {
       position: absolute;
-      inset: 0;
+      top: 13%;
+      left: 0;
+      right: 0;
+      height: 35%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding-bottom: 220px;
       z-index: 2;
       transition: opacity 0.4s ease;
     }
 
     .avatar-orb-wrapper {
       position: relative;
-      width: 250px;
-      height: 250px;
+      width: 190px;
+      height: 190px;
       animation: levitate 3.6s ease-in-out infinite;
     }
 
@@ -312,23 +314,31 @@
       text-transform: uppercase;
     }
 
-    /* ==================== ZONA INFERIOR / CARDS DE CHAT ==================== */
+    /* ==================== ZONA CENTRAL / CARDS DE CHAT ==================== */
+    /* Ubicada estrictamente en la franja media-superior (top: 48% a 72%), dejando el 28% inferior 100% libre para el chat nativo de TikTok */
     .stream-lower-section {
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      top: 48%;
+      bottom: 28%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      width: 100%;
+      justify-content: flex-start;
+      gap: 8px;
+      z-index: 20;
+      pointer-events: none;
     }
 
-    /* Tarjeta Flotante Glassmorphic */
+    /* Tarjeta Flotante Glassmorphic de Alto Contraste */
     .glass-card {
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(8, 12, 22, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1.5px solid var(--card-border);
-      border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.65);
+      border-radius: 14px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.85);
       transition: all 0.35s ease;
     }
 
@@ -431,55 +441,61 @@
     }
 
     .answer-text {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.45;
+      font-size: 14.5px;
+      font-weight: 700;
+      line-height: 1.4;
       color: #fff;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      max-height: 105px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
     }
 
     /* 3. Card de Espera / Invitación a Comentar */
     .waiting-card {
       text-align: center;
-      padding: 16px 14px;
-      border-color: rgba(212, 175, 55, 0.3);
+      padding: 12px 14px;
+      border-color: rgba(212, 175, 55, 0.45);
+      background: rgba(8, 12, 22, 0.92);
       animation: breatheCard 3s infinite alternate;
     }
 
     @keyframes breatheCard {
-      from { border-color: rgba(212, 175, 55, 0.25); box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
+      from { border-color: rgba(212, 175, 55, 0.3); box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); }
       to { border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 0 25px rgba(0, 240, 255, 0.25); }
     }
 
     .waiting-title {
       font-family: var(--font-luxury);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 900;
       color: var(--gold);
       letter-spacing: 1px;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
       text-transform: uppercase;
     }
 
     .waiting-subtitle {
-      font-size: 12px;
-      color: #bbb;
+      font-size: 11.5px;
+      color: #ccc;
       font-weight: 600;
     }
 
     /* Barra Inferior de Llamado a la Acción */
     .cta-bar {
-      background: linear-gradient(90deg, rgba(212, 175, 55, 0.2), rgba(0, 240, 255, 0.25), rgba(212, 175, 55, 0.2));
-      border: 1.5px solid var(--gold);
-      border-radius: 12px;
-      padding: 10px 14px;
+      background: rgba(8, 12, 22, 0.88);
+      border: 1.2px solid rgba(212, 175, 55, 0.45);
+      border-radius: 10px;
+      padding: 6px 12px;
       text-align: center;
-      box-shadow: 0 0 20px var(--gold-glow);
+      box-shadow: 0 0 15px var(--gold-glow);
     }
 
     .cta-text {
-      font-size: 12px;
-      font-weight: 900;
+      font-size: 11.5px;
+      font-weight: 800;
       letter-spacing: 0.5px;
       color: #fff;
       text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
@@ -489,28 +505,9 @@
       gap: 6px;
     }
 
-    /* Botón flotante para activar audio si se abre en navegador web regular */
+    /* Botón flotante para activar audio (oculto en stream) */
     .audio-toggle-btn {
-      position: absolute;
-      top: 22px;
-      right: 18px;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 20px;
-      cursor: pointer;
-      pointer-events: auto;
-      z-index: 50;
-      transition: all 0.2s;
-    }
-
-    .audio-toggle-btn:hover {
-      background: rgba(212, 175, 55, 0.4);
-      border-color: var(--gold);
+      display: none !important;
     }
   </style>
 </head>

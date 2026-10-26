@@ -144,6 +144,18 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
     nombre_humano = limpiar_nombre_usuario(usuario)
     agent_type = agent.get("type", "consultorio")
     agent_name = agent.get("name", "El Sensei del Amor")
+
+    # 0. RESPUESTA INSTANTÁNEA PARA SALUDOS SIMPLES (0 ms de espera para TikTok Live)
+    saludos_cortos = ["hola", "buenas", "buenas noches", "buen dia", "saludos", "que tal", "hola sensei", "holaa", "como estas", "cómo estás", "como va"]
+    p_clean = pregunta.lower().strip().rstrip(".!?¿¡")
+    if p_clean in saludos_cortos or len(p_clean) <= 3:
+        if agent_type == "tienda_ventas":
+            return (f"¡Hola {nombre_humano}! Bienvenida a la boutique en vivo. ¿Qué aroma o perfume buscas hoy?", "AMIGABLE")
+        elif "perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower():
+            return (f"¡Saludos {nombre_humano}! Un placer saludarte. Dime qué perfume usas hoy o qué fragancia buscas calificar.", "SABIO")
+        else:
+            return (f"¡Qué tal {nombre_humano}! Bienvenido al templo. Dime, ¿qué dilema de amor o pareja tienes hoy?", "SABIO")
+
     base_prompt = agent.get("system_prompt", "").strip()
     sales_mode = agent.get("sales_mode")
     if not sales_mode:
@@ -298,9 +310,9 @@ REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
    - NUNCA menciones que eres una IA, OpenAI, Gemini, Python o servidores.
 3. SIENTE LA VIBRA DEL USUARIO:
    - Si se ríe ("jajaja", "xd"): ¡RÍETE CON ÉL! Comienza riéndote y vacílalo con humor.
-4. REGLA HUMANA DE SALUDO:
+4. REGLA HUMANA DE SALUDO Y VELOCIDAD TIKTOK LIVE:
    - Dirígete a la persona por su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
-   - Responde SIEMPRE en español en máximo 2 a 3 frases de alto impacto.
+   - Responde SIEMPRE en español en MÁXIMO 1 o 2 frases contundentes, sabias y directas (20 a 30 palabras máximo). Prohibido discursos largos. ¡El live de TikTok debe ser dinámico y veloz!
    - Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
 Pregunta del espectador en TikTok: "{pregunta}"
@@ -348,15 +360,15 @@ Respuesta de {agent_name}:"""
         # Soporte para Google Gemini (Gemini Flash con respuesta ultra rápida)
         else:
             import aiohttp
-            modelos_gemini = ["gemini-3.5-flash", "gemini-flash-latest"]
+            modelos_gemini = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
             for modelo in modelos_gemini:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
                     payload = {
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
-                            "temperature": 0.85,
-                            "maxOutputTokens": 2048,
+                            "temperature": 0.8,
+                            "maxOutputTokens": 120,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
                     }
@@ -916,17 +928,17 @@ async def worker_preguntas():
             estado["is_speaking"] = False
             registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
-        # Mantener el texto visible 5 segundos para que la audiencia lo lea
-        await asyncio.sleep(5)
-        estado["status_phase"] = "esperando"
-        estado["active_user"] = ""
-        estado["active_question"] = ""
-        estado["active_answer"] = ""
-        # Volver al estado de bienvenida en el overlay
-        actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+        # Mantener visible brevemente: si hay más preguntas en cola, pasar de inmediato (1s); si no, 2.5s
+        espera_lectura = 1.0 if not cola_preguntas.empty() else 2.5
+        await asyncio.sleep(espera_lectura)
 
-        # Pausa natural para la audiencia antes de atender el siguiente caso
-        await asyncio.sleep(3)
+        if cola_preguntas.empty():
+            estado["status_phase"] = "esperando"
+            estado["active_user"] = ""
+            estado["active_question"] = ""
+            estado["active_answer"] = ""
+            actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+
         cola_preguntas.task_done()
 
 async def simulador_ventas_loop():
@@ -975,13 +987,21 @@ async def escuchar_tiktok():
                 c = event.comment.strip()
                 if len(c) >= 2:
                     registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
+                    # Mantener el live al día sin saturación: mantener solo las últimas 2 preguntas
+                    while cola_preguntas.qsize() >= 2:
+                        try:
+                            cola_preguntas.get_nowait()
+                            cola_preguntas.task_done()
+                        except Exception:
+                            break
                     await cola_preguntas.put((u, c))
 
             @client.on(DisconnectEvent)
             async def on_disconnect(event: DisconnectEvent):
                 registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
-            await client.connect()
+            # process_connect_events=False descarta comentarios pasados y solo escucha en tiempo real
+            await client.connect(process_connect_events=False)
         except asyncio.CancelledError:
             break
         except Exception as e:
