@@ -952,7 +952,7 @@ async def simulador_ventas_loop():
 # ==================== CLIENTE TIKTOK LIVE ====================
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
-    from TikTokLive.types.events import CommentEvent, ConnectEvent, DisconnectEvent
+    from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent
 
     while estado["is_streaming"]:
         current_agent = agent_manager.get_active_agent() or {}
@@ -961,6 +961,7 @@ async def escuchar_tiktok():
             await asyncio.sleep(3)
             continue
 
+        client = None
         try:
             client = TikTokLiveClient(unique_id=f"@{usuario}")
 
@@ -980,10 +981,18 @@ async def escuchar_tiktok():
             async def on_disconnect(event: DisconnectEvent):
                 registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
-            await client.start()
+            await client.connect()
+        except asyncio.CancelledError:
+            break
         except Exception as e:
             registrar_log(f"Conexión TikTokLive (@{usuario}): {e}", "warn")
-            await asyncio.sleep(6)
+            await asyncio.sleep(5)
+        finally:
+            if client and client.connected:
+                try:
+                    await client.disconnect()
+                except Exception:
+                    pass
 
 # ==================== ENDPOINTS DE LA API WEB ====================
 def is_super_admin(request) -> bool:
@@ -1339,6 +1348,21 @@ async def handle_test_comment(request):
         if data.get("gemini_api_key"):
             current_agent["gemini_api_key"] = data["gemini_api_key"].strip()
             agent_manager.save_agents()
+
+        enviar_al_live = data.get("enviar_al_live", False)
+        if enviar_al_live:
+            if not estado["is_streaming"]:
+                return web.json_response({"ok": False, "error": "Debes hacer clic primero en 'INICIAR TRANSMISIÓN' para proyectar preguntas al Live en vivo."})
+            if comment:
+                registrar_log(f"🚀 Pregunta inyectada al Live de @{user}: \"{comment}\"", "hl")
+                await cola_preguntas.put((user, comment))
+                return web.json_response({
+                    "ok": True,
+                    "enviado_al_live": True,
+                    "user": user,
+                    "question": comment,
+                    "message": "Pregunta inyectada con éxito al Live en vivo. El Sensei la responderá en pantalla y voz en segundos."
+                })
 
         if comment:
             ans, emocion = await responder_con_ia(user, comment, agent=current_agent)

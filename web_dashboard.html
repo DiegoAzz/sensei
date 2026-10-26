@@ -1425,7 +1425,7 @@
         width: 100% !important;
       }
 
-      #btn-test-enviar {
+      #btn-test-enviar, #btn-test-live {
         width: 100% !important;
         min-height: 44px !important;
         justify-content: center !important;
@@ -1742,9 +1742,16 @@
 
           <div class="sandbox-input-row" style="display: flex; gap: 8px;">
             <input type="text" id="test-comment-input" class="input-field" style="flex: 1;" placeholder="¿Debo perdonar una infidelidad si jura que cambió?">
-            <button type="button" class="btn-action-primary" id="btn-test-enviar" style="padding: 10px 16px;">
-              Preguntar
+            <button type="button" class="btn-action-primary" id="btn-test-enviar" style="padding: 10px 14px; white-space: nowrap;" title="Prueba rápida privada solo en este panel">
+              🧪 Probar Privado
             </button>
+            <button type="button" class="btn-action-success" id="btn-test-live" style="padding: 10px 14px; background: linear-gradient(135deg, #00b09b, #96c93d); color: #fff; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;" title="Enviar directamente a la pantalla y voz del Live en vivo">
+              🚀 Enviar al Live
+            </button>
+          </div>
+          <div style="font-size: 11px; color: #8892b0; margin-top: 4px; display: flex; gap: 14px; flex-wrap: wrap;">
+            <span>🧪 <b>Probar Privado:</b> Solo suena aquí en tu navegador para afinar el tono.</span>
+            <span>🚀 <b>Enviar al Live:</b> Sale en vivo en la pantalla de TikTok y se escucha a todos.</span>
           </div>
           <div class="preset-pills">
             <button class="btn-preset" data-q="¿Debo perdonar una infidelidad?">¿Perdonar infidelidad?</button>
@@ -3508,9 +3515,46 @@ REGLAS DE ORO:
         addLog("Error al procesar: " + e.message, "err");
       } finally {
         btnTestEnviar.disabled = false;
-        btnTestEnviar.textContent = "Preguntar";
+        btnTestEnviar.textContent = "🧪 Probar Privado";
       }
     });
+
+    const btnTestLive = document.getElementById("btn-test-live");
+    if (btnTestLive) {
+      btnTestLive.addEventListener("click", async () => {
+        const q = testCommentInput.value.trim();
+        if (!q) {
+          alert("Escribe una pregunta para proyectar en el Live.");
+          return;
+        }
+        btnTestLive.disabled = true;
+        btnTestLive.textContent = "⏳ Transmitiendo...";
+        try {
+          const res = await fetch("/api/test-comment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user: "espectador_vip",
+              comment: q,
+              agent_id: currentAgent ? currentAgent.id : null,
+              enviar_al_live: true
+            })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            addLog(`🚀 Pregunta inyectada al Live en vivo: "${q}"`, "green");
+            testCommentInput.value = "";
+          } else {
+            alert(d.error || "No se pudo inyectar al live. Asegúrate de que la transmisión esté activa.");
+          }
+        } catch (e) {
+          alert("Error enviando al directo: " + e.message);
+        } finally {
+          btnTestLive.disabled = false;
+          btnTestLive.textContent = "🚀 Enviar al Live";
+        }
+      });
+    }
 
     setInterval(async () => {
       try {
