@@ -524,6 +524,8 @@
       🔊 Escuchar Audio
     </button>
     <audio id="live-speech-audio" preload="auto" playsinline></audio>
+    <!-- MÚSICA MÍSTICA DE FONDO (CONTINUA EN TIKTOK LIVE) -->
+    <audio id="bg-music" src="/assets/musica_misteriosa.mp3" loop preload="auto"></audio>
 
     <!-- CAPA 3: HUD E INTERFAZ FLOTANTE -->
     <div class="hud-layer">
@@ -612,6 +614,10 @@
     const salePopupDesc = document.getElementById("sale-popup-desc");
     const btnUnmute = document.getElementById("btn-unmute");
     const liveSpeechAudio = document.getElementById("live-speech-audio");
+    const bgMusic = document.getElementById("bg-music");
+    if (bgMusic) {
+      bgMusic.volume = 0.16;
+    }
 
     let currentAgentId = null;
     let isSpeakingState = false;
@@ -623,6 +629,9 @@
     function activarAudio() {
       vidIdle.muted = false;
       vidTalking.muted = false;
+      if (bgMusic && bgMusic.paused) {
+        bgMusic.play().catch(() => {});
+      }
       if (liveSpeechAudio) {
         liveSpeechAudio.play().catch(() => {});
       }
@@ -769,16 +778,25 @@
           }
         }
 
-        // 3. Control de Estado de Habla (Talking vs Idle)
+        // 3. Control de Estado de Habla (Talking vs Idle) con Ducking de Música
         const speakingNow = !!data.is_speaking;
         if (speakingNow !== isSpeakingState) {
           isSpeakingState = speakingNow;
           if (speakingNow) {
             document.body.classList.add("is-speaking");
             if (vidTalking.paused) vidTalking.play().catch(() => {});
+            // Ducking: atenuar suavemente la música de fondo al 4% mientras habla El Sensei
+            if (bgMusic) bgMusic.volume = 0.04;
           } else {
             document.body.classList.remove("is-speaking");
+            // Restaurar volumen normal de música (16%) en momentos de espera
+            if (bgMusic) bgMusic.volume = 0.16;
           }
+        }
+
+        // Asegurar que la música mística de fondo suene continuamente en TikTok Live
+        if (bgMusic && bgMusic.paused) {
+          bgMusic.play().catch(() => {});
         }
 
         // 4. Control de Subtítulos y Pregunta en Pantalla
