@@ -304,16 +304,14 @@ Respuesta del Asesor en Directo:"""
         prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
 
-REGLAS DE ORO Y BLINDAJE DE NICHO (ESTRICTO):
-1. TU ÚNICO UNIVERSO ES EL NICHO DE TU AGENTE ({agent.get('niche', 'Amor y Consejos')}).
-2. PROHIBIDO SALIR DEL PERSONAJE / PROHIBIDO HABLAR DE TECNOLOGÍA:
-   - NUNCA menciones que eres una IA, OpenAI, Gemini, Python o servidores.
-3. SIENTE LA VIBRA DEL USUARIO:
-   - Si se ríe ("jajaja", "xd"): ¡RÍETE CON ÉL! Comienza riéndote y vacílalo con humor.
-4. REGLA HUMANA DE SALUDO Y VELOCIDAD TIKTOK LIVE:
-   - Dirígete a la persona por su nombre limpio: "{nombre_humano}" (sin '@' ni guiones).
-   - Responde SIEMPRE en español en MÁXIMO 1 o 2 frases contundentes, sabias y directas (20 a 30 palabras máximo). Prohibido discursos largos. ¡El live de TikTok debe ser dinámico y veloz!
-   - Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
+REGLAS DE ORO Y VELOCIDAD EXTREMA PARA TIKTOK LIVE:
+1. TU ÚNICO UNIVERSO: El amor, desamor, conquista, parejas, infidelidad y dignidad.
+2. PROHIBIDO SALIR DEL PERSONAJE: Jamás digas que eres IA, bot, modelo de lenguaje ni menciones tecnología.
+3. SALUDO CORTO Y RESPUESTA RELÁMPAGO (MÁXIMO 1 FRASE DE 12 A 20 PALABRAS):
+   - Saluda brevemente a "{nombre_humano}" y dale un consejo certero, sabio y contundente sin rodeos.
+   - ¡TERMINANTEMENTE PROHIBIDO DAR DISCURSOS O PÁRRAFOS LARGOS! El live de TikTok exige respuestas ultra rápidas.
+4. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
+5. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
 Pregunta del espectador en TikTok: "{pregunta}"
 Respuesta de {agent_name}:"""
@@ -342,11 +340,11 @@ Respuesta de {agent_name}:"""
                 payload = {
                     "model": "gpt-4o-mini",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.85,
-                    "max_tokens": 160
+                    "temperature": 0.7,
+                    "max_tokens": 80
                 }
                 async with aiohttp.ClientSession() as session:
-                    async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                    async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=4)) as resp:
                         if resp.status == 200:
                             d = await resp.json()
                             raw_ans = d["choices"][0]["message"]["content"].strip()
@@ -357,23 +355,24 @@ Respuesta de {agent_name}:"""
             except Exception as e:
                 logger.warning(f"Error consultando OpenAI API: {e}")
 
-        # Soporte para Google Gemini (Gemini Flash con respuesta ultra rápida)
+        # Soporte para Google Gemini (Gemini Flash con respuesta ultra rápida instantánea)
         else:
             import aiohttp
-            modelos_gemini = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
+            # Modelos oficiales vigentes en v1beta sin 404
+            modelos_gemini = ["gemini-flash-latest", "gemini-1.5-flash-latest"]
             for modelo in modelos_gemini:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
                     payload = {
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
-                            "temperature": 0.8,
-                            "maxOutputTokens": 120,
+                            "temperature": 0.7,
+                            "maxOutputTokens": 55,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
                     }
                     async with aiohttp.ClientSession() as session:
-                        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=8)) as resp:
+                        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=3.5)) as resp:
                             if resp.status == 200:
                                 d = await resp.json()
                                 parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
@@ -523,31 +522,47 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO",
     current_agent = agent_manager.get_active_agent() or {}
     voz = voz_override or current_agent.get("voice") or estado.get("voice", "es-MX-JorgeNeural")
 
-    # Limpieza total para pronunciación 100% humana:
-    # 1. Quitar cualquier '@' para que Edge-TTS JAMÁS pronuncie la palabra 'arroba'
-    # 2. Quitar guiones bajos para que no diga 'guion bajo'
-    # 3. Limpiar dobles espacios
+    # Limpieza total para pronunciación 100% fluida y blindaje contra NoAudioReceived:
+    # 1. Quitar cualquier '@' y nombres de usuario para que Edge-TTS no deletree
     texto_voz = re.sub(r"@([a-zA-ZáéíóúÁÉÍÓÚñÑ]+)[\w\.]*", r"\1", texto)
     texto_voz = texto_voz.replace("@", "")
     texto_voz = texto_voz.replace("_", " ")
+    # 2. Filtrar emojis y símbolos extraños que rompen Edge-TTS
+    texto_voz = re.sub(r'[\U00010000-\U0010ffff]', '', texto_voz)
+    texto_voz = re.sub(r'[\u2600-\u27bf]', '', texto_voz)
+    # 3. Mantener caracteres de texto válidos
+    texto_voz = re.sub(r'[^\w\s.,!?;:¿¡áéíóúÁÉÍÓÚñÑ]', '', texto_voz)
     texto_voz = re.sub(r"\s+", " ", texto_voz).strip()
 
-    # Ajustar tono según la emoción
+    if not texto_voz:
+        texto_voz = "Escucha con atención, esto transformará tu perspectiva."
+
+    # Velocidad ágil (+10% a +14%) para ritmo dinámico en TikTok Live
     if emocion == "RISA":
-        rate = "+5%"
+        rate = "+14%"
         pitch = "+2Hz"
     elif emocion in ["ESTOICO", "INDIGNADO"]:
-        rate = "-2%"
-        pitch = "-3Hz"
-    elif emocion == "PICANTE":
-        rate = "+3%"
-        pitch = "+0Hz"
-    else:
-        rate = "+0%"
+        rate = "+8%"
         pitch = "-2Hz"
+    elif emocion == "PICANTE":
+        rate = "+12%"
+        pitch = "+1Hz"
+    else:
+        rate = "+10%"
+        pitch = "-1Hz"
 
-    comunicador = edge_tts.Communicate(texto_voz, voz, rate=rate, pitch=pitch)
-    await comunicador.save(salida_path)
+    try:
+        comunicador = edge_tts.Communicate(texto_voz, voz, rate=rate, pitch=pitch)
+        await asyncio.wait_for(comunicador.save(salida_path), timeout=4.5)
+    except Exception as e:
+        logger.warning(f"Aviso sintetizando audio con voz {voz}: {e}. Intentando fallback rápido.")
+        try:
+            fb_comm = edge_tts.Communicate(texto_voz, "es-MX-JorgeNeural", rate="+10%")
+            await asyncio.wait_for(fb_comm.save(salida_path), timeout=4.0)
+        except Exception as e2:
+            logger.error(f"Error definitivo en síntesis de audio: {e2}")
+            # Evitar que la falta de archivo tumbe el loop
+            Path(salida_path).touch()
 
 # ==================== MOTOR DE AUDIO Y STREAMING ====================
 def asegurar_fuente_tipografica() -> str:
@@ -895,31 +910,32 @@ async def worker_preguntas():
             import time
             estado["audio_version"] = int(time.time() * 1000)
 
-            # Decodificar el audio a PCM para streaming RTMP si FFmpeg está activo
-            cmd_tts = [
-                "ffmpeg", "-y",
-                "-i", str(audio_tmp),
-                "-f", "s16le", "-ar", "44100", "-ac", "2",
-                "-filter:a", "volume=1.15",
-                "pipe:1"
-            ]
-            res_tts = subprocess.run(cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            duracion_audio = max(3.5, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else 5.0
+            # Estimar la duración del habla con voz ágil (+10% velocidad: ~16 caracteres por segundo)
+            duracion_estimada = max(2.2, len(respuesta) / 16.0)
 
-            if res_tts.returncode == 0 and ffmpeg_process and ffmpeg_process.poll() is None:
+            # Solo si hay un stream RTMP FFmpeg activo procesamos PCM con subproceso
+            if ffmpeg_process and ffmpeg_process.poll() is None:
+                cmd_tts = [
+                    "ffmpeg", "-y",
+                    "-i", str(audio_tmp),
+                    "-f", "s16le", "-ar", "44100", "-ac", "2",
+                    "-filter:a", "volume=1.15",
+                    "pipe:1"
+                ]
+                res_tts = await asyncio.to_thread(subprocess.run, cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                duracion_audio = max(2.5, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else duracion_estimada
                 buffer_voz_pcm.extend(res_tts.stdout)
                 estado["is_speaking"] = True
                 registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
 
-                # Esperar a que el streamer de FFmpeg consuma los bytes (con timeout de seguridad)
                 start_w = time.time()
-                while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 2:
-                    await asyncio.sleep(0.2)
+                while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 1.5:
+                    await asyncio.sleep(0.15)
             else:
                 # Transmisión vía TikTok LIVE Studio / Browser Source
                 estado["is_speaking"] = True
                 registrar_log(f"Respondiendo en TikTok LIVE Studio con audio sincronizado.", "green")
-                await asyncio.sleep(duracion_audio)
+                await asyncio.sleep(duracion_estimada)
 
             estado["is_speaking"] = False
             estado["status_phase"] = "leyendo"
@@ -928,8 +944,8 @@ async def worker_preguntas():
             estado["is_speaking"] = False
             registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
-        # Mantener visible brevemente: si hay más preguntas en cola, pasar de inmediato (1s); si no, 2.5s
-        espera_lectura = 1.0 if not cola_preguntas.empty() else 2.5
+        # Cero esperas artificiales: si hay preguntas en cola pasar de inmediato (0.2s); si no, 1.0s
+        espera_lectura = 0.2 if not cola_preguntas.empty() else 1.0
         await asyncio.sleep(espera_lectura)
 
         if cola_preguntas.empty():
