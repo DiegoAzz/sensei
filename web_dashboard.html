@@ -3332,17 +3332,10 @@ REGLAS DE ORO:
     }
 
     btnIniciar.addEventListener("click", async () => {
-      const rtmp = cfgRtmpUrl.value.trim();
-      const sk = cfgStreamKey.value.trim();
-
-      if (!rtmp || !sk) {
-        addLog("💡 Para probar al agente de inmediato, usa el MODO SANDBOX de abajo.", "hl");
-        const sb = document.getElementById("sandbox-container");
-        if (sb) {
-          sb.scrollIntoView({ behavior: "smooth" });
-          sb.style.boxShadow = "0 0 25px rgba(255, 42, 109, 0.75)";
-          setTimeout(() => { sb.style.boxShadow = "none"; }, 2500);
-        }
+      const username = cfgUsername.value.trim();
+      if (!username) {
+        alert("Por favor ingresa tu usuario de TikTok (el que transmite) para que la IA escuche los comentarios en vivo.");
+        cfgUsername.focus();
         return;
       }
 
@@ -3350,7 +3343,7 @@ REGLAS DE ORO:
       btnIniciar.textContent = "⏳ Iniciando Live...";
 
       const payload = {
-        tiktok_username: cfgUsername.value.trim(),
+        tiktok_username: username,
         rtmp_url: cfgRtmpUrl.value.trim(),
         stream_key: cfgStreamKey.value.trim(),
         voice: cfgVoice.value,
@@ -3366,7 +3359,11 @@ REGLAS DE ORO:
         });
         const resp = await res.json();
         if (resp.ok) {
-          addLog("Transmisión iniciada hacia TikTok Live.", "green");
+          if (resp.mode === "rtmp") {
+            addLog("📡 Transmisión RTMP directa hacia TikTok iniciada desde el servidor.", "green");
+          } else {
+            addLog("🎬 Modo TikTok LIVE Studio / Pantalla Live activo. Escuchando comentarios en vivo de @" + username + "...", "green");
+          }
           actualizarUI(true);
         } else {
           addLog("Error al iniciar: " + (resp.error || "Desconocido"), "err");

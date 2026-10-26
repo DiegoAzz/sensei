@@ -843,7 +843,11 @@ async def audio_streamer_loop():
 # ==================== WORKER DE PREGUNTAS ====================
 async def worker_preguntas():
     while estado["is_streaming"]:
-        usuario, pregunta = await cola_preguntas.get()
+        try:
+            usuario, pregunta = await cola_preguntas.get()
+        except asyncio.CancelledError:
+            break
+
         nombre_humano = limpiar_nombre_usuario(usuario)
         current_agent = agent_manager.get_active_agent() or {}
 
@@ -875,7 +879,11 @@ async def worker_preguntas():
             await sintetizar_audio(respuesta, str(audio_tmp), emocion, voz_override=voz_activa)
             registrar_log(f"Voz ({voz_activa}) sintetizada.", "hl")
 
-            # Decodificar el audio a PCM y enviarlo al reproductor en vivo
+            # Notificar nueva versión de audio para Browser Source (TikTok LIVE Studio / OBS)
+            import time
+            estado["audio_version"] = int(time.time() * 1000)
+
+            # Decodificar el audio a PCM para streaming RTMP si FFmpeg está activo
             cmd_tts = [
                 "ffmpeg", "-y",
                 "-i", str(audio_tmp),
@@ -884,14 +892,23 @@ async def worker_preguntas():
                 "pipe:1"
             ]
             res_tts = subprocess.run(cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-            if res_tts.returncode == 0:
+            duracion_audio = max(3.5, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else 5.0
+
+            if res_tts.returncode == 0 and ffmpeg_process and ffmpeg_process.poll() is None:
                 buffer_voz_pcm.extend(res_tts.stdout)
                 estado["is_speaking"] = True
                 registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
 
-            # Esperar a que termine de reproducirse la respuesta en el Live
-            while len(buffer_voz_pcm) > 0 and estado["is_streaming"]:
-                await asyncio.sleep(0.3)
+                # Esperar a que el streamer de FFmpeg consuma los bytes (con timeout de seguridad)
+                start_w = time.time()
+                while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 2:
+                    await asyncio.sleep(0.2)
+            else:
+                # Transmisión vía TikTok LIVE Studio / Browser Source
+                estado["is_speaking"] = True
+                registrar_log(f"Respondiendo en TikTok LIVE Studio con audio sincronizado.", "green")
+                await asyncio.sleep(duracion_audio)
+
             estado["is_speaking"] = False
             estado["status_phase"] = "leyendo"
 
@@ -909,7 +926,7 @@ async def worker_preguntas():
         actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
         # Pausa natural para la audiencia antes de atender el siguiente caso
-        await asyncio.sleep(4)
+        await asyncio.sleep(3)
         cola_preguntas.task_done()
 
 async def simulador_ventas_loop():
@@ -935,38 +952,38 @@ async def simulador_ventas_loop():
 # ==================== CLIENTE TIKTOK LIVE ====================
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
-    from TikTokLive.types.events import CommentEvent, ConnectEvent
+    from TikTokLive.types.events import CommentEvent, ConnectEvent, DisconnectEvent
 
-    current_agent = agent_manager.get_active_agent() or {}
-    usuario = (current_agent.get("tiktok_username") or estado["tiktok_username"]).replace("@", "").strip()
-    if not usuario:
-        return
+    while estado["is_streaming"]:
+        current_agent = agent_manager.get_active_agent() or {}
+        usuario = (current_agent.get("tiktok_username") or estado.get("tiktok_username", "")).replace("@", "").strip()
+        if not usuario:
+            await asyncio.sleep(3)
+            continue
 
-    client = TikTokLiveClient(unique_id=f"@{usuario}")
+        try:
+            client = TikTokLiveClient(unique_id=f"@{usuario}")
 
-    @client.on(ConnectEvent)
-    async def on_connect(event: ConnectEvent):
-        registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
+            @client.on(ConnectEvent)
+            async def on_connect(event: ConnectEvent):
+                registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
 
-    @client.on(CommentEvent)
-    async def on_comment(event: CommentEvent):
-        u = event.user.unique_id
-        c = event.comment
+            @client.on(CommentEvent)
+            async def on_comment(event: CommentEvent):
+                u = event.user.unique_id
+                c = event.comment.strip()
+                if len(c) >= 2:
+                    registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
+                    await cola_preguntas.put((u, c))
 
-        # Palabras clave del agente activo
-        palabras = current_agent.get("keywords") or [
-            "?", "¿", "crush", "ligar", "seduccion", "seducir", "friendzone", "hablarle",
-            "perfume", "olor", "fragancia", "precio", "comprar", "recomienda", "consejo"
-        ]
+            @client.on(DisconnectEvent)
+            async def on_disconnect(event: DisconnectEvent):
+                registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
-        if (any(k in c.lower() for k in palabras) or "?" in c or "¿" in c) and len(c) >= 4:
-            registrar_log(f"📥 Pregunta recibida de @{u}: {c}")
-            await cola_preguntas.put((u, c))
-
-    try:
-        await client.start()
-    except Exception as e:
-        registrar_log(f"Conexión TikTokLive: {e}", "warn")
+            await client.start()
+        except Exception as e:
+            registrar_log(f"Conexión TikTokLive (@{usuario}): {e}", "warn")
+            await asyncio.sleep(6)
 
 # ==================== ENDPOINTS DE LA API WEB ====================
 def is_super_admin(request) -> bool:
@@ -1212,6 +1229,7 @@ async def handle_status(request):
         "is_streaming": estado["is_streaming"],
         "is_speaking": is_speaking,
         "status_phase": estado.get("status_phase", "esperando"),
+        "audio_version": estado.get("audio_version", 0),
         "active_agent_id": agent_manager.active_agent_id,
         "active_user": estado.get("active_user", ""),
         "active_emotion": estado.get("active_emotion", "SABIO"),
@@ -1239,26 +1257,32 @@ async def handle_start(request):
 
     agent_manager.save_agents()
 
-    rtmp = (current_agent.get("rtmp_url") or "").rstrip("/")
-    sk = current_agent.get("stream_key") or ""
+    rtmp = (current_agent.get("rtmp_url") or "").strip().rstrip("/")
+    sk = (current_agent.get("stream_key") or "").strip()
 
-    if not rtmp or not sk:
-        return web.json_response({"ok": False, "error": "Debes ingresar la URL RTMP y la Stream Key de TikTok"})
+    # Si el usuario ingresó un RTMP real de TikTok, iniciar FFmpeg directo
+    es_rtmp_real = bool(rtmp and sk and not ("127.0.0.1" in rtmp or "localhost" in rtmp or sk == "****"))
 
-    rtmp_completo = f"{rtmp}/{sk}"
+    estado["is_streaming"] = True
+
+    if es_rtmp_real:
+        rtmp_completo = f"{rtmp}/{sk}"
+        try:
+            ffmpeg_process = iniciar_proceso_ffmpeg(rtmp_completo, agent=current_agent)
+            streamer_task = asyncio.create_task(audio_streamer_loop())
+            registrar_log(f"Transmisión RTMP directa de '{current_agent.get('name')}' iniciada en TikTok.", "green")
+        except Exception as e:
+            registrar_log(f"Error iniciando FFmpeg RTMP: {e}", "warn")
+    else:
+        registrar_log(f"Modo TikTok LIVE Studio / Pantalla Live iniciada para @{current_agent.get('tiktok_username')}.", "green")
 
     try:
-        ffmpeg_process = iniciar_proceso_ffmpeg(rtmp_completo, agent=current_agent)
-        estado["is_streaming"] = True
-
-        streamer_task = asyncio.create_task(audio_streamer_loop())
         worker_task = asyncio.create_task(worker_preguntas())
         tiktok_task = asyncio.create_task(escuchar_tiktok())
         if current_agent.get("type") == "tienda_ventas":
             ventas_task = asyncio.create_task(simulador_ventas_loop())
 
-        registrar_log(f"Transmisión en vivo de '{current_agent.get('name')}' iniciada en TikTok.", "green")
-        return web.json_response({"ok": True})
+        return web.json_response({"ok": True, "mode": "rtmp" if es_rtmp_real else "studio"})
     except Exception as e:
         return web.json_response({"ok": False, "error": str(e)})
 
@@ -1357,6 +1381,15 @@ async def handle_live_screen(request):
     html_file = BASE_DIR / "live_screen.html"
     return web.FileResponse(html_file)
 
+async def handle_live_audio(request):
+    audio_file = DATA_DIR / "consejo_sensei.mp3"
+    if audio_file.exists():
+        return web.FileResponse(audio_file, headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "audio/mpeg"
+        })
+    return web.Response(status=404)
+
 # ==================== MAIN ====================
 async def start_dual_servers():
     app = web.Application()
@@ -1364,6 +1397,7 @@ async def start_dual_servers():
     app.router.add_get("/client", handle_index)
     app.router.add_get("/live-screen", handle_live_screen)
     app.router.add_get("/overlay", handle_live_screen)
+    app.router.add_get("/api/live-audio", handle_live_audio)
     app.router.add_get("/api/status", handle_status)
     app.router.add_post("/api/start", handle_start)
     app.router.add_post("/api/stop", handle_stop)

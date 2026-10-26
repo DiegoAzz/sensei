@@ -539,6 +539,7 @@
     <button class="audio-toggle-btn" id="btn-unmute" onclick="activarAudio()">
       🔊 Escuchar Audio
     </button>
+    <audio id="live-speech-audio" preload="auto" playsinline></audio>
 
     <!-- CAPA 3: HUD E INTERFAZ FLOTANTE -->
     <div class="hud-layer">
@@ -643,18 +644,28 @@
     const salePopup = document.getElementById("sale-popup");
     const salePopupDesc = document.getElementById("sale-popup-desc");
     const btnUnmute = document.getElementById("btn-unmute");
+    const liveSpeechAudio = document.getElementById("live-speech-audio");
 
     let currentAgentId = null;
     let isSpeakingState = false;
     let currentIdleSrc = "";
     let currentTalkSrc = "";
     let lastSaleId = null;
+    let lastAudioVersion = 0;
 
     function activarAudio() {
       vidIdle.muted = false;
       vidTalking.muted = false;
-      btnUnmute.style.display = "none";
+      if (liveSpeechAudio) {
+        liveSpeechAudio.play().catch(() => {});
+      }
+      btnUnmute.style.opacity = "0";
+      setTimeout(() => { btnUnmute.style.display = "none"; }, 350);
     }
+
+    document.addEventListener("click", () => {
+      activarAudio();
+    }, { once: true });
 
     async function pollStatus() {
       try {
@@ -670,6 +681,14 @@
           hudCta.textContent = data.call_to_action || "📦 Pide el tuyo en el enlace de la biografía";
           hudStoreBadge.textContent = data.store_name ? data.store_name.slice(0, 24) : "COLOMBIA 🇨🇴";
           cardAnsSpeaker.textContent = (data.name || "ASESOR").split("·")[0].trim().toUpperCase();
+
+          if (cardWaitingSub) {
+            if (data.type === "tienda_ventas") {
+              cardWaitingSub.textContent = data.call_to_action || "Pide tu perfume árabe favorito o clon de diseñador y te respondemos en vivo.";
+            } else {
+              cardWaitingSub.textContent = data.call_to_action || "Deja tu caso sobre tu crush, pareja o desamor en los comentarios y el Sensei te responde en vivo.";
+            }
+          }
 
           if (data.theme_color) {
             document.documentElement.style.setProperty("--gold", data.theme_color);
@@ -705,7 +724,16 @@
           }
         }
 
-        // 2. Control de Estado de Habla (Talking vs Idle)
+        // 2. Reproducir audio de respuesta en tiempo real (para TikTok LIVE Studio / OBS)
+        if (data.audio_version && data.audio_version !== lastAudioVersion) {
+          lastAudioVersion = data.audio_version;
+          if (liveSpeechAudio) {
+            liveSpeechAudio.src = `/api/live-audio?v=${data.audio_version}`;
+            liveSpeechAudio.play().catch(e => console.log("Audio play error:", e));
+          }
+        }
+
+        // 3. Control de Estado de Habla (Talking vs Idle)
         const speakingNow = !!data.is_speaking;
         if (speakingNow !== isSpeakingState) {
           isSpeakingState = speakingNow;
@@ -717,7 +745,7 @@
           }
         }
 
-        // 3. Control de Cards y Textos en Pantalla
+        // 4. Control de Cards y Textos en Pantalla
         const phase = data.status_phase || "esperando";
 
         if (phase === "pensando") {
@@ -743,7 +771,7 @@
           cardAnswer.style.display = "none";
         }
 
-        // 4. Pop-up de Venta en Vivo
+        // 5. Pop-up de Venta en Vivo
         if (data.last_sale_alert && data.last_sale_alert.id !== lastSaleId) {
           lastSaleId = data.last_sale_alert.id;
           const a = data.last_sale_alert;
