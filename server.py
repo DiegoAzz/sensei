@@ -890,103 +890,112 @@ async def worker_preguntas():
         except asyncio.CancelledError:
             break
 
-        nombre_humano = limpiar_nombre_usuario(usuario)
-        current_agent = agent_manager.get_active_agent() or {}
-
-        estado["active_user"] = nombre_humano
-        estado["active_question"] = pregunta
-        estado["status_phase"] = "pensando"
-
-        # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
-        actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
-
-        tipo_ag = current_agent.get("type", "consultorio")
-        tag_icon = "🛍️ Venta" if tipo_ag == "tienda_ventas" else "🏮 Consulta"
-        registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
-
-        respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
-
-        # Garantizar que El Sensei SIEMPRE mencione y lea el nombre del usuario en voz alta en el audio:
-        resp_clean = respuesta.strip()
-        nombre_lower = nombre_humano.lower()
-        if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
-            import random
-            prefijos = [
-                f"Escucha bien, {nombre_humano}:",
-                f"Atento {nombre_humano}:",
-                f"Oye {nombre_humano}:",
-                f"{nombre_humano}, mira la realidad:"
-            ]
-            respuesta = f"{random.choice(prefijos)} {resp_clean}"
-        elif nombre_lower == "amigo" and not any(k in resp_clean.lower() for k in ["amigo", "hermano", "escucha"]):
-            respuesta = f"Escucha bien, amigo: {resp_clean}"
-
-        estado["active_answer"] = respuesta
-        estado["active_emotion"] = emocion
-        estado["status_phase"] = "respondiendo"
-
-        tag_resp = "🌸 Boutique" if tipo_ag == "tienda_ventas" else f"📿 {current_agent.get('name', 'Sensei')}"
-        registrar_log(f"{tag_resp} [{emocion}] responde a {nombre_humano}: \"{respuesta}\"", "green")
-
-        # Proyectar consejo/venta en tiempo real en la caja holográfica del video de TikTok
-        actualizar_overlay_video(nombre_humano, pregunta, respuesta, estado_tipo="respondiendo", agent=current_agent)
-
-        audio_tmp = DATA_DIR / "consejo_sensei.mp3"
         try:
-            voz_activa = current_agent.get("voice") or estado["voice"]
-            await sintetizar_audio(respuesta, str(audio_tmp), emocion, voz_override=voz_activa)
-            registrar_log(f"Voz ({voz_activa}) sintetizada.", "hl")
+            nombre_humano = limpiar_nombre_usuario(usuario)
+            current_agent = agent_manager.get_active_agent() or {}
 
-            # Notificar nueva versión de audio para Browser Source (TikTok LIVE Studio / OBS)
-            import time
-            estado["audio_version"] = int(time.time() * 1000)
+            estado["active_user"] = nombre_humano
+            estado["active_question"] = pregunta
+            estado["status_phase"] = "pensando"
 
-            # Estimar la duración del habla con voz ágil (+10% velocidad: ~16 caracteres por segundo)
-            duracion_estimada = max(2.2, len(respuesta) / 16.0)
+            # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
+            actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
 
-            # Solo si hay un stream RTMP FFmpeg activo procesamos PCM con subproceso
-            if ffmpeg_process and ffmpeg_process.poll() is None:
-                cmd_tts = [
-                    "ffmpeg", "-y",
-                    "-i", str(audio_tmp),
-                    "-f", "s16le", "-ar", "44100", "-ac", "2",
-                    "-filter:a", "volume=1.15",
-                    "pipe:1"
+            tipo_ag = current_agent.get("type", "consultorio")
+            tag_icon = "🛍️ Venta" if tipo_ag == "tienda_ventas" else "🏮 Consulta"
+            registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
+
+            # Garantizar que responder_con_ia nunca rompa el worker
+            try:
+                respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
+            except Exception as e_ia:
+                logger.error(f"Error en motor IA: {e_ia}. Activando oráculo local de contingencia.")
+                respuesta, emocion = obtener_consejo_amor_sensei(usuario, pregunta)
+
+            # Garantizar que El Sensei SIEMPRE mencione y lea el nombre del usuario en voz alta en el audio:
+            resp_clean = (respuesta or "").strip()
+            nombre_lower = nombre_humano.lower()
+            if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
+                import random
+                prefijos = [
+                    f"Escucha bien, {nombre_humano}:",
+                    f"Atento {nombre_humano}:",
+                    f"Oye {nombre_humano}:",
+                    f"{nombre_humano}, mira la realidad:"
                 ]
-                res_tts = await asyncio.to_thread(subprocess.run, cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-                duracion_audio = max(2.5, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else duracion_estimada
-                buffer_voz_pcm.extend(res_tts.stdout)
-                estado["is_speaking"] = True
-                registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
+                respuesta = f"{random.choice(prefijos)} {resp_clean}"
+            elif nombre_lower == "amigo" and not any(k in resp_clean.lower() for k in ["amigo", "hermano", "escucha"]):
+                respuesta = f"Escucha bien, hermano: {resp_clean}"
 
-                start_w = time.time()
-                while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 1.5:
-                    await asyncio.sleep(0.15)
-            else:
-                # Transmisión vía TikTok LIVE Studio / Browser Source
-                estado["is_speaking"] = True
-                registrar_log(f"Respondiendo en TikTok LIVE Studio con audio sincronizado.", "green")
-                await asyncio.sleep(duracion_estimada)
+            estado["active_answer"] = respuesta
+            estado["active_emotion"] = emocion
+            estado["status_phase"] = "respondiendo"
 
-            estado["is_speaking"] = False
-            estado["status_phase"] = "leyendo"
+            tag_resp = "🌸 Boutique" if tipo_ag == "tienda_ventas" else f"📿 {current_agent.get('name', 'Sensei')}"
+            registrar_log(f"{tag_resp} [{emocion}] responde a {nombre_humano}: \"{respuesta}\"", "green")
 
-        except Exception as e:
-            estado["is_speaking"] = False
-            registrar_log(f"Error procesando voz en vivo: {e}", "err")
+            # Proyectar consejo/venta en tiempo real en la caja holográfica del video de TikTok
+            actualizar_overlay_video(nombre_humano, pregunta, respuesta, estado_tipo="respondiendo", agent=current_agent)
 
-        # Cero esperas artificiales: si hay preguntas en cola pasar de inmediato (0.2s); si no, 1.0s
-        espera_lectura = 0.2 if not cola_preguntas.empty() else 1.0
-        await asyncio.sleep(espera_lectura)
+            audio_tmp = DATA_DIR / "consejo_sensei.mp3"
+            try:
+                voz_activa = current_agent.get("voice") or estado["voice"]
+                await sintetizar_audio(respuesta, str(audio_tmp), emocion, voz_override=voz_activa)
+                registrar_log(f"Voz ({voz_activa}) sintetizada.", "hl")
 
-        if cola_preguntas.empty():
-            estado["status_phase"] = "esperando"
-            estado["active_user"] = ""
-            estado["active_question"] = ""
-            estado["active_answer"] = ""
-            actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+                # Notificar nueva versión de audio para Browser Source (TikTok LIVE Studio / OBS)
+                import time
+                estado["audio_version"] = int(time.time() * 1000)
 
-        cola_preguntas.task_done()
+                # Estimar la duración del habla con voz ágil (+10% velocidad: ~16 caracteres por segundo)
+                duracion_estimada = max(2.0, len(respuesta) / 16.0)
+
+                # Solo si hay un stream RTMP FFmpeg activo procesamos PCM con subproceso
+                if ffmpeg_process and ffmpeg_process.poll() is None:
+                    cmd_tts = [
+                        "ffmpeg", "-y",
+                        "-i", str(audio_tmp),
+                        "-f", "s16le", "-ar", "44100", "-ac", "2",
+                        "-filter:a", "volume=1.15",
+                        "pipe:1"
+                    ]
+                    res_tts = await asyncio.to_thread(subprocess.run, cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                    duracion_audio = max(2.5, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else duracion_estimada
+                    buffer_voz_pcm.extend(res_tts.stdout)
+                    estado["is_speaking"] = True
+                    registrar_log(f"Respondiendo con voz en vivo en TikTok sobre la música de fondo.", "green")
+
+                    start_w = time.time()
+                    while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 1.5:
+                        await asyncio.sleep(0.15)
+                else:
+                    # Transmisión vía TikTok LIVE Studio / Browser Source
+                    estado["is_speaking"] = True
+                    registrar_log(f"Respondiendo en TikTok LIVE Studio con audio sincronizado.", "green")
+                    await asyncio.sleep(duracion_estimada)
+
+                estado["is_speaking"] = False
+                estado["status_phase"] = "leyendo"
+
+            except Exception as e:
+                estado["is_speaking"] = False
+                registrar_log(f"Error procesando voz en vivo: {e}", "err")
+
+            # Cero esperas artificiales: si hay preguntas en cola pasar de inmediato (0.15s); si no, 0.9s
+            espera_lectura = 0.15 if not cola_preguntas.empty() else 0.9
+            await asyncio.sleep(espera_lectura)
+
+            if cola_preguntas.empty():
+                estado["status_phase"] = "esperando"
+                estado["active_user"] = ""
+                estado["active_question"] = ""
+                estado["active_answer"] = ""
+                actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+
+        except Exception as e_proc:
+            logger.error(f"Error en worker_preguntas procesando comentario: {e_proc}")
+        finally:
+            cola_preguntas.task_done()
 
 async def simulador_ventas_loop():
     """Genera alertas y compras simuladas en la pantalla del live para tiendas físicas."""
@@ -1030,18 +1039,22 @@ async def escuchar_tiktok():
 
             @client.on(CommentEvent)
             async def on_comment(event: CommentEvent):
-                u = event.user.unique_id
-                c = event.comment.strip()
-                if len(c) >= 2:
+                try:
+                    u = event.user.unique_id
+                    c = event.comment.strip()
+                    if not c:
+                        return
                     registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
-                    # Mantener la cola al día con el último comentario para responder de inmediato sin acumular
-                    while not cola_preguntas.empty():
+                    # Mantener el live fresco: si hay más de 5 preguntas acumuladas, descartar solo la más vieja
+                    if cola_preguntas.qsize() >= 5:
                         try:
                             cola_preguntas.get_nowait()
                             cola_preguntas.task_done()
                         except Exception:
-                            break
+                            pass
                     await cola_preguntas.put((u, c))
+                except Exception as e:
+                    logger.warning(f"Aviso procesando comentario de TikTok: {e}")
 
             @client.on(DisconnectEvent)
             async def on_disconnect(event: DisconnectEvent):
@@ -1052,8 +1065,8 @@ async def escuchar_tiktok():
         except asyncio.CancelledError:
             break
         except Exception as e:
-            registrar_log(f"Conexión TikTokLive (@{usuario}): {e}", "warn")
-            await asyncio.sleep(5)
+            registrar_log(f"Conexión TikTokLive (@{usuario}): {e}. Reintentando en 2s...", "warn")
+            await asyncio.sleep(2)
         finally:
             if client and client.connected:
                 try:
