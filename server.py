@@ -551,18 +551,33 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO",
         rate = "+10%"
         pitch = "-1Hz"
 
-    try:
-        comunicador = edge_tts.Communicate(texto_voz, voz, rate=rate, pitch=pitch)
-        await asyncio.wait_for(comunicador.save(salida_path), timeout=4.5)
-    except Exception as e:
-        logger.warning(f"Aviso sintetizando audio con voz {voz}: {e}. Intentando fallback rápido.")
+    tmp_path = Path(salida_path).with_suffix(".tmp.mp3")
+    generado_ok = False
+
+    voces_probar = [voz]
+    if "es-MX-JorgeNeural" not in voces_probar:
+        voces_probar.append("es-MX-JorgeNeural")
+    if "es-ES-AlvaroNeural" not in voces_probar:
+        voces_probar.append("es-ES-AlvaroNeural")
+
+    for v_candidata in voces_probar:
         try:
-            fb_comm = edge_tts.Communicate(texto_voz, "es-MX-JorgeNeural", rate="+10%")
-            await asyncio.wait_for(fb_comm.save(salida_path), timeout=4.0)
-        except Exception as e2:
-            logger.error(f"Error definitivo en síntesis de audio: {e2}")
-            # Evitar que la falta de archivo tumbe el loop
-            Path(salida_path).touch()
+            comunicador = edge_tts.Communicate(texto_voz, v_candidata, rate=rate, pitch=pitch)
+            await asyncio.wait_for(comunicador.save(str(tmp_path)), timeout=4.5)
+            if tmp_path.exists() and tmp_path.stat().st_size > 500:
+                tmp_path.replace(salida_path)
+                generado_ok = True
+                break
+        except Exception as e:
+            logger.warning(f"Aviso sintetizando con voz {v_candidata}: {e}")
+            if tmp_path.exists():
+                try:
+                    tmp_path.unlink()
+                except Exception:
+                    pass
+
+    if not generado_ok:
+        logger.error(f"Error generando audio para: '{texto_voz[:35]}...'")
 
 # ==================== MOTOR DE AUDIO Y STREAMING ====================
 def asegurar_fuente_tipografica() -> str:
@@ -890,6 +905,22 @@ async def worker_preguntas():
         registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
 
         respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
+
+        # Garantizar que El Sensei SIEMPRE mencione y lea el nombre del usuario en voz alta en el audio:
+        resp_clean = respuesta.strip()
+        nombre_lower = nombre_humano.lower()
+        if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
+            import random
+            prefijos = [
+                f"Escucha bien, {nombre_humano}:",
+                f"Atento {nombre_humano}:",
+                f"Oye {nombre_humano}:",
+                f"{nombre_humano}, mira la realidad:"
+            ]
+            respuesta = f"{random.choice(prefijos)} {resp_clean}"
+        elif nombre_lower == "amigo" and not any(k in resp_clean.lower() for k in ["amigo", "hermano", "escucha"]):
+            respuesta = f"Escucha bien, amigo: {resp_clean}"
+
         estado["active_answer"] = respuesta
         estado["active_emotion"] = emocion
         estado["status_phase"] = "respondiendo"
@@ -1443,11 +1474,19 @@ async def handle_live_screen(request):
 
 async def handle_live_audio(request):
     audio_file = DATA_DIR / "consejo_sensei.mp3"
-    if audio_file.exists():
+    if audio_file.exists() and audio_file.stat().st_size > 500:
         return web.FileResponse(audio_file, headers={
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Content-Type": "audio/mpeg"
         })
+    # Fallback si existe audio de respaldo para no romper la reproducción
+    for fb_name in ["test_voice2.mp3", "test_speed.mp3", "test_voice.mp3"]:
+        fb_p = DATA_DIR / fb_name
+        if fb_p.exists() and fb_p.stat().st_size > 500:
+            return web.FileResponse(fb_p, headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Type": "audio/mpeg"
+            })
     return web.Response(status=404)
 
 # ==================== MAIN ====================

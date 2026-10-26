@@ -747,19 +747,25 @@
         if (data.audio_version && data.audio_version !== lastAudioVersion) {
           lastAudioVersion = data.audio_version;
           const audioUrl = `/api/live-audio?v=${data.audio_version}`;
-          if (liveSpeechAudio) {
-            liveSpeechAudio.src = audioUrl;
-            liveSpeechAudio.currentTime = 0;
-            const p = liveSpeechAudio.play();
-            if (p && typeof p.catch === "function") {
-              p.catch(e => {
-                try {
-                  const fallbackAudio = new Audio(audioUrl);
-                  fallbackAudio.volume = 1.0;
-                  fallbackAudio.play().catch(() => {});
-                } catch(err) {}
+          
+          try {
+            const player = new Audio();
+            player.src = audioUrl;
+            player.volume = 1.0;
+            player.autoplay = true;
+            const playPromise = player.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(err => {
+                console.warn("Audio intento principal:", err);
+                if (liveSpeechAudio) {
+                  liveSpeechAudio.src = audioUrl;
+                  liveSpeechAudio.currentTime = 0;
+                  liveSpeechAudio.play().catch(e => console.warn("Audio fallback:", e));
+                }
               });
             }
+          } catch(err) {
+            console.error("Error reproduciendo audio:", err);
           }
         }
 
