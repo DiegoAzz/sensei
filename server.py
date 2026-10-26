@@ -987,8 +987,8 @@ async def escuchar_tiktok():
                 c = event.comment.strip()
                 if len(c) >= 2:
                     registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
-                    # Mantener el live al día sin saturación: mantener solo las últimas 2 preguntas
-                    while cola_preguntas.qsize() >= 2:
+                    # Mantener la cola al día con el último comentario para responder de inmediato sin acumular
+                    while not cola_preguntas.empty():
                         try:
                             cola_preguntas.get_nowait()
                             cola_preguntas.task_done()
@@ -1000,8 +1000,8 @@ async def escuchar_tiktok():
             async def on_disconnect(event: DisconnectEvent):
                 registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
-            # process_connect_events=False descarta comentarios pasados y solo escucha en tiempo real
-            await client.connect(process_connect_events=False)
+            # process_connect_events=True permite capturar la pregunta que el usuario recién escribió
+            await client.connect(process_connect_events=True)
         except asyncio.CancelledError:
             break
         except Exception as e:

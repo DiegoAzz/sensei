@@ -105,7 +105,7 @@
       top: 13%;
       left: 0;
       right: 0;
-      height: 35%;
+      height: 28%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -116,8 +116,8 @@
 
     .avatar-orb-wrapper {
       position: relative;
-      width: 190px;
-      height: 190px;
+      width: 155px;
+      height: 155px;
       animation: levitate 3.6s ease-in-out infinite;
     }
 
@@ -245,23 +245,23 @@
 
     .boutique-title {
       font-family: var(--font-luxury);
-      font-size: 21px;
+      font-size: 16px;
       font-weight: 900;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       background: linear-gradient(135deg, #fff 20%, var(--gold) 70%, #ffdf79 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 25px var(--gold-glow);
+      text-shadow: 0 0 20px var(--gold-glow);
       text-transform: uppercase;
       line-height: 1.15;
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .boutique-sub {
-      font-size: 12px;
+      font-size: 10.5px;
       font-weight: 700;
       color: var(--cyan);
-      text-shadow: 0 0 10px var(--cyan-glow);
+      text-shadow: 0 0 8px var(--cyan-glow);
       letter-spacing: 0.5px;
     }
 
@@ -315,17 +315,17 @@
     }
 
     /* ==================== ZONA CENTRAL / CARDS DE CHAT ==================== */
-    /* Ubicada estrictamente en la franja media-superior (top: 48% a 72%), dejando el 28% inferior 100% libre para el chat nativo de TikTok */
+    /* Ubicada estrictamente en la franja media (top: 42% a 58%), dejando el 40% inferior 100% libre para el chat de TikTok */
     .stream-lower-section {
       position: absolute;
       left: 14px;
       right: 14px;
-      top: 48%;
-      bottom: 28%;
+      top: 42%;
+      max-height: 19%;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      gap: 8px;
+      gap: 6px;
       z-index: 20;
       pointer-events: none;
     }
@@ -336,21 +336,21 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1.5px solid var(--card-border);
-      border-radius: 14px;
-      padding: 10px 14px;
-      box-shadow: 0 10px 35px rgba(0,0,0,0.85);
+      border-radius: 12px;
+      padding: 8px 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.85);
       transition: all 0.35s ease;
     }
 
     /* 1. Card de Pregunta del Espectador */
     .question-card {
       border-color: rgba(0, 240, 255, 0.5);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
       animation: cardPop 0.4s ease;
     }
 
     @keyframes cardPop {
-      0% { opacity: 0; transform: translateY(15px) scale(0.96); }
+      0% { opacity: 0; transform: translateY(12px) scale(0.97); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
@@ -358,24 +358,24 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .question-user-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       background: rgba(0, 240, 255, 0.15);
       border: 1px solid rgba(0, 240, 255, 0.4);
       color: var(--cyan);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
-      padding: 3px 9px;
-      border-radius: 12px;
+      padding: 2px 7px;
+      border-radius: 10px;
     }
 
     .question-tag {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 700;
       color: #aaa;
       letter-spacing: 0.5px;
@@ -383,37 +383,37 @@
     }
 
     .question-text {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 700;
       color: #fff;
-      line-height: 1.35;
+      line-height: 1.3;
       font-style: italic;
     }
 
-    /* 2. Card de Respuesta de la Presentadora / Asesora */
+    /* 2. Card de Respuesta del Asesor */
     .answer-card {
       border-color: var(--gold);
-      box-shadow: 0 0 30px var(--gold-glow);
+      box-shadow: 0 0 25px var(--gold-glow);
       position: relative;
     }
 
     .answer-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 6px;
+      margin-bottom: 5px;
     }
 
     .presenter-speaking-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background: linear-gradient(90deg, #d4af37, #f39c12);
       color: #07090e;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 900;
-      padding: 3px 10px;
-      border-radius: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
       letter-spacing: 0.5px;
     }
 
@@ -421,11 +421,11 @@
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      height: 12px;
+      height: 10px;
     }
 
     .soundwave-bar {
-      width: 2.5px;
+      width: 2px;
       height: 100%;
       background: #07090e;
       border-radius: 2px;
@@ -436,29 +436,29 @@
     .soundwave-bar:nth-child(3) { animation-delay: 0.4s; }
 
     @keyframes soundwaveAnim {
-      from { height: 3px; }
-      to { height: 12px; }
+      from { height: 2px; }
+      to { height: 10px; }
     }
 
     .answer-text {
-      font-size: 14.5px;
+      font-size: 12px;
       font-weight: 700;
-      line-height: 1.4;
+      line-height: 1.35;
       color: #fff;
       text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-      max-height: 105px;
+      max-height: 75px;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 4;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
     }
 
     /* 3. Card de Espera / Invitación a Comentar */
     .waiting-card {
       text-align: center;
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(8, 12, 22, 0.92);
+      background: rgba(8, 12, 22, 0.94);
       animation: breatheCard 3s infinite alternate;
     }
 
@@ -469,18 +469,19 @@
 
     .waiting-title {
       font-family: var(--font-luxury);
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 900;
       color: var(--gold);
-      letter-spacing: 1px;
+      letter-spacing: 0.8px;
       margin-bottom: 3px;
       text-transform: uppercase;
     }
 
     .waiting-subtitle {
-      font-size: 11.5px;
+      font-size: 10.5px;
       color: #ccc;
       font-weight: 600;
+      line-height: 1.3;
     }
 
     /* Barra Inferior de Llamado a la Acción */
@@ -597,16 +598,9 @@
 
         <!-- 3. Tarjeta de Espera cuando no hay pregunta -->
         <div class="glass-card waiting-card" id="card-waiting">
-          <div class="waiting-title">✨ Deja tu pregunta en el chat ✨</div>
+          <div class="waiting-title" id="hud-waiting-title">🏮 CONSULTORIO EN DIRECTO 🏮</div>
           <div class="waiting-subtitle" id="card-waiting-sub">
-            Pide tu perfume árabe favorito o clon de diseñador y te respondemos en vivo.
-          </div>
-        </div>
-
-        <!-- Barra Inferior de CTA -->
-        <div class="cta-bar">
-          <div class="cta-text" id="hud-cta">
-            <span>📦 Envíos gratis a toda Colombia hoy · Pide en el enlace de la bio</span>
+            Deja tu caso de amor o pareja en los comentarios y el Sensei te responde en vivo 👇
           </div>
         </div>
 
@@ -724,9 +718,20 @@
         // 2. Reproducir audio de respuesta en tiempo real (para TikTok LIVE Studio / OBS)
         if (data.audio_version && data.audio_version !== lastAudioVersion) {
           lastAudioVersion = data.audio_version;
+          const audioUrl = `/api/live-audio?v=${data.audio_version}`;
           if (liveSpeechAudio) {
-            liveSpeechAudio.src = `/api/live-audio?v=${data.audio_version}`;
-            liveSpeechAudio.play().catch(e => console.log("Audio play error:", e));
+            liveSpeechAudio.src = audioUrl;
+            liveSpeechAudio.currentTime = 0;
+            const p = liveSpeechAudio.play();
+            if (p && typeof p.catch === "function") {
+              p.catch(e => {
+                try {
+                  const fallbackAudio = new Audio(audioUrl);
+                  fallbackAudio.volume = 1.0;
+                  fallbackAudio.play().catch(() => {});
+                } catch(err) {}
+              });
+            }
           }
         }
 
