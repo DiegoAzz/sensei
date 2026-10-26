@@ -314,107 +314,136 @@
       text-transform: uppercase;
     }
 
-    /* ==================== ZONA CENTRAL / CARDS DE CHAT ==================== */
-    /* Ubicada estrictamente en la franja media (top: 42% a 58%), dejando el 40% inferior 100% libre para el chat de TikTok */
-    .stream-lower-section {
+    /* ==================== SUBTÍTULOS DINÁMICOS PROFESIONALES (ESTILO TIKTOK VIRAL) ==================== */
+    /* Ubicados estrictamente arriba (top: 38% a 48%), dejando todo el espacio inferior 100% libre para el chat de TikTok */
+    .stream-subtitles-hud {
       position: absolute;
-      left: 14px;
-      right: 14px;
-      top: 42%;
-      max-height: 19%;
+      left: 12px;
+      right: 12px;
+      top: 38%;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      align-items: center;
       gap: 6px;
-      z-index: 20;
+      z-index: 25;
       pointer-events: none;
     }
 
-    /* Tarjeta Flotante Glassmorphic de Alto Contraste */
-    .glass-card {
-      background: rgba(8, 12, 22, 0.94);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1.5px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.85);
-      transition: all 0.35s ease;
-    }
-
-    /* 1. Card de Pregunta del Espectador */
-    .question-card {
-      border-color: rgba(0, 240, 255, 0.5);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-      animation: cardPop 0.4s ease;
-    }
-
-    @keyframes cardPop {
-      0% { opacity: 0; transform: translateY(12px) scale(0.97); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .question-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-
-    .question-user-badge {
+    /* 1. Pastilla de Pregunta Compacta (1 sola línea) */
+    .hud-question-pill {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      background: rgba(0, 240, 255, 0.15);
-      border: 1px solid rgba(0, 240, 255, 0.4);
-      color: var(--cyan);
-      font-size: 10px;
+      gap: 6px;
+      background: rgba(4, 6, 14, 0.9);
+      border: 1px solid rgba(0, 240, 255, 0.7);
+      border-radius: 20px;
+      padding: 3px 12px;
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.25);
+      max-width: 95%;
+      animation: popIn 0.3s ease-out;
+    }
+
+    .hud-q-badge {
+      font-size: 10.5px;
       font-weight: 800;
-      padding: 2px 7px;
-      border-radius: 10px;
+      color: var(--cyan);
+      white-space: nowrap;
     }
 
-    .question-tag {
-      font-size: 9px;
-      font-weight: 700;
-      color: #aaa;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .question-text {
-      font-size: 12px;
+    .hud-q-content {
+      font-size: 11.5px;
       font-weight: 700;
       color: #fff;
-      line-height: 1.3;
       font-style: italic;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 260px;
     }
 
-    /* 2. Card de Respuesta del Asesor */
-    .answer-card {
-      border-color: var(--gold);
-      box-shadow: 0 0 25px var(--gold-glow);
-      position: relative;
-    }
-
-    .answer-header {
+    /* 2. Caja de Subtítulo Activo (1 frase grande a la vez según habla el Sensei) */
+    .hud-sub-box {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      margin-bottom: 5px;
+      text-align: center;
+      gap: 4px;
+      width: 100%;
     }
 
-    .presenter-speaking-pill {
+    .hud-sub-speaker-tag {
       display: inline-flex;
       align-items: center;
       gap: 5px;
       background: linear-gradient(90deg, #d4af37, #f39c12);
       color: #07090e;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 900;
       padding: 2px 8px;
       border-radius: 10px;
       letter-spacing: 0.5px;
+      box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    }
+
+    .hud-sub-active-line {
+      display: inline-block;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.25;
+      color: #ffffff;
+      text-align: center;
+      background: rgba(3, 5, 12, 0.9);
+      border: 1.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 7px 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.95), 0 0 15px var(--gold-glow);
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+      letter-spacing: 0.3px;
+      max-width: 94%;
+      animation: subPop 0.22s ease-out;
+    }
+
+    @keyframes subPop {
+      0% { transform: scale(0.92); opacity: 0.3; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes popIn {
+      0% { transform: translateY(-8px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    /* 3. Pill de Espera */
+    .hud-waiting-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(5, 7, 16, 0.88);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 20px;
+      padding: 5px 14px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+      animation: pulsePill 2.5s infinite alternate;
+    }
+
+    .wait-dot {
+      width: 7px;
+      height: 7px;
+      background: #00ff88;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00ff88;
+    }
+
+    .hud-waiting-pill span {
+      font-size: 11px;
+      font-weight: 700;
+      color: #ddd;
+    }
+
+    @keyframes pulsePill {
+      0% { border-color: rgba(212, 175, 55, 0.3); }
+      100% { border-color: rgba(0, 240, 255, 0.6); }
     }
 
     .soundwave {
@@ -438,50 +467,6 @@
     @keyframes soundwaveAnim {
       from { height: 2px; }
       to { height: 10px; }
-    }
-
-    .answer-text {
-      font-size: 12px;
-      font-weight: 700;
-      line-height: 1.35;
-      color: #fff;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-      max-height: 75px;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-    }
-
-    /* 3. Card de Espera / Invitación a Comentar */
-    .waiting-card {
-      text-align: center;
-      padding: 10px 12px;
-      border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(8, 12, 22, 0.94);
-      animation: breatheCard 3s infinite alternate;
-    }
-
-    @keyframes breatheCard {
-      from { border-color: rgba(212, 175, 55, 0.3); box-shadow: 0 0 15px rgba(212, 175, 55, 0.15); }
-      to { border-color: rgba(0, 240, 255, 0.5); box-shadow: 0 0 25px rgba(0, 240, 255, 0.25); }
-    }
-
-    .waiting-title {
-      font-family: var(--font-luxury);
-      font-size: 12px;
-      font-weight: 900;
-      color: var(--gold);
-      letter-spacing: 0.8px;
-      margin-bottom: 3px;
-      text-transform: uppercase;
-    }
-
-    .waiting-subtitle {
-      font-size: 10.5px;
-      color: #ccc;
-      font-weight: 600;
-      line-height: 1.3;
     }
 
     /* Barra Inferior de Llamado a la Acción */
@@ -564,44 +549,34 @@
         </div>
       </div>
 
-      <!-- ZONA INFERIOR DE CARDS INTERACTIVAS -->
-      <div class="stream-lower-section">
+      <!-- ==================== SUBTÍTULOS DINÁMICOS PROFESIONALES (TIPO CAPCUT / TIKTOK VIRAL) ==================== -->
+      <div class="stream-subtitles-hud" id="stream-subtitles-hud">
 
-        <!-- 1. Tarjeta de Pregunta Activa -->
-        <div class="glass-card question-card" id="card-question" style="display: none;">
-          <div class="question-header">
-            <span class="question-user-badge" id="card-q-user">👤 @usuario</span>
-            <span class="question-tag">Pregunta en vivo</span>
-          </div>
-          <div class="question-text" id="card-q-text">
-            "¿Tienen algo parecido a Toy Boy de Moschino?"
-          </div>
+        <!-- 1. Pastilla de Pregunta Compacta (1 sola línea) -->
+        <div class="hud-question-pill" id="card-question" style="display: none;">
+          <span class="hud-q-badge" id="card-q-user">👤 @usuario</span>
+          <span class="hud-q-content" id="card-q-text">"¿Pregunta?"</span>
         </div>
 
-        <!-- 2. Tarjeta de Respuesta de la Presentadora -->
-        <div class="glass-card answer-card" id="card-answer" style="display: none;">
-          <div class="answer-header">
-            <span class="presenter-speaking-pill">
-              <span id="card-ans-speaker">SALOMÉ</span>
-              <span class="soundwave">
-                <span class="soundwave-bar"></span>
-                <span class="soundwave-bar"></span>
-                <span class="soundwave-bar"></span>
-              </span>
+        <!-- 2. Subtítulo Dinámico (1 frase grande que cambia mientras habla) -->
+        <div class="hud-sub-box" id="card-answer" style="display: none;">
+          <div class="hud-sub-speaker-tag">
+            <span id="card-ans-speaker">⛩️ EL SENSEI</span>
+            <span class="soundwave">
+              <span class="soundwave-bar"></span>
+              <span class="soundwave-bar"></span>
+              <span class="soundwave-bar"></span>
             </span>
-            <span style="font-size: 11px; color: var(--gold); font-weight: 700;">En Directo</span>
           </div>
-          <div class="answer-text" id="card-ans-text">
-            ¡Hola mi vida! En nuestra boutique tenemos la inspiración perfecta...
+          <div class="hud-sub-active-line" id="card-ans-text">
+            <!-- Frase actual sincronizada -->
           </div>
         </div>
 
-        <!-- 3. Tarjeta de Espera cuando no hay pregunta -->
-        <div class="glass-card waiting-card" id="card-waiting">
-          <div class="waiting-title" id="hud-waiting-title">🏮 CONSULTORIO EN DIRECTO 🏮</div>
-          <div class="waiting-subtitle" id="card-waiting-sub">
-            Deja tu caso de amor o pareja en los comentarios y el Sensei te responde en vivo 👇
-          </div>
+        <!-- 3. Pill de Espera -->
+        <div class="hud-waiting-pill" id="card-waiting">
+          <span class="wait-dot"></span>
+          <span id="card-waiting-sub">⛩️ Deja tu dilema en los comentarios y te respondo en vivo 👇</span>
         </div>
 
       </div>
@@ -657,6 +632,56 @@
     document.addEventListener("click", () => {
       activarAudio();
     }, { once: true });
+
+    // ==================== MOTOR DE SUBTÍTULOS DINÁMICOS ====================
+    let currentSubtitleInterval = null;
+    let lastRenderedAnswer = "";
+
+    function splitTextIntoSubtitles(text) {
+      const clean = text.replace(/\[[A-Z_]+\]/g, "").replace(/^["'“”]/, "").replace(/["'“”]$/, "").trim();
+      const words = clean.split(/\s+/);
+      const segments = [];
+      let current = [];
+      for (let i = 0; i < words.length; i++) {
+        current.push(words[i]);
+        const w = words[i];
+        const endsWithPunct = /[.,!?;:]$/.test(w);
+        if ((endsWithPunct && current.length >= 2) || current.length >= 4 || i === words.length - 1) {
+          segments.push(current.join(" "));
+          current = [];
+        }
+      }
+      return segments.length > 0 ? segments : [clean];
+    }
+
+    function iniciarSubtitulosDinamicos(fullText) {
+      if (currentSubtitleInterval) {
+        clearInterval(currentSubtitleInterval);
+        currentSubtitleInterval = null;
+      }
+      const segments = splitTextIntoSubtitles(fullText);
+      let idx = 0;
+
+      function renderNextSegment() {
+        if (idx < segments.length) {
+          cardAnsText.textContent = segments[idx];
+          cardAnsText.style.animation = "none";
+          void cardAnsText.offsetWidth;
+          cardAnsText.style.animation = "subPop 0.22s ease-out";
+          idx++;
+        }
+      }
+
+      renderNextSegment();
+      currentSubtitleInterval = setInterval(() => {
+        if (idx < segments.length) {
+          renderNextSegment();
+        } else {
+          clearInterval(currentSubtitleInterval);
+          currentSubtitleInterval = null;
+        }
+      }, 1250);
+    }
 
     async function pollStatus() {
       try {
@@ -747,30 +772,38 @@
           }
         }
 
-        // 4. Control de Cards y Textos en Pantalla
+        // 4. Control de Subtítulos y Pregunta en Pantalla
         const phase = data.status_phase || "esperando";
 
         if (phase === "pensando") {
           cardWaiting.style.display = "none";
-          cardQuestion.style.display = "block";
+          cardQuestion.style.display = "inline-flex";
           cardQUser.textContent = `👤 @${data.active_user || 'espectador'}`;
           cardQText.textContent = `"${data.active_question || '...'}"`;
           cardAnswer.style.display = "none";
+          if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
+          lastRenderedAnswer = "";
 
         } else if (phase === "respondiendo" || phase === "leyendo") {
           cardWaiting.style.display = "none";
-          cardQuestion.style.display = "block";
+          cardQuestion.style.display = "inline-flex";
           cardQUser.textContent = `👤 @${data.active_user || 'espectador'}`;
           cardQText.textContent = `"${data.active_question || ''}"`;
 
-          cardAnswer.style.display = "block";
-          cardAnsText.textContent = data.active_answer || "Preparando recomendación...";
+          cardAnswer.style.display = "flex";
+          const ans = data.active_answer || "...";
+          if (ans !== lastRenderedAnswer) {
+            lastRenderedAnswer = ans;
+            iniciarSubtitulosDinamicos(ans);
+          }
 
         } else {
           // Fase esperando
-          cardWaiting.style.display = "block";
+          cardWaiting.style.display = "inline-flex";
           cardQuestion.style.display = "none";
           cardAnswer.style.display = "none";
+          if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
+          lastRenderedAnswer = "";
         }
 
         // 5. Pop-up de Venta en Vivo
