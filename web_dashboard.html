@@ -2361,7 +2361,7 @@
       if (idHandle) idHandle.textContent = agent.tiktok_username ? `@${agent.tiktok_username.replace('@','')} · TikTok Live IA` : "TikTok Live IA 24/7";
 
       // Config form fields
-      cfgUsername.value = agent.tiktok_username || (agent.id === "sensei-amor" ? "senseidelamor" : "");
+      cfgUsername.value = agent.tiktok_username || "";
       if (cfgSessionId) cfgSessionId.value = agent.tiktok_session_id || "";
       cfgRtmpUrl.value = agent.rtmp_url || "";
       cfgStreamKey.value = agent.stream_key || "";

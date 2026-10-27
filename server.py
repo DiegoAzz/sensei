@@ -1406,7 +1406,7 @@ async def escuchar_tiktok():
         ignorar_buffer_hasta = tiempo_conexion + 1.2
 
         try:
-            client = TikTokLiveClient(unique_id=f"@{usuario}")
+            client = TikTokLiveClient(unique_id=usuario)
 
             # Vincular session_id para responder por escrito directamente en el chat en vivo
             session_id = (current_agent.get("tiktok_session_id") or estado.get("tiktok_session_id") or os.environ.get("TIKTOK_SESSION_ID", "")).strip()
@@ -1540,8 +1540,13 @@ async def escuchar_tiktok():
         except asyncio.CancelledError:
             break
         except Exception as e:
-            registrar_log(f"Conexión TikTokLive (@{usuario}): {e}. Reintentando en 2s...", "warn")
-            await asyncio.sleep(2)
+            err_msg = str(e)
+            if "UserOfflineError" in err_msg or "offline" in err_msg.lower():
+                registrar_log(f"⚠️ TikTokLive: @{usuario} figura como OFFLINE en TikTok. Si tu live está en otra cuenta, cámbiala en Configuración y pulsa 'Iniciar Transmisión'. Reintentando en 8s...", "warn")
+                await asyncio.sleep(8)
+            else:
+                registrar_log(f"Conexión TikTokLive (@{usuario}): {err_msg}. Reintentando en 3s...", "warn")
+                await asyncio.sleep(3)
         finally:
             active_tiktok_client = None
             if client and getattr(client, "connected", False):
@@ -1950,12 +1955,15 @@ enganche_task = None
 watchdog_task = None
 
 async def handle_start(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task, watchdog_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task, watchdog_task, active_tiktok_client
 
     data = await request.json()
     current_agent = agent_manager.get_active_agent() or {}
 
-    if data.get("tiktok_username"): current_agent["tiktok_username"] = data["tiktok_username"]
+    if data.get("tiktok_username"):
+        clean_user = data["tiktok_username"].replace("@", "").strip()
+        current_agent["tiktok_username"] = clean_user
+        estado["tiktok_username"] = clean_user
     if "tiktok_session_id" in data:
         current_agent["tiktok_session_id"] = data["tiktok_session_id"]
         estado["tiktok_session_id"] = data["tiktok_session_id"]
@@ -1967,6 +1975,20 @@ async def handle_start(request):
     if data.get("avatar"): current_agent["avatar"] = data["avatar"]
 
     agent_manager.save_agents()
+
+    # Cancelar tareas activas previas para asegurar socket fresco y sin duplicidad
+    for t in [tiktok_task, worker_task, streamer_task, enganche_task, watchdog_task, ventas_task]:
+        if t and not t.done():
+            try:
+                t.cancel()
+            except Exception:
+                pass
+    if active_tiktok_client and getattr(active_tiktok_client, "connected", False):
+        try:
+            await active_tiktok_client.disconnect()
+        except Exception:
+            pass
+    active_tiktok_client = None
 
     rtmp = (current_agent.get("rtmp_url") or "").strip().rstrip("/")
     sk = (current_agent.get("stream_key") or "").strip()
