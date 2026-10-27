@@ -798,6 +798,8 @@
     </button>
     <!-- MÚSICA MÍSTICA DE FONDO (CONTINUA EN TIKTOK LIVE) -->
     <audio id="bg-music" src="/assets/musica_misteriosa.mp3" loop preload="auto"></audio>
+    <!-- REPRODUCTOR ÚNICO DE VOZ (ANTI-ECO Y MONO CANAL) -->
+    <audio id="speech-audio" preload="auto"></audio>
 
     <!-- CAPA 3: HUD E INTERFAZ FLOTANTE -->
     <div class="hud-layer">
@@ -952,23 +954,24 @@
     let currentIdleSrc = "";
     let currentTalkSrc = "";
     let lastSaleId = null;
-    let lastAudioVersion = 0;
+    let lastAudioVersionPlayed = 0;
+    let tsLastAudioTrigger = 0;
     let initialAudioLoaded = false;
-    let currentSpeechAudio = null;
+    const speechAudio = document.getElementById("speech-audio");
 
     function reproducirVozSensei(audioUrl) {
-      if (currentSpeechAudio) {
-        try {
-          currentSpeechAudio.pause();
-          currentSpeechAudio.currentTime = 0;
-          currentSpeechAudio.src = "";
-        } catch(e) {}
+      if (!speechAudio) return;
+      try {
+        speechAudio.pause();
+        speechAudio.currentTime = 0;
+        speechAudio.src = audioUrl;
+        speechAudio.volume = 1.0;
+        speechAudio.play().catch(e => {
+          console.warn("Aviso play voz:", e);
+        });
+      } catch(e) {
+        console.warn("Error reproducir voz:", e);
       }
-      currentSpeechAudio = new Audio(audioUrl);
-      currentSpeechAudio.volume = 1.0;
-      currentSpeechAudio.play().catch(e => {
-        console.warn("Aviso play voz:", e);
-      });
     }
 
     function activarAudio() {
@@ -1037,7 +1040,10 @@
       }, 1250);
     }
 
+    let isPolling = false;
     async function pollStatus() {
+      if (isPolling) return;
+      isPolling = true;
       try {
         const resp = await fetch("/api/status");
         if (!resp.ok) return;
@@ -1097,13 +1103,16 @@
           }
         }
 
-        // 2. Reproducir audio de respuesta en tiempo real (anti-eco y sin repetir al actualizar)
+        // 2. Reproducir audio de respuesta en tiempo real (blindaje anti-eco estricto de canal único)
+        const version = data.audio_version || 0;
+        const ahora = Date.now();
         if (!initialAudioLoaded) {
           initialAudioLoaded = true;
-          lastAudioVersion = data.audio_version || 0;
-        } else if (data.audio_version && data.audio_version !== lastAudioVersion) {
-          lastAudioVersion = data.audio_version;
-          reproducirVozSensei(`/api/live-audio?v=${data.audio_version}`);
+          lastAudioVersionPlayed = version;
+        } else if (version && version !== lastAudioVersionPlayed && (ahora - tsLastAudioTrigger > 2200)) {
+          lastAudioVersionPlayed = version;
+          tsLastAudioTrigger = ahora;
+          reproducirVozSensei(`/api/live-audio?v=${version}`);
         }
 
         // 3. Control de Estado de Habla (Talking vs Idle) con Ducking de Música
@@ -1237,11 +1246,13 @@
 
       } catch (err) {
         // Silenciar errores de red
+      } finally {
+        isPolling = false;
       }
     }
 
-    // Polling ágil a 450ms: ultra reactivo y estable sin saturar el socket
-    setInterval(pollStatus, 450);
+    // Polling estable a 750ms con mutex anti-eco
+    setInterval(pollStatus, 750);
     pollStatus();
   </script>
 </body>
