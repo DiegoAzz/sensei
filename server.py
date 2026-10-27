@@ -155,6 +155,7 @@ async def encolar_pregunta(usuario: str, pregunta: str, es_vip: bool = False):
     """
     Encola una pregunta para El Sensei.
     Si es_vip=True (ha donado 1 Rosa o regalo), SALTA LA FILA y se coloca de primero.
+    Capacidad ampliada a 25 para no descartar preguntas legítimas de la audiencia.
     """
     global cola_preguntas
     if es_vip:
@@ -166,10 +167,10 @@ async def encolar_pregunta(usuario: str, pregunta: str, es_vip: bool = False):
             except Exception:
                 break
         await cola_preguntas.put((usuario, pregunta))
-        for p in pendientes[:3]:
+        for p in pendientes[:10]:
             await cola_preguntas.put(p)
     else:
-        if cola_preguntas.qsize() >= 4:
+        if cola_preguntas.qsize() >= 25:
             try:
                 cola_preguntas.get_nowait()
                 cola_preguntas.task_done()
@@ -709,44 +710,30 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO",
     if not texto_voz:
         texto_voz = "Escucha con atención, esto transformará tu perspectiva."
 
-    # Velocidad ágil (+10% a +14%) para ritmo dinámico en TikTok Live
-    if emocion == "RISA":
-        rate = "+14%"
-        pitch = "+2Hz"
-    elif emocion in ["ESTOICO", "INDIGNADO"]:
-        rate = "+8%"
-        pitch = "-2Hz"
-    elif emocion == "PICANTE":
-        rate = "+12%"
-        pitch = "+1Hz"
-    else:
-        rate = "+10%"
-        pitch = "-1Hz"
+    # Velocidad y tono estables para conservar fielmente la identidad de la voz sin cambios bruscos
+    rate = "+10%"
+    pitch = "+0Hz"
 
     tmp_path = Path(salida_path).with_suffix(".tmp.mp3")
     generado_ok = False
 
-    voces_probar = [voz]
-    if "es-MX-JorgeNeural" not in voces_probar:
-        voces_probar.append("es-MX-JorgeNeural")
-    if "es-ES-AlvaroNeural" not in voces_probar:
-        voces_probar.append("es-ES-AlvaroNeural")
-
-    for v_candidata in voces_probar:
+    # Conservar fielmente la voz configurada por el usuario, reintentando con la MISMA voz
+    for intento in range(2):
         try:
-            comunicador = edge_tts.Communicate(texto_voz, v_candidata, rate=rate, pitch=pitch)
-            await asyncio.wait_for(comunicador.save(str(tmp_path)), timeout=4.5)
+            comunicador = edge_tts.Communicate(texto_voz, voz, rate=rate, pitch=pitch)
+            await asyncio.wait_for(comunicador.save(str(tmp_path)), timeout=6.0)
             if tmp_path.exists() and tmp_path.stat().st_size > 500:
                 tmp_path.replace(salida_path)
                 generado_ok = True
                 break
         except Exception as e:
-            logger.warning(f"Aviso sintetizando con voz {v_candidata}: {e}")
+            logger.warning(f"Intento {intento+1} sintetizando con voz fija ({voz}): {e}")
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
                 except Exception:
                     pass
+            await asyncio.sleep(0.3)
 
     if not generado_ok:
         logger.error(f"Error generando audio para: '{texto_voz[:35]}...'")
@@ -1090,8 +1077,8 @@ async def worker_preguntas():
 
             elif es_frase_viral:
                 frase_viral_txt = pregunta.replace("📣 FRASE VIRAL:", "").strip()
-                estado["active_user"] = "🔥 GANCHO VIRAL"
-                estado["active_question"] = "⛩️ SABIDURÍA DEL SENSEI ⛩️"
+                estado["active_user"] = "⛩️ SABIDURÍA DEL SENSEI"
+                estado["active_question"] = "🔥 REFLEXIÓN EN VIVO"
                 estado["status_phase"] = "respondiendo"
                 actualizar_overlay_video("El Sensei", "Reflexión del Sensei", estado_tipo="respondiendo", agent=current_agent)
                 respuesta = frase_viral_txt
@@ -1134,20 +1121,41 @@ async def worker_preguntas():
                     logger.error(f"Error en motor IA: {e_ia}. Activando oráculo local de contingencia.")
                     respuesta, emocion = obtener_consejo_amor_sensei(usuario, pregunta)
 
-            # Garantizar que El Sensei SIEMPRE mencione y lea el nombre del usuario en voz alta en el audio:
+            # Garantizar que El Sensei SIEMPRE lea la pregunta del usuario en voz alta para que la audiencia entienda:
             resp_clean = (respuesta or "").strip()
             nombre_lower = nombre_humano.lower()
-            if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
-                import random
-                prefijos = [
-                    f"Escucha bien, {nombre_humano}:",
-                    f"Atento {nombre_humano}:",
-                    f"Oye {nombre_humano}:",
-                    f"{nombre_humano}, mira la realidad:"
-                ]
-                respuesta = f"{random.choice(prefijos)} {resp_clean}"
-            elif nombre_lower == "amigo" and not any(k in resp_clean.lower() for k in ["amigo", "hermano", "escucha"]):
-                respuesta = f"Escucha bien, hermano: {resp_clean}"
+
+            if not es_regalo and not es_bienvenida_donador and not es_frase_viral:
+                # Comprobar si la IA ya leyó la pregunta en voz alta dentro de su respuesta generada
+                preg_fragmento = pregunta.lower()[:20].strip()
+                ia_ya_leyo = (preg_fragmento in resp_clean.lower()) or (f"{nombre_lower} nos" in resp_clean.lower()) or (f"{nombre_lower} pregunta" in resp_clean.lower()) or ("pregunta:" in resp_clean.lower())
+
+                if not ia_ya_leyo:
+                    preg_lectura = pregunta.strip()
+                    if len(preg_lectura) > 85:
+                        preg_lectura = preg_lectura[:82] + "..."
+                    import random
+                    intro_lectura = random.choice([
+                        f"{nombre_humano} nos dice: «{preg_lectura}».",
+                        f"{nombre_humano} pregunta: «{preg_lectura}».",
+                        f"Atención al dilema de {nombre_humano}: «{preg_lectura}»."
+                    ])
+                    if nombre_lower in resp_clean.lower():
+                        respuesta = f"{intro_lectura} {resp_clean}"
+                    else:
+                        respuesta = f"{intro_lectura} Escucha bien: {resp_clean}"
+                else:
+                    if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
+                        respuesta = f"Atento {nombre_humano}: {resp_clean}"
+            else:
+                if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo" and not es_frase_viral:
+                    import random
+                    prefijos = [
+                        f"Escucha bien, {nombre_humano}:",
+                        f"Atento {nombre_humano}:",
+                        f"Oye {nombre_humano}:"
+                    ]
+                    respuesta = f"{random.choice(prefijos)} {resp_clean}"
 
             estado["active_answer"] = respuesta
             estado["active_emotion"] = emocion
@@ -1212,10 +1220,10 @@ async def worker_preguntas():
             if not cola_preguntas.empty():
                 await asyncio.sleep(0.05)
             else:
-                # Si no hay más preguntas, mantener la respuesta completa en pantalla como "SOPORTE ESCRITO"
+                # Si no hay más preguntas, mantener la respuesta brevemente en pantalla como soporte (3s)
                 estado["status_phase"] = "soporte_escrito"
                 start_soporte = time.time()
-                while cola_preguntas.empty() and (time.time() - start_soporte) < 16.0 and estado["is_streaming"]:
+                while cola_preguntas.empty() and (time.time() - start_soporte) < 3.0 and estado["is_streaming"]:
                     await asyncio.sleep(0.15)
 
                 if cola_preguntas.empty():
@@ -1360,7 +1368,7 @@ async def simulador_ventas_loop():
                     actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
 # ==================== CLIENTE TIKTOK LIVE ====================
-historial_comentarios_recientes = collections.deque(maxlen=80)
+historial_comentarios_timestamps = {}
 
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
@@ -1478,11 +1486,15 @@ async def escuchar_tiktok():
                     if not c or len(c) < 2:
                         return
 
-                    # Filtro anti-duplicados estricto
+                    # Filtro anti-duplicados inteligente por tiempo (5 segundos para evitar ecos de red)
+                    ahora = time.time()
                     clave_comentario = f"{u.lower()}:{c.lower()}"
-                    if clave_comentario in historial_comentarios_recientes:
-                        return
-                    historial_comentarios_recientes.append(clave_comentario)
+                    if clave_comentario in historial_comentarios_timestamps:
+                        if ahora - historial_comentarios_timestamps[clave_comentario] < 5.0:
+                            return
+                    historial_comentarios_timestamps[clave_comentario] = ahora
+                    if len(historial_comentarios_timestamps) > 200:
+                        historial_comentarios_timestamps = {k: v for k, v in historial_comentarios_timestamps.items() if ahora - v < 60.0}
 
                     info_donador = obtener_info_donador(event.user)
                     if info_donador.get("es_donador"):
@@ -1716,6 +1728,8 @@ async def handle_select_agent(request):
     ok = agent_manager.set_active_agent(agent_id)
     ag = agent_manager.get_active_agent()
     if ag:
+        if ag.get("voice"):
+            estado["voice"] = ag["voice"]
         actualizar_overlay_video("", "", estado_tipo="esperando", agent=ag)
         registrar_log(f"Agente activo seleccionado: {ag['name']}", "hl")
     return web.json_response({"ok": ok, "agent": ag})
@@ -1920,7 +1934,7 @@ async def handle_start(request):
     es_rtmp_real = bool(rtmp and sk and not ("127.0.0.1" in rtmp or "localhost" in rtmp or sk == "****"))
 
     estado["is_streaming"] = True
-    historial_comentarios_recientes.clear()
+    historial_comentarios_timestamps.clear()
     while not cola_preguntas.empty():
         try:
             cola_preguntas.get_nowait()

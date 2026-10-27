@@ -336,45 +336,50 @@
       text-transform: uppercase;
     }
 
-    /* Subtítulos y Pastilla de Pregunta (Ubicados limpiamente debajo del Sensei a top: 51%, sin tapar el pecho) */
+    /* Subtítulos y Pastilla de Pregunta (Ubicados limpiamente debajo del Sensei a top: 50.5%, finito y responsivo) */
     .stream-subtitles-hud {
       position: absolute;
-      left: 14px;
-      right: 14px;
-      top: 51%;
+      left: 10px;
+      right: 10px;
+      top: 50.5%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       z-index: 25;
       pointer-events: none;
+      box-sizing: border-box;
+      max-width: 100%;
     }
 
-    /* 1. Pastilla de Pregunta Compacta (1 sola línea) */
+    /* 1. Pastilla de Pregunta Compacta (1 sola línea finita y proporcionada) */
     .hud-question-pill {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      background: rgba(4, 6, 14, 0.9);
-      border: 1px solid rgba(0, 240, 255, 0.7);
-      border-radius: 20px;
+      background: rgba(5, 7, 15, 0.92);
+      border: 1px solid rgba(0, 240, 255, 0.6);
+      border-radius: 16px;
       padding: 3px 12px;
-      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.25);
-      max-width: 95%;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+      max-width: 92%;
+      box-sizing: border-box;
+      backdrop-filter: blur(8px);
       animation: popIn 0.3s ease-out;
       transition: all 0.3s ease;
     }
 
     .hud-question-pill.is-vip-donator {
-      background: linear-gradient(135deg, rgba(30, 20, 5, 0.95), rgba(15, 10, 2, 0.95));
-      border: 1.5px solid #ffd700;
-      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 35px rgba(255, 42, 109, 0.4);
+      background: linear-gradient(135deg, rgba(28, 18, 5, 0.95), rgba(12, 8, 2, 0.95));
+      border: 1.2px solid #ffd700;
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
       animation: vipPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
 
     .hud-question-pill.is-vip-donator .hud-q-badge {
       color: #ffd700;
-      text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
       font-weight: 900;
     }
 
@@ -384,63 +389,71 @@
     }
 
     .hud-q-badge {
-      font-size: 10.5px;
+      font-size: clamp(9.5px, 2.4vw, 11px);
       font-weight: 800;
       color: var(--cyan);
       white-space: nowrap;
+      flex-shrink: 0;
+      letter-spacing: 0.2px;
     }
 
     .hud-q-content {
-      font-size: 11.5px;
-      font-weight: 700;
+      font-size: clamp(10px, 2.5vw, 11.5px);
+      font-weight: 600;
       color: #fff;
       font-style: italic;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 260px;
+      max-width: 250px;
     }
 
-    /* 2. Caja de Subtítulo Activo (1 frase grande a la vez según habla el Sensei) */
+    /* 2. Caja de Subtítulo Activo (Finito, responsivo, texto dinámico sin desbordes) */
     .hud-sub-box {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      gap: 4px;
+      gap: 3px;
       width: 100%;
+      max-width: 90%;
+      box-sizing: border-box;
     }
 
     .hud-sub-speaker-tag {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
       background: linear-gradient(90deg, #d4af37, #f39c12);
       color: #07090e;
-      font-size: 9.5px;
+      font-size: 8.5px;
       font-weight: 900;
-      padding: 2px 8px;
-      border-radius: 10px;
+      padding: 2px 7px;
+      border-radius: 6px;
       letter-spacing: 0.5px;
-      box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+      text-transform: uppercase;
     }
 
     .hud-sub-active-line {
       display: inline-block;
       font-family: var(--font-body);
-      font-size: 16px;
-      font-weight: 900;
-      line-height: 1.25;
+      font-size: clamp(12.5px, 3.1vw, 14.5px);
+      font-weight: 800;
+      line-height: 1.32;
       color: #ffffff;
       text-align: center;
-      background: rgba(3, 5, 12, 0.9);
-      border: 1.5px solid var(--gold);
-      border-radius: 12px;
-      padding: 7px 15px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.95), 0 0 15px var(--gold-glow);
-      text-shadow: 0 2px 5px rgba(0,0,0,0.9);
-      letter-spacing: 0.3px;
-      max-width: 94%;
+      background: rgba(3, 5, 12, 0.92);
+      border: 1.2px solid var(--gold);
+      border-radius: 10px;
+      padding: 5px 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.9), 0 0 10px var(--gold-glow);
+      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+      letter-spacing: 0.2px;
+      max-width: 100%;
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow-wrap: break-word;
       animation: subPop 0.22s ease-out;
     }
 
@@ -454,16 +467,19 @@
       100% { transform: translateY(0); opacity: 1; }
     }
 
-    /* 3. Pill de Espera */
+    /* 3. Pill de Espera (Finito y centrado) */
     .hud-waiting-pill {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       background: rgba(5, 7, 16, 0.88);
       border: 1px solid rgba(212, 175, 55, 0.45);
-      border-radius: 20px;
-      padding: 5px 14px;
+      border-radius: 16px;
+      padding: 4px 12px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+      max-width: 92%;
+      box-sizing: border-box;
       animation: pulsePill 2.5s infinite alternate;
     }
 
@@ -897,18 +913,19 @@
         if (phase === "pensando") {
           cardWaiting.style.display = "none";
           cardQuestion.style.display = "inline-flex";
-          let rawU = (data.active_user || 'espectador').trim();
+          let rawU = (data.active_user || 'espectador').replace(/GANCHO VIRAL/gi, "SABIDURÍA").trim();
+          let rawQ = (data.active_question || '...').replace(/GANCHO VIRAL/gi, "").trim();
           if (rawU.includes("👑")) {
             cardQuestion.classList.add("is-vip-donator");
           } else {
             cardQuestion.classList.remove("is-vip-donator");
           }
-          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤")) {
+          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤") || rawU.includes("⛩️")) {
             cardQUser.textContent = rawU;
           } else {
             cardQUser.textContent = `👤 @${rawU}`;
           }
-          cardQText.textContent = `"${data.active_question || '...'}"`;
+          cardQText.textContent = rawQ ? `"${rawQ}"` : '';
           cardAnswer.style.display = "none";
           if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           lastRenderedAnswer = "";
@@ -916,26 +933,31 @@
         } else if (phase === "respondiendo" || phase === "leyendo" || phase === "soporte_escrito") {
           cardWaiting.style.display = "none";
           cardQuestion.style.display = "inline-flex";
-          let rawU = (data.active_user || 'espectador').trim();
+          let rawU = (data.active_user || 'espectador').replace(/GANCHO VIRAL/gi, "SABIDURÍA").trim();
+          let rawQ = (data.active_question || '').replace(/GANCHO VIRAL/gi, "").trim();
           if (rawU.includes("👑")) {
             cardQuestion.classList.add("is-vip-donator");
           } else {
             cardQuestion.classList.remove("is-vip-donator");
           }
-          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤")) {
+          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤") || rawU.includes("⛩️")) {
             cardQUser.textContent = rawU;
           } else {
             cardQUser.textContent = `👤 @${rawU}`;
           }
-          cardQText.textContent = `"${data.active_question || ''}"`;
+          cardQText.textContent = rawQ ? `"${rawQ}"` : '';
 
           cardAnswer.style.display = "flex";
           const ans = data.active_answer || "...";
           if (phase === "soporte_escrito") {
-            // Modo Soporte Escrito: mantiene la respuesta completa visible en pantalla para lectura
+            // Modo Soporte Escrito: texto fino y compacto sin desbordar la pantalla
             if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
-            cardAnsSpeaker.textContent = "⛩️ VEREDICTO ESCRITO";
-            cardAnsText.textContent = ans;
+            cardAnsSpeaker.textContent = "⛩️ CONSEJO FINAL";
+            if (ans.length > 85) {
+              cardAnsText.textContent = ans.slice(0, 82) + "...";
+            } else {
+              cardAnsText.textContent = ans;
+            }
           } else if (ans !== lastRenderedAnswer) {
             lastRenderedAnswer = ans;
             tsLastAnswerStart = Date.now();
