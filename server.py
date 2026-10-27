@@ -1803,7 +1803,7 @@ async def start_dual_servers():
         if ag_sensei and not ag_sensei.get("tiktok_username"):
             ag_sensei["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
             ag_sensei["call_to_action"] = "🌹 Envía 1 Rosa para saltar la fila y consulta VIP en vivo"
-            ag_sensei["banner_subtitle"] = "🌹 1 Rosa = Consulta VIP Prioritaria sin fila"
+            ag_sensei["banner_subtitle"] = "Conquista · Infidelidad · Parejas · Amor Propio"
             agent_manager.save_agents()
     except Exception as e_init:
         logger.warning(f"Aviso verificando usuario default: {e_init}")

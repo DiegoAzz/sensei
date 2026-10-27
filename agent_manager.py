@@ -226,7 +226,7 @@ REGLAS SUPREMAS DEL SENSEI DE LAS FRAGANCIAS:
         "type": "consultorio",
         "niche": "Amor, seducción, citas, parejas y desamor",
         "banner_title": "~ EL SENSEI DEL AMOR ~",
-        "banner_subtitle": "🌹 1 Rosa = Consulta VIP Prioritaria sin fila",
+        "banner_subtitle": "Conquista · Infidelidad · Parejas · Amor Propio",
         "voice": "es-MX-JorgeNeural",
         "estilo": "sabio_directo",
         "theme_color": "#ff2a6d",

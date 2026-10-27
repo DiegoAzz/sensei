@@ -102,10 +102,10 @@
     /* Capa de Avatar Estático Levitando */
     .avatar-static-layer {
       position: absolute;
-      top: 13%;
+      top: 15.5%;
       left: 0;
       right: 0;
-      height: 22%;
+      height: 19%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -117,8 +117,8 @@
 
     .avatar-orb-wrapper {
       position: relative;
-      width: 135px;
-      height: 135px;
+      width: 120px;
+      height: 120px;
       animation: levitate 3.6s ease-in-out infinite;
     }
 
@@ -470,52 +470,51 @@
       to { height: 10px; }
     }
 
-    /* Banner Superior de Monetización VIP (1 Rosa = Prioridad) */
-    .vip-monetization-bar {
-      margin-top: 8px;
+    /* Pastilla VIP Compacta en Top Meta Row (Cero Estorbo) */
+    .vip-badge {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 7px;
-      background: linear-gradient(90deg, rgba(255, 42, 109, 0.4), rgba(212, 175, 55, 0.4));
-      border: 1.2px solid rgba(255, 215, 0, 0.7);
+      gap: 5px;
+      background: linear-gradient(135deg, rgba(255, 42, 109, 0.45), rgba(212, 175, 55, 0.45));
+      border: 1.2px solid rgba(255, 215, 0, 0.85);
       border-radius: 20px;
-      padding: 4px 14px;
-      box-shadow: 0 0 16px rgba(255, 42, 109, 0.5);
-      animation: vipGlow 2.4s ease-in-out infinite;
+      padding: 3px 9px;
+      box-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
+      animation: vipGlow 2.2s ease-in-out infinite alternate;
     }
 
     @keyframes vipGlow {
       0%, 100% {
-        box-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
-        border-color: rgba(255, 215, 0, 0.5);
+        box-shadow: 0 0 8px rgba(255, 42, 109, 0.35);
+        border-color: rgba(255, 215, 0, 0.6);
       }
       50% {
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 42, 109, 0.6);
+        box-shadow: 0 0 16px rgba(255, 215, 0, 0.7), 0 0 22px rgba(255, 42, 109, 0.5);
         border-color: rgba(255, 42, 109, 0.9);
       }
     }
 
     .vip-pulse-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #ff2a6d;
-      box-shadow: 0 0 8px #ff2a6d;
+      box-shadow: 0 0 6px #ff2a6d;
       animation: pulseDot 1s infinite alternate;
     }
 
     @keyframes pulseDot {
       from { transform: scale(0.85); opacity: 0.7; }
-      to { transform: scale(1.35); opacity: 1; }
+      to { transform: scale(1.3); opacity: 1; }
     }
 
     .vip-text {
-      font-size: 11px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 900;
       color: #ffd700;
       letter-spacing: 0.4px;
-      text-shadow: 0 0 8px rgba(255, 215, 0, 0.7);
+      text-transform: uppercase;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
     }
 
     /* Barra Inferior de Llamado a la Acción */
@@ -585,14 +584,13 @@
             <span>LIVE</span>
           </div>
           <div class="store-badge" id="hud-store-badge">COLOMBIA 🇨🇴</div>
+          <div class="vip-badge" id="hud-vip-badge">
+            <span class="vip-pulse-dot"></span>
+            <span class="vip-text" id="hud-vip-text">🌹 1 ROSA = VIP</span>
+          </div>
         </div>
-        <h1 class="boutique-title" id="hud-title">~ BOUTIQUE SALOMÉ ~</h1>
-        <p class="boutique-sub" id="hud-subtitle">Perfumes Árabes · Diseñador · Asesoría Olfativa</p>
-        <!-- BANNER DE MONETIZACIÓN VIP TIKTOK -->
-        <div class="vip-monetization-bar" id="vip-monetization-bar">
-          <span class="vip-pulse-dot"></span>
-          <span class="vip-text" id="vip-text">🌹 Envía 1 Rosa = Consulta VIP Prioritaria sin fila</span>
-        </div>
+        <h1 class="boutique-title" id="hud-title">~ EL SENSEI DEL AMOR ~</h1>
+        <p class="boutique-sub" id="hud-subtitle">Conquista · Infidelidad · Parejas · Amor Propio</p>
       </header>
 
       <!-- POPUP FLOTANTE DE VENTA EN VIVO -->
@@ -771,10 +769,7 @@
           hudTitle.textContent = data.banner_title || data.name || "~ EN VIVO ~";
           hudSubtitle.textContent = data.banner_subtitle || data.niche || "";
           hudCta.textContent = data.call_to_action || "📦 Pide el tuyo en el enlace de la biografía";
-          const vipTextEl = document.getElementById("vip-text");
-          if (vipTextEl && data.call_to_action) {
-            vipTextEl.textContent = data.call_to_action;
-          }
+
           hudStoreBadge.textContent = data.store_name ? data.store_name.slice(0, 24) : "COLOMBIA 🇨🇴";
           cardAnsSpeaker.textContent = (data.name || "ASESOR").split("·")[0].trim().toUpperCase();
 
@@ -782,7 +777,7 @@
             if (data.type === "tienda_ventas") {
               cardWaitingSub.textContent = data.call_to_action || "Pide tu perfume árabe favorito o clon de diseñador y te respondemos en vivo.";
             } else {
-              cardWaitingSub.textContent = data.call_to_action || "Deja tu caso sobre tu crush, pareja o desamor en los comentarios y el Sensei te responde en vivo.";
+              cardWaitingSub.textContent = "⛩️ Deja tu dilema en el chat · 🌹 1 Rosa = Consulta VIP Prioritaria 👇";
             }
           }
 
