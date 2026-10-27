@@ -1032,7 +1032,108 @@ async def worker_preguntas():
         except Exception as e_proc:
             logger.error(f"Error en worker_preguntas procesando comentario: {e_proc}")
         finally:
+            tiempo_ultima_actividad_comentario = time.time()
             cola_preguntas.task_done()
+
+# ==================== AUTO-ENGANCHE EN TIEMPOS MUERTOS ====================
+tiempo_ultima_actividad_comentario = time.time()
+
+FRASES_ENGANCHE_AMOR = [
+    "Si tienes dudas con tu pareja, tu crush te dejó en visto o estás en la friendzone, escribe tu caso en los comentarios y te responderé en vivo.",
+    "A veces el corazón duele porque insistimos donde no nos valoran. Cuéntame tu dilema en el chat y te daré mi veredicto con total sinceridad.",
+    "¿Tu ex te volvió a escribir o sientes que te están ocultando algo? Déjame tu pregunta ahora mismo en los comentarios y lo resolvemos juntos.",
+    "No te guardes lo que sientes. Pregúntame sobre celos, infidelidad o cómo conquistar a esa persona especial. ¡Te leo en vivo en el chat!",
+    "Si no sabes si dar el primer paso o alejarte con dignidad, escribe tu caso aquí abajo y te daré un consejo certero.",
+    "¿Sientes que eres la segunda opción de alguien? No mendigues cariño. Cuéntame tu situación en los comentarios y recuperemos tu amor propio."
+]
+
+FRASES_ENGANCHE_PERFUMES = [
+    "Si buscas un perfume que deje huella, un aroma árabe de alta duración o un clon de lujo para hoy, déjame en los comentarios qué estilo buscas y te asesoro en vivo.",
+    "¿Quieres saber cuál es el perfume que más cumplidos genera o cuál dura más de 10 horas en piel? Escríbeme tu duda en el chat y te recomiendo la joya perfecta.",
+    "En nuestra boutique tenemos fragancias exclusivas disponibles con despacho hoy. Déjame en los comentarios tu duda olfativa y te respondemos en directo."
+]
+
+async def auto_enganche_tiempo_muerto_loop():
+    """
+    Cuando hay tiempo muerto en el Live (35 a 45 segundos sin comentarios),
+    El Sensei toma la palabra en vivo con su voz para animar a los espectadores a comentar.
+    """
+    global tiempo_ultima_actividad_comentario
+    while estado["is_streaming"]:
+        await asyncio.sleep(6)
+        if not estado["is_streaming"]:
+            break
+
+        # Si hay preguntas en cola o el Sensei está respondiendo a un espectador, aplazar
+        if not cola_preguntas.empty() or estado.get("is_speaking") or estado.get("status_phase") in ["pensando", "respondiendo"]:
+            tiempo_ultima_actividad_comentario = time.time()
+            continue
+
+        current_agent = agent_manager.get_active_agent() or {}
+        tipo_ag = current_agent.get("type", "consultorio")
+        nicho = (current_agent.get("niche") or "").lower()
+
+        # Si han pasado más de 38 segundos de silencio absoluto en el Live
+        if time.time() - tiempo_ultima_actividad_comentario >= 38:
+            import random
+            if "perfume" in nicho or tipo_ag == "tienda_ventas":
+                frase = random.choice(FRASES_ENGANCHE_PERFUMES)
+                emocion = "AMIGABLE"
+            else:
+                frase = random.choice(FRASES_ENGANCHE_AMOR)
+                emocion = "SABIO"
+
+            registrar_log(f"📣 [LLAMADO EN VIVO]: \"{frase}\"", "hl")
+            tiempo_ultima_actividad_comentario = time.time()
+
+            audio_tmp = DATA_DIR / "consejo_sensei.mp3"
+            try:
+                voz_activa = current_agent.get("voice") or estado["voice"]
+                await sintetizar_audio(frase, str(audio_tmp), emocion, voz_override=voz_activa)
+
+                # Si durante la síntesis entró un comentario real de un usuario, darle paso inmediato
+                if not cola_preguntas.empty():
+                    continue
+
+                estado["active_user"] = "EN VIVO"
+                estado["active_question"] = "⛩️ TIEMPO DE CONSULTAS"
+                estado["active_answer"] = frase
+                estado["active_emotion"] = emocion
+                estado["status_phase"] = "respondiendo"
+                estado["is_speaking"] = True
+
+                import time as t_mod
+                estado["audio_version"] = int(t_mod.time() * 1000)
+
+                duracion_estimada = max(3.0, len(frase) / 16.0)
+
+                if ffmpeg_process and ffmpeg_process.poll() is None:
+                    cmd_tts = [
+                        "ffmpeg", "-y",
+                        "-i", str(audio_tmp),
+                        "-f", "s16le", "-ar", "44100", "-ac", "2",
+                        "-filter:a", "volume=1.15",
+                        "pipe:1"
+                    ]
+                    res_tts = await asyncio.to_thread(subprocess.run, cmd_tts, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                    duracion_audio = max(3.0, len(res_tts.stdout) / (44100 * 2 * 2)) if res_tts.returncode == 0 else duracion_estimada
+                    buffer_voz_pcm.extend(res_tts.stdout)
+                    start_w = time.time()
+                    while len(buffer_voz_pcm) > 0 and estado["is_streaming"] and (time.time() - start_w) < duracion_audio + 1.0:
+                        await asyncio.sleep(0.15)
+                else:
+                    await asyncio.sleep(duracion_estimada)
+
+                estado["is_speaking"] = False
+                estado["status_phase"] = "esperando"
+                estado["active_user"] = ""
+                estado["active_question"] = ""
+                estado["active_answer"] = ""
+                tiempo_ultima_actividad_comentario = time.time()
+
+            except Exception as e_eng:
+                estado["is_speaking"] = False
+                logger.warning(f"Aviso en auto-enganche: {e_eng}")
 
 async def simulador_ventas_loop():
     """Genera alertas y compras simuladas en la pantalla del live para tiendas físicas."""
@@ -1386,9 +1487,10 @@ async def handle_status(request):
     })
 
 ventas_task = None
+enganche_task = None
 
 async def handle_start(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task
 
     data = await request.json()
     current_agent = agent_manager.get_active_agent() or {}
@@ -1432,6 +1534,7 @@ async def handle_start(request):
     try:
         worker_task = asyncio.create_task(worker_preguntas())
         tiktok_task = asyncio.create_task(escuchar_tiktok())
+        enganche_task = asyncio.create_task(auto_enganche_tiempo_muerto_loop())
         if current_agent.get("type") == "tienda_ventas":
             ventas_task = asyncio.create_task(simulador_ventas_loop())
 
@@ -1440,7 +1543,7 @@ async def handle_start(request):
         return web.json_response({"ok": False, "error": str(e)})
 
 async def handle_stop(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task
     estado["is_streaming"] = False
     current_agent = agent_manager.get_active_agent() or {}
     actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
@@ -1462,6 +1565,8 @@ async def handle_stop(request):
         worker_task.cancel()
     if ventas_task:
         ventas_task.cancel()
+    if enganche_task:
+        enganche_task.cancel()
 
     registrar_log("Transmisión finalizada por el usuario.", "warn")
     return web.json_response({"ok": True})
