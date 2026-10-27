@@ -3409,6 +3409,27 @@ REGLAS DE ORO:
       const div = document.createElement("div");
       div.className = `log-line ${type}`;
       div.textContent = `[${time}] ${text}`;
+
+      // Permitir hacer clic en un comentario para responderle de inmediato en Intervención
+      if (text.includes("Comentario") || text.includes("CONSULTA") || text.includes("@")) {
+        div.style.cursor = "pointer";
+        div.title = "💡 Clic para responder como Sensei a este usuario";
+        div.addEventListener("click", () => {
+          const matchUser = text.match(/@([a-zA-Z0-9_\.]+)/);
+          const matchComment = text.match(/"([^"]+)"/);
+          if (matchUser && nudgeUserInput) {
+            nudgeUserInput.value = "@" + matchUser[1];
+          }
+          if (matchComment && nudgeCommentInput) {
+            nudgeCommentInput.value = matchComment[1];
+          }
+          if (manualAnswerInput) {
+            manualAnswerInput.focus();
+            manualAnswerInput.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+      }
+
       terminalLogs.appendChild(div);
       terminalLogs.scrollTop = terminalLogs.scrollHeight;
     }
@@ -3765,6 +3786,33 @@ REGLAS DE ORO:
         }
       });
     }
+
+    // Auto-formateo inteligente de '@': añade automáticamente el arroba donde se pida
+    function autoFormatearArroba(input) {
+      if (!input) return;
+      input.addEventListener("input", () => {
+        let val = input.value.trim();
+        if (val) {
+          val = val.replace(/^@+/, "");
+          if (val.length > 0) {
+            input.value = "@" + val;
+          }
+        }
+      });
+      input.addEventListener("focus", () => {
+        if (!input.value.trim()) {
+          input.value = "@";
+        }
+      });
+      input.addEventListener("blur", () => {
+        if (input.value.trim() === "@") {
+          input.value = "";
+        }
+      });
+    }
+
+    autoFormatearArroba(nudgeUserInput);
+    autoFormatearArroba(cfgUsername);
 
     // 👑 Botones de Pruebas Rápidas en Vivo (Donador VIP, Ganchos y Regalo)
     const btnSimDonador = document.getElementById("btn-simular-donador-vip");
