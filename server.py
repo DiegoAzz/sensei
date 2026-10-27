@@ -1237,16 +1237,18 @@ async def auto_enganche_tiempo_muerto_loop():
                 else:
                     await asyncio.sleep(duracion_estimada)
 
-                estado["is_speaking"] = False
-                estado["status_phase"] = "esperando"
-                estado["active_user"] = ""
-                estado["active_question"] = ""
-                estado["active_answer"] = ""
-                tiempo_ultima_actividad_comentario = time.time()
-
             except Exception as e_eng:
-                estado["is_speaking"] = False
                 logger.warning(f"Aviso en auto-enganche: {e_eng}")
+            finally:
+                estado["is_speaking"] = False
+                if estado.get("status_phase") == "respondiendo" and estado.get("active_user") == "EN VIVO":
+                    estado["status_phase"] = "esperando"
+                    estado["active_user"] = ""
+                    estado["active_question"] = ""
+                    estado["active_answer"] = ""
+                    current_agent = agent_manager.get_active_agent() or {}
+                    actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+                tiempo_ultima_actividad_comentario = time.time()
 
 async def simulador_ventas_loop():
     """Genera alertas y compras simuladas en la pantalla del live para tiendas físicas."""
@@ -1386,11 +1388,77 @@ async def escuchar_tiktok():
             registrar_log(f"Conexión TikTokLive (@{usuario}): {e}. Reintentando en 2s...", "warn")
             await asyncio.sleep(2)
         finally:
-            if client and client.connected:
+            active_tiktok_client = None
+            if client and getattr(client, "connected", False):
                 try:
                     await client.disconnect()
                 except Exception:
                     pass
+
+# ==================== GUARDIÁN / WATCHDOG ANTI-DESCONEXIÓN ====================
+async def tiktok_watchdog_loop():
+    """
+    Guardián activo para transmisiones largas (2+ horas):
+    1. Si el WebSocket de TikTok se desconecta o la tarea muere, la reconecta limpiamente.
+    2. Si la pantalla se congela en 'respondiendo' o 'pensando' por más de 22 segundos sin hablar, la resetea a 'esperando'.
+    3. Si el worker de preguntas muere, lo levanta de inmediato.
+    """
+    global tiktok_task, worker_task, enganche_task, active_tiktok_client
+    ultimo_estado_fase = ""
+    tiempo_en_misma_fase = time.time()
+    tiempo_sin_conexion_tiktok = 0
+
+    while estado.get("is_streaming"):
+        await asyncio.sleep(10)
+        if not estado.get("is_streaming"):
+            break
+
+        # A) Watchdog Anti-Congelamiento de Pantalla:
+        fase_actual = estado.get("status_phase", "esperando")
+        if fase_actual in ["respondiendo", "pensando"]:
+            if fase_actual == ultimo_estado_fase:
+                tiempo_transcurrido = time.time() - tiempo_en_misma_fase
+                if tiempo_transcurrido > 22 and not estado.get("is_speaking", False):
+                    registrar_log(f"🛡️ [WATCHDOG]: Pantalla descongelada tras {int(tiempo_transcurrido)}s inactiva en '{fase_actual}'. Restaurando a espera.", "warn")
+                    estado["status_phase"] = "esperando"
+                    estado["is_speaking"] = False
+                    estado["active_user"] = ""
+                    estado["active_question"] = ""
+                    estado["active_answer"] = ""
+                    current_agent = agent_manager.get_active_agent() or {}
+                    actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+                    tiempo_en_misma_fase = time.time()
+            else:
+                ultimo_estado_fase = fase_actual
+                tiempo_en_misma_fase = time.time()
+        else:
+            ultimo_estado_fase = fase_actual
+            tiempo_en_misma_fase = time.time()
+
+        # B) Watchdog de Resucitación de Tareas Principales:
+        if worker_task is None or worker_task.done():
+            registrar_log("🛡️ [WATCHDOG]: Tarea worker_preguntas restaurada.", "warn")
+            worker_task = asyncio.create_task(worker_preguntas())
+
+        if enganche_task is None or enganche_task.done():
+            enganche_task = asyncio.create_task(auto_enganche_tiempo_muerto_loop())
+
+        # C) Watchdog de Conexión TikTok Live:
+        esta_conectado = active_tiktok_client is not None and getattr(active_tiktok_client, "connected", False)
+        if not esta_conectado:
+            tiempo_sin_conexion_tiktok += 10
+            if tiempo_sin_conexion_tiktok >= 25:
+                registrar_log("🛡️ [WATCHDOG]: TikTok no reporta conexión activa (>25s). Reiniciando socket...", "warn")
+                if tiktok_task and not tiktok_task.done():
+                    try:
+                        tiktok_task.cancel()
+                    except Exception:
+                        pass
+                active_tiktok_client = None
+                tiktok_task = asyncio.create_task(escuchar_tiktok())
+                tiempo_sin_conexion_tiktok = 0
+        else:
+            tiempo_sin_conexion_tiktok = 0
 
 # ==================== ENDPOINTS DE LA API WEB ====================
 def is_super_admin(request) -> bool:
@@ -1648,9 +1716,10 @@ async def handle_status(request):
 
 ventas_task = None
 enganche_task = None
+watchdog_task = None
 
 async def handle_start(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task, watchdog_task
 
     data = await request.json()
     current_agent = agent_manager.get_active_agent() or {}
@@ -1698,6 +1767,7 @@ async def handle_start(request):
         worker_task = asyncio.create_task(worker_preguntas())
         tiktok_task = asyncio.create_task(escuchar_tiktok())
         enganche_task = asyncio.create_task(auto_enganche_tiempo_muerto_loop())
+        watchdog_task = asyncio.create_task(tiktok_watchdog_loop())
         if current_agent.get("type") == "tienda_ventas":
             ventas_task = asyncio.create_task(simulador_ventas_loop())
 
@@ -1706,7 +1776,7 @@ async def handle_start(request):
         return web.json_response({"ok": False, "error": str(e)})
 
 async def handle_stop(request):
-    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task
+    global ffmpeg_process, tiktok_task, worker_task, streamer_task, ventas_task, enganche_task, watchdog_task
     estado["is_streaming"] = False
     current_agent = agent_manager.get_active_agent() or {}
     actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
@@ -1730,6 +1800,9 @@ async def handle_stop(request):
         ventas_task.cancel()
     if enganche_task:
         enganche_task.cancel()
+    if watchdog_task:
+        watchdog_task.cancel()
+        watchdog_task = None
 
     registrar_log("Transmisión finalizada por el usuario.", "warn")
     return web.json_response({"ok": True})
@@ -1744,6 +1817,50 @@ async def handle_audio_test(request):
     if audio_file.exists():
         return web.FileResponse(audio_file)
     return web.Response(status=404)
+
+async def handle_nudge(request):
+    """
+    ⚡ Pellizcar al Sensei (Forzar Respuesta en Vivo):
+    Permite al administrador inyectar una pregunta de un usuario específico cuando el Sensei no ha contestado
+    o cuando la cola se ha quedado atrás.
+    Descongela inmediatamente la pantalla y le da prioridad VIP para que El Sensei responda en vivo YA.
+    """
+    global worker_task, enganche_task
+    try:
+        data = await request.json()
+        user = (data.get("user") or "").strip().lstrip("@") or "espectador"
+        comment = (data.get("comment") or "").strip()
+        if not comment:
+            return web.json_response({"ok": False, "error": "Por favor escribe la pregunta o caso del espectador."}, status=400)
+
+        # Si el stream no estaba marcado como activo, activarlo
+        if not estado.get("is_streaming"):
+            estado["is_streaming"] = True
+
+        # Descongelar pantalla si estaba en auto-enganche o trabada
+        estado["is_speaking"] = False
+        estado["status_phase"] = "pensando"
+
+        # Asegurar que el worker de preguntas esté activo
+        if worker_task is None or worker_task.done():
+            worker_task = asyncio.create_task(worker_preguntas())
+
+        # Registrar al usuario como VIP temporal para máxima prioridad
+        registrar_usuario_vip(user, minutos=15)
+        registrar_log(f"⚡ [PELLIZCO AL SENSEI]: Administrador fuerza respuesta en vivo para @{user}: \"{comment}\"", "green")
+
+        # Inyectar al frente de la cola con prioridad VIP absoluta
+        await encolar_pregunta(user, comment, es_vip=True)
+
+        return web.json_response({
+            "ok": True,
+            "user": user,
+            "comment": comment,
+            "message": f"¡Sensei pellizcado con éxito! Respondiendo a @{user} en vivo ahora mismo."
+        })
+    except Exception as e:
+        logger.error(f"Error en handle_nudge: {e}")
+        return web.json_response({"ok": False, "error": str(e)}, status=500)
 
 async def handle_test_comment(request):
     try:
@@ -1847,6 +1964,7 @@ async def start_dual_servers():
     app.router.add_post("/api/stop", handle_stop)
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
+    app.router.add_post("/api/nudge", handle_nudge)
     app.router.add_get("/api/audio-test", handle_audio_test)
 
     # Rutas del Club de Agentes y Super Administrador

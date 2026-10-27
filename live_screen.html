@@ -710,6 +710,7 @@
     // ==================== MOTOR DE SUBTÍTULOS DINÁMICOS ====================
     let currentSubtitleInterval = null;
     let lastRenderedAnswer = "";
+    let tsLastAnswerStart = 0;
 
     function splitTextIntoSubtitles(text) {
       const clean = text.replace(/\[[A-Z_]+\]/g, "").replace(/^["'“”]/, "").replace(/["'“”]$/, "").trim();
@@ -884,8 +885,15 @@
             cardAnsText.textContent = ans;
           } else if (ans !== lastRenderedAnswer) {
             lastRenderedAnswer = ans;
+            tsLastAnswerStart = Date.now();
             cardAnsSpeaker.textContent = (data.name || "SENSEI").split("·")[0].trim().toUpperCase();
             iniciarSubtitulosDinamicos(ans);
+          } else if (phase === "respondiendo" && (Date.now() - tsLastAnswerStart) > 22000) {
+            // Protección anti-congelamiento local: si el subtítulo lleva más de 22s, devolver pantalla a espera
+            cardWaiting.style.display = "inline-flex";
+            cardQuestion.style.display = "none";
+            cardAnswer.style.display = "none";
+            if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           }
 
         } else {
