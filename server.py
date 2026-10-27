@@ -1033,10 +1033,10 @@ async def escuchar_tiktok():
             continue
 
         client = None
-        # Tiempo de conexión: se ignora el búfer histórico que TikTok envía en los primeros 4.5 segundos
+        # Tiempo de conexión: se descarta el paquete de sincronización inicial en solo 1.2s
         import time
         tiempo_conexion = time.time()
-        ignorar_buffer_hasta = tiempo_conexion + 4.5
+        ignorar_buffer_hasta = tiempo_conexion + 1.2
 
         try:
             client = TikTokLiveClient(unique_id=f"@{usuario}")
@@ -1044,20 +1044,12 @@ async def escuchar_tiktok():
             @client.on(ConnectEvent)
             async def on_connect(event: ConnectEvent):
                 registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
-                # Esperar a que pase el volcado de comentarios viejos y purgar cualquier residuo
-                await asyncio.sleep(4.5)
-                while not cola_preguntas.empty():
-                    try:
-                        cola_preguntas.get_nowait()
-                        cola_preguntas.task_done()
-                    except Exception:
-                        break
-                registrar_log("🔥 En vivo: Escuchando ÚNICAMENTE comentarios nuevos a partir de ahora.", "green")
+                registrar_log("🔥 En vivo: Escuchando comentarios nuevos en tiempo real.", "green")
 
             @client.on(CommentEvent)
             async def on_comment(event: CommentEvent):
                 try:
-                    # Descartar radicalmente todo el historial pasado que TikTok envía al conectar
+                    # Descartar el volcado de paquetes iniciales de TikTok (<1.2s)
                     if time.time() < ignorar_buffer_hasta:
                         return
 
