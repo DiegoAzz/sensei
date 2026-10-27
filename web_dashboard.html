@@ -1551,7 +1551,7 @@
         <form id="stream-form" class="card" style="padding:0; border:none; background:transparent;">
           <div class="form-group">
             <label class="form-label">Tu Usuario de TikTok (el que transmite)</label>
-            <input type="text" id="cfg-username" class="input-field" placeholder="ej: el_sensei_del_amor">
+            <input type="text" id="cfg-username" class="input-field" value="senseidelamor" placeholder="ej: senseidelamor">
           </div>
 
           <div class="form-group">
@@ -2294,7 +2294,7 @@
       if (idHandle) idHandle.textContent = agent.tiktok_username ? `@${agent.tiktok_username.replace('@','')} · TikTok Live IA` : "TikTok Live IA 24/7";
 
       // Config form fields
-      cfgUsername.value = agent.tiktok_username || "";
+      cfgUsername.value = agent.tiktok_username || (agent.id === "sensei-amor" ? "senseidelamor" : "");
       cfgRtmpUrl.value = agent.rtmp_url || "";
       cfgStreamKey.value = agent.stream_key || "";
       cfgVoice.value = agent.voice || "es-MX-JorgeNeural";

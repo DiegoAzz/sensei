@@ -10,6 +10,7 @@ import re
 import sys
 import json
 import asyncio
+import time
 import logging
 import subprocess
 import base64
@@ -57,7 +58,7 @@ def obtener_gemini_key_default():
 # Estado del sistema
 estado = {
     "is_streaming": False,
-    "tiktok_username": os.environ.get("TIKTOK_USERNAME", ""),
+    "tiktok_username": os.environ.get("TIKTOK_USERNAME", "senseidelamor"),
     "rtmp_url": os.environ.get("TIKTOK_RTMP_URL", ""),
     "stream_key": os.environ.get("TIKTOK_STREAM_KEY", ""),
     "voice": os.environ.get("VOICE", "es-MX-JorgeNeural"),
@@ -88,6 +89,45 @@ ffmpeg_process = None
 tiktok_task = None
 worker_task = None
 streamer_task = None
+
+# ==================== SISTEMA DE MONETIZACIÓN Y PRIORIDAD VIP ====================
+usuarios_vip = {}  # {usuario_lower: timestamp_expiracion}
+
+def es_usuario_vip(usuario: str) -> bool:
+    u = (usuario or "").lower().lstrip("@").strip()
+    return time.time() < usuarios_vip.get(u, 0)
+
+def registrar_usuario_vip(usuario: str, minutos: int = 15):
+    u = (usuario or "").lower().lstrip("@").strip()
+    if u:
+        usuarios_vip[u] = time.time() + (minutos * 60)
+
+async def encolar_pregunta(usuario: str, pregunta: str, es_vip: bool = False):
+    """
+    Encola una pregunta para El Sensei.
+    Si es_vip=True (ha donado 1 Rosa o regalo), SALTA LA FILA y se coloca de primero.
+    """
+    global cola_preguntas
+    if es_vip:
+        pendientes = []
+        while not cola_preguntas.empty():
+            try:
+                pendientes.append(cola_preguntas.get_nowait())
+                cola_preguntas.task_done()
+            except Exception:
+                break
+        await cola_preguntas.put((usuario, pregunta))
+        for p in pendientes[:3]:
+            await cola_preguntas.put(p)
+    else:
+        if cola_preguntas.qsize() >= 4:
+            try:
+                cola_preguntas.get_nowait()
+                cola_preguntas.task_done()
+            except Exception:
+                pass
+        await cola_preguntas.put((usuario, pregunta))
+
 
 def registrar_log(texto: str, tipo: str = "normal"):
     logger.info(texto)
@@ -332,9 +372,10 @@ Respuesta del Asesor en Directo:"""
 
     else:
         tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
+        vip_tag_prompt = f"\n⭐ ATENCIÓN VIP: {nombre_humano} es un donador VIP del live (ha enviado regalos/rosas). Dale trato preferencial de honor, reconócelo como miembro distinguido del dojo y dale un consejo certero y exclusivo.\n" if es_usuario_vip(usuario) else ""
         prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
-{contexto_conversacion}
+{vip_tag_prompt}{contexto_conversacion}
 REGLAS DE ORO, COHERENCIA Y VELOCIDAD PARA TIKTOK LIVE:
 1. TU ÚNICO UNIVERSO: El amor, desamor, conquista, parejas, infidelidad y dignidad.
 2. PROHIBIDO SALIR DEL PERSONAJE: Jamás digas que eres IA, bot, modelo de lenguaje ni menciones tecnología.
@@ -931,23 +972,45 @@ async def worker_preguntas():
             nombre_humano = limpiar_nombre_usuario(usuario)
             current_agent = agent_manager.get_active_agent() or {}
 
-            estado["active_user"] = nombre_humano
-            estado["active_question"] = pregunta
-            estado["status_phase"] = "pensando"
+            es_regalo = pregunta.startswith("🎁 REGALO VIP:")
+            vip_activo = es_usuario_vip(usuario) or es_regalo
 
-            # Actualizar overlay del video para que los espectadores de TikTok vean la pregunta
-            actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
+            if es_regalo:
+                regalo_desc = pregunta.replace("🎁 REGALO VIP:", "").strip()
+                registrar_usuario_vip(usuario, minutos=15)
+                estado["active_user"] = f"👑 {nombre_humano} [VIP]"
+                estado["active_question"] = f"🎁 ¡ENVIÓ {regalo_desc}! 🌹"
+                estado["status_phase"] = "respondiendo"
+                actualizar_overlay_video(nombre_humano, f"🎁 {regalo_desc}", estado_tipo="respondiendo", agent=current_agent)
 
-            tipo_ag = current_agent.get("type", "consultorio")
-            tag_icon = "🛍️ Venta" if tipo_ag == "tienda_ventas" else "🏮 Consulta"
-            registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
+                import random
+                frases_agradecimiento = [
+                    f"¡Alabado sea el dojo sagrado! Muchas gracias a {nombre_humano} por ese hermoso detalle de {regalo_desc}. Tienes prioridad VIP absoluta en este live. Escríbeme tu pregunta en los comentarios y te daré mi sabiduría al instante sin hacer fila.",
+                    f"¡Qué gran honor para este consultorio! Agradezco profundamente a {nombre_humano} por esa {regalo_desc}. Tu lealtad te da el pase VIP sin esperas. Cuéntame tu dilema de amor ya mismo en el chat y te revelo la verdad.",
+                    f"¡Poder y magnetismo para {nombre_humano}! Gracias por ese generoso regalo de {regalo_desc}. Eres miembro de honor en este dojo. Hazme tu consulta amorosa ahora mismo y pasarás de primero sin fila."
+                ]
+                respuesta = random.choice(frases_agradecimiento)
+                emocion = "EMOCIONADO"
+            else:
+                if vip_activo:
+                    estado["active_user"] = f"👑 {nombre_humano} [VIP]"
+                    estado["active_question"] = f"⭐ {pregunta}"
+                else:
+                    estado["active_user"] = nombre_humano
+                    estado["active_question"] = pregunta
+                estado["status_phase"] = "pensando"
 
-            # Garantizar que responder_con_ia nunca rompa el worker
-            try:
-                respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
-            except Exception as e_ia:
-                logger.error(f"Error en motor IA: {e_ia}. Activando oráculo local de contingencia.")
-                respuesta, emocion = obtener_consejo_amor_sensei(usuario, pregunta)
+                actualizar_overlay_video(nombre_humano, pregunta, estado_tipo="pensando", agent=current_agent)
+
+                tipo_ag = current_agent.get("type", "consultorio")
+                tag_icon = "👑 VIP" if vip_activo else ("🛍️ Venta" if tipo_ag == "tienda_ventas" else "🏮 Consulta")
+                registrar_log(f"{tag_icon} de {nombre_humano}: \"{pregunta}\"", "hl")
+
+                try:
+                    respuesta, emocion = await responder_con_ia(usuario, pregunta, agent=current_agent)
+                except Exception as e_ia:
+                    logger.error(f"Error en motor IA: {e_ia}. Activando oráculo local de contingencia.")
+                    respuesta, emocion = obtener_consejo_amor_sensei(usuario, pregunta)
 
             # Garantizar que El Sensei SIEMPRE mencione y lea el nombre del usuario en voz alta en el audio:
             resp_clean = (respuesta or "").strip()
@@ -1039,11 +1102,13 @@ async def worker_preguntas():
 tiempo_ultima_actividad_comentario = time.time()
 
 FRASES_ENGANCHE_AMOR = [
+    "🌹 Si quieres que responda tu caso de amor ya mismo sin esperar fila, ¡envía 1 Rosa ahora y te daré mi veredicto VIP en vivo!",
+    "El oráculo del amor está activo. ¿Dudas si tu pareja te es infiel o si tu crush te ama? Envía un regalo en el chat para saltar la fila y revelarte la verdad.",
+    "¿Tu ex te busca y no sabes qué hacer? Envía 1 Rosa, dime tu caso en los comentarios y te daré la respuesta definitiva sin rodeos.",
+    "¡Atención dojo! Los que envían Rosas tienen prioridad número uno. Déjame tu caso de amor o conquista y pasa al frente del salón.",
+    "No te quedes con la duda de si esa persona te engaña. Envía un regalito en el chat, pon tu pregunta y El Sensei te dirá lo que nadie se atreve a decirte.",
     "Si tienes dudas con tu pareja, tu crush te dejó en visto o estás en la friendzone, escribe tu caso en los comentarios y te responderé en vivo.",
     "A veces el corazón duele porque insistimos donde no nos valoran. Cuéntame tu dilema en el chat y te daré mi veredicto con total sinceridad.",
-    "¿Tu ex te volvió a escribir o sientes que te están ocultando algo? Déjame tu pregunta ahora mismo en los comentarios y lo resolvemos juntos.",
-    "No te guardes lo que sientes. Pregúntame sobre celos, infidelidad o cómo conquistar a esa persona especial. ¡Te leo en vivo en el chat!",
-    "Si no sabes si dar el primer paso o alejarte con dignidad, escribe tu caso aquí abajo y te daré un consejo certero.",
     "¿Sientes que eres la segunda opción de alguien? No mendigues cariño. Cuéntame tu situación en los comentarios y recuperemos tu amor propio."
 ]
 
@@ -1074,7 +1139,7 @@ async def auto_enganche_tiempo_muerto_loop():
         nicho = (current_agent.get("niche") or "").lower()
 
         # Si han pasado más de 38 segundos de silencio absoluto en el Live
-        if time.time() - tiempo_ultima_actividad_comentario >= 38:
+        if time.time() - tiempo_ultima_actividad_comentario >= 26:
             import random
             if "perfume" in nicho or tipo_ag == "tienda_ventas":
                 frase = random.choice(FRASES_ENGANCHE_PERFUMES)
@@ -1096,7 +1161,7 @@ async def auto_enganche_tiempo_muerto_loop():
                     continue
 
                 estado["active_user"] = "EN VIVO"
-                estado["active_question"] = "⛩️ TIEMPO DE CONSULTAS"
+                estado["active_question"] = "🌹 1 ROSA = CONSULTA VIP SIN FILA 🌹"
                 estado["active_answer"] = frase
                 estado["active_emotion"] = emocion
                 estado["status_phase"] = "respondiendo"
@@ -1160,7 +1225,7 @@ historial_comentarios_recientes = collections.deque(maxlen=80)
 
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
-    from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent
+    from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent, GiftEvent
 
     while estado["is_streaming"]:
         current_agent = agent_manager.get_active_agent() or {}
@@ -1183,6 +1248,42 @@ async def escuchar_tiktok():
                 registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
                 registrar_log("🔥 En vivo: Escuchando comentarios nuevos en tiempo real.", "green")
 
+            @client.on(GiftEvent)
+            async def on_gift(event: GiftEvent):
+                try:
+                    # Descartar volcado inicial
+                    if time.time() < ignorar_buffer_hasta:
+                        return
+
+                    # Si el usuario sigue en racha (combo de regalos), esperar a que termine la racha
+                    if getattr(event, "streaking", False):
+                        return
+
+                    u = event.user.unique_id
+                    nombre_h = limpiar_nombre_usuario(u)
+
+                    regalo_nombre = "Rosa"
+                    if hasattr(event, "gift") and event.gift:
+                        regalo_nombre = getattr(event.gift, "name", None) or getattr(event.gift, "describe", "Regalo")
+
+                    repeticion = getattr(event, "repeat_count", 1) or 1
+                    diamantes = 1
+                    if hasattr(event, "gift") and event.gift:
+                        diamantes = getattr(event.gift, "diamond_count", 1) or 1
+
+                    total_diamantes = diamantes * repeticion
+                    registrar_log(f"🎁 ¡REGALO RECIBIDO! @{u} envió {repeticion}x {regalo_nombre} ({total_diamantes} 💎)", "green")
+
+                    # Asignar pase VIP de 15 minutos al donador
+                    registrar_usuario_vip(u, minutos=15)
+
+                    # Inyectar al frente de la cola con prioridad VIP absoluta
+                    msg_regalo = f"🎁 REGALO VIP: {repeticion}x {regalo_nombre}"
+                    await encolar_pregunta(u, msg_regalo, es_vip=True)
+                except Exception as e_gift:
+                    logger.warning(f"Aviso procesando regalo de TikTok: {e_gift}")
+
+
             @client.on(CommentEvent)
             async def on_comment(event: CommentEvent):
                 try:
@@ -1201,16 +1302,13 @@ async def escuchar_tiktok():
                         return
                     historial_comentarios_recientes.append(clave_comentario)
 
-                    registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
+                    vip_activo = es_usuario_vip(u)
+                    if vip_activo:
+                        registrar_log(f"👑 [CONSULTA VIP] de @{u}: \"{c}\"", "green")
+                    else:
+                        registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
 
-                    # Mantener el live fresco: si hay más de 4 preguntas acumuladas, descartar solo la más vieja
-                    if cola_preguntas.qsize() >= 4:
-                        try:
-                            cola_preguntas.get_nowait()
-                            cola_preguntas.task_done()
-                        except Exception:
-                            pass
-                    await cola_preguntas.put((u, c))
+                    await encolar_pregunta(u, c, es_vip=vip_activo)
                 except Exception as e:
                     logger.warning(f"Aviso procesando comentario de TikTok: {e}")
 
@@ -1604,7 +1702,7 @@ async def handle_test_comment(request):
                 return web.json_response({"ok": False, "error": "Debes hacer clic primero en 'INICIAR TRANSMISIÓN' para proyectar preguntas al Live en vivo."})
             if comment:
                 registrar_log(f"🚀 Pregunta inyectada al Live de @{user}: \"{comment}\"", "hl")
-                await cola_preguntas.put((user, comment))
+                await encolar_pregunta(user, comment, es_vip=False)
                 return web.json_response({
                     "ok": True,
                     "enviado_al_live": True,
@@ -1698,6 +1796,17 @@ async def start_dual_servers():
     app.router.add_post("/api/agents/{id}/select", handle_select_agent)
     app.router.add_get("/api/agents/{id}/sale-alert", handle_sale_alert)
     app.router.add_get("/api/templates", handle_templates)
+    
+    # Asegurar que el Sensei del Amor tenga siempre asignado 'senseidelamor' por defecto
+    try:
+        ag_sensei = agent_manager.get_agent("sensei-amor")
+        if ag_sensei and not ag_sensei.get("tiktok_username"):
+            ag_sensei["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
+            ag_sensei["call_to_action"] = "🌹 Envía 1 Rosa para saltar la fila y consulta VIP en vivo"
+            ag_sensei["banner_subtitle"] = "🌹 1 Rosa = Consulta VIP Prioritaria sin fila"
+            agent_manager.save_agents()
+    except Exception as e_init:
+        logger.warning(f"Aviso verificando usuario default: {e_init}")
     app.router.add_get("/api/avatars", handle_list_avatars)
     app.router.add_post("/api/upload-avatar", handle_upload_avatar)
     app.router.add_post("/api/agents/{id}/avatar", handle_set_agent_avatar)

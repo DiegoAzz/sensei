@@ -226,14 +226,14 @@ REGLAS SUPREMAS DEL SENSEI DE LAS FRAGANCIAS:
         "type": "consultorio",
         "niche": "Amor, seducción, citas, parejas y desamor",
         "banner_title": "~ EL SENSEI DEL AMOR ~",
-        "banner_subtitle": "Conquista · Infidelidad · Parejas · Amor Propio",
+        "banner_subtitle": "🌹 1 Rosa = Consulta VIP Prioritaria sin fila",
         "voice": "es-MX-JorgeNeural",
         "estilo": "sabio_directo",
         "theme_color": "#ff2a6d",
         "accent_color": "#ffd700",
         "avatar": "/assets/logo_sensei.jpg",
         "bg_hex": "0x0f0214",
-        "call_to_action": "Deja tu pregunta sobre tu crush o pareja en los comentarios",
+        "call_to_action": "🌹 Envía 1 Rosa para saltar la fila y consulta VIP en vivo",
         "keywords": [
             "crush", "ligar", "seduccion", "seducir", "friendzone", "hablarle",
             "historia", "storie", "instagram", "whatsapp", "cita", "misterio", "atraer",
@@ -393,6 +393,8 @@ class AgentManager:
                     data = json.load(f)
                     self.agents = data.get("agents", {})
                     self.active_agent_id = data.get("active_agent_id", "sensei-amor")
+                    if "sensei-amor" in self.agents and not self.agents["sensei-amor"].get("tiktok_username"):
+                        self.agents["sensei-amor"]["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
             except Exception as e:
                 logger.error(f"Error cargando agents.json: {e}")
 
@@ -402,7 +404,7 @@ class AgentManager:
                 "sensei-amor": {
                     "id": "sensei-amor",
                     **AGENT_TEMPLATES["sensei_amor"],
-                    "tiktok_username": os.environ.get("TIKTOK_USERNAME", ""),
+                    "tiktok_username": os.environ.get("TIKTOK_USERNAME", "senseidelamor"),
                     "rtmp_url": os.environ.get("TIKTOK_RTMP_URL", ""),
                     "stream_key": os.environ.get("TIKTOK_STREAM_KEY", ""),
                     "gemini_api_key": "",
