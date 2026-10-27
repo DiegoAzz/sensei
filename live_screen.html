@@ -614,7 +614,7 @@
     const btnUnmute = document.getElementById("btn-unmute");
     const bgMusic = document.getElementById("bg-music");
     if (bgMusic) {
-      bgMusic.volume = 0.16;
+      bgMusic.volume = 0.09; // Volumen suave ambiental para evitar ruido o distorsión
     }
 
     let currentAgentId = null;
@@ -642,8 +642,9 @@
     }
 
     function activarAudio() {
-      vidIdle.muted = false;
-      vidTalking.muted = false;
+      // Los videos de presentador siempre permanecen muteados para que no metan estática ni ruido
+      vidIdle.muted = true;
+      vidTalking.muted = true;
       if (bgMusic && bgMusic.paused) {
         bgMusic.play().catch(() => {});
       }
@@ -780,12 +781,12 @@
           if (speakingNow) {
             document.body.classList.add("is-speaking");
             if (vidTalking.paused) vidTalking.play().catch(() => {});
-            // Ducking: atenuar suavemente la música de fondo al 4% mientras habla El Sensei
-            if (bgMusic) bgMusic.volume = 0.04;
+            // Ducking: atenuar suavemente la música de fondo al 2% mientras habla El Sensei
+            if (bgMusic) bgMusic.volume = 0.02;
           } else {
             document.body.classList.remove("is-speaking");
-            // Restaurar volumen normal de música (16%) en momentos de espera
-            if (bgMusic) bgMusic.volume = 0.16;
+            // Restaurar volumen normal de música ambiental (9%) en momentos de espera
+            if (bgMusic) bgMusic.volume = 0.09;
           }
         }
 
