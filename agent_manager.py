@@ -21,7 +21,7 @@ AGENTS_FILE = DATA_DIR / "agents.json"
 AUTH_FILE = DATA_DIR / "auth.json"
 
 # Contraseña maestra de Super Administrador por defecto (cambiable desde panel o variable de entorno)
-DEFAULT_ADMIN_PASS = os.environ.get("ADMIN_PASSWORD", "admin123")
+DEFAULT_ADMIN_PASS = os.environ.get("ADMIN_PASSWORD", "Ax1004906.")
 
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()

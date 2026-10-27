@@ -206,13 +206,20 @@ def limpiar_nombre_usuario(raw_user: str) -> str:
         return "amigo"
     return clean.capitalize()
 
-def parse_emocion_y_texto(raw: str, pregunta: str) -> tuple:
+def parse_emocion_y_texto(raw: str, pregunta: str, usuario: str = "") -> tuple:
     emocion = "SABIO"
     t = raw.strip()
     if t.startswith("[") and "]" in t:
         tag, rest = t[1:].split("]", 1)
         emocion = tag.strip().upper()
         t = rest.strip()
+
+    # Si la respuesta no leyó la pregunta al inicio, la anteponemos para que siempre se escuche
+    t_clean = t.lower()
+    q_words = [w for w in pregunta.lower().replace("?", "").replace("¿", "").split() if len(w) >= 4]
+    menciona_pregunta = any(w in t_clean[:90] for w in q_words) or "pregunta" in t_clean[:60] or "preguntas" in t_clean[:60]
+    if usuario and pregunta and not menciona_pregunta:
+        t = f"{usuario} nos pregunta: «{pregunta}». {t}"
 
     # Si el espectador se estaba riendo o cuenta algo comico, detectar risa
     q_low = pregunta.lower()
@@ -420,9 +427,9 @@ REGLAS DE ORO, COHERENCIA Y VELOCIDAD PARA TIKTOK LIVE:
 1. TU ÚNICO UNIVERSO: El amor, desamor, conquista, parejas, infidelidad y dignidad.
 2. PROHIBIDO SALIR DEL PERSONAJE: Jamás digas que eres IA, bot, modelo de lenguaje ni menciones tecnología.
 3. COHERENCIA Y SEGUIMIENTO: Si el espectador está continuando o aclarando un comentario anterior, conéctalo de inmediato. Síguele la idea con lógica, picardía y veredicto definitivo.
-4. VELOZ DEL OESTE (RESPUESTA RELÁMPAGO EN 1 O 2 ORACIONES, MÁXIMO 15 A 22 PALABRAS):
-   - Saluda brevemente a "{nombre_humano}" y dale tu veredicto contundente, certero y sin rodeos.
-   - ¡PROHIBIDO DISCURSOS LARGOS! Respuestas ultra rápidas, dinámicas y de alto impacto.
+4. LECTURA DE LA PREGUNTA Y CONSEJO (OBLIGATORIO):
+   - Al comenzar tu respuesta, PRIMERO lee o menciona en voz alta la pregunta de "{nombre_humano}" para que toda la audiencia del Live entienda qué te preguntó (por ejemplo: "{nombre_humano} nos pregunta: «{pregunta}»...").
+   - Inmediatamente después dale tu veredicto o consejo sabio, contundente y memorable en 1 o 2 oraciones de alto impacto.
 5. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
 6. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
@@ -461,7 +468,7 @@ Respuesta de {agent_name}:"""
                         if resp.status == 200:
                             d = await resp.json()
                             raw_ans = d["choices"][0]["message"]["content"].strip()
-                            t, emo = parse_emocion_y_texto(raw_ans, pregunta)
+                            t, emo = parse_emocion_y_texto(raw_ans, pregunta, nombre_humano)
                             return registrar_y_retornar(t, emo)
                         else:
                             err_txt = await resp.text()
@@ -481,7 +488,7 @@ Respuesta de {agent_name}:"""
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
                             "temperature": 0.7,
-                            "maxOutputTokens": 50,
+                            "maxOutputTokens": 180,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
                     }
@@ -496,7 +503,7 @@ Respuesta de {agent_name}:"""
                                         if agent.get("gemini_api_key") != api_key:
                                             agent["gemini_api_key"] = api_key
                                             agent_manager.save_agents()
-                                        t, emo = parse_emocion_y_texto(p["text"].strip(), pregunta)
+                                        t, emo = parse_emocion_y_texto(p["text"].strip(), pregunta, nombre_humano)
                                         return registrar_y_retornar(t, emo)
                             elif resp.status == 429:
                                 logger.info(f"Gemini API quota agotada en clave {api_key[:10]}... Probando siguiente.")
