@@ -110,6 +110,10 @@ def guardar_configuracion():
         logger.error(f"Error al guardar config: {e}")
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
+# Memoria conversacional por usuario en TikTok Live para coherencia y seguimiento de hilos
+memoria_conversacion_usuarios = collections.defaultdict(lambda: collections.deque(maxlen=3))
+tiempo_ultimo_comentario_usuario = {}
+
 def limpiar_nombre_usuario(raw_user: str) -> str:
     import re
     u = raw_user.lstrip("@").strip()
@@ -161,6 +165,32 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
     sales_mode = agent.get("sales_mode")
     if not sales_mode:
         sales_mode = "sensei_puro" if agent_type == "consultorio" else "modo_bestia"
+
+    # Recuperar memoria conversacional reciente con este espectador (hilo secuencial de conversación)
+    import time
+    ahora = time.time()
+    t_prev = tiempo_ultimo_comentario_usuario.get(usuario, 0)
+    if ahora - t_prev > 240:
+        memoria_conversacion_usuarios[usuario].clear()
+
+    historial_usuario = list(memoria_conversacion_usuarios[usuario])
+    contexto_conversacion = ""
+    if historial_usuario:
+        lineas_h = []
+        for prev_q, prev_a in historial_usuario:
+            prev_a_clean = re.sub(r"\[[A-Z_]+\]", "", prev_a).strip()
+            lineas_h.append(f"- {nombre_humano} dijo: \"{prev_q}\"")
+            lineas_h.append(f"- Tú respondiste: \"{prev_a_clean}\"")
+        contexto_conversacion = (
+            f"\nHISTORIAL DE LA CONVERSACIÓN PREVIA CON {nombre_humano}:\n"
+            + "\n".join(lineas_h)
+            + f"\nREGLA OBLIGATORIA DE SEGUIMIENTO Y COHERENCIA: El nuevo comentario de {nombre_humano} es una CONTINUACIÓN de lo que acaban de hablar. SÍGUELE LA CORRIENTE CON TOTAL COHERENCIA. Si te contrapregunta, aclara, insiste o compara (ej: 'pero entre hombres y mujeres', '¿por qué?', '¿y qué hago?'), respóndele directamente sobre esa misma idea y dale un veredicto definitivo con picardía y sabiduría.\n"
+        )
+
+    def registrar_y_retornar(texto: str, emocion: str) -> tuple:
+        memoria_conversacion_usuarios[usuario].append((pregunta, texto))
+        tiempo_ultimo_comentario_usuario[usuario] = time.time()
+        return texto, emocion
 
     # 1. MODO SENSEI DEL PERFUME (0% VENTAS - PURA SABIDURÍA OLFATIVA)
     if sales_mode == "sensei_puro" and ("perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower() or "fragancia" in (agent.get("niche") or "").lower()):
@@ -304,17 +334,18 @@ Respuesta del Asesor en Directo:"""
         tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
         prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
-
-REGLAS DE ORO Y VELOCIDAD EXTREMA PARA TIKTOK LIVE:
+{contexto_conversacion}
+REGLAS DE ORO, COHERENCIA Y VELOCIDAD PARA TIKTOK LIVE:
 1. TU ÚNICO UNIVERSO: El amor, desamor, conquista, parejas, infidelidad y dignidad.
 2. PROHIBIDO SALIR DEL PERSONAJE: Jamás digas que eres IA, bot, modelo de lenguaje ni menciones tecnología.
-3. SALUDO CORTO Y RESPUESTA RELÁMPAGO (MÁXIMO 1 FRASE DE 12 A 20 PALABRAS):
+3. COHERENCIA Y SEGUIMIENTO: Si el espectador está continuando o aclarando un comentario anterior, conéctalo de inmediato. Síguele la idea con lógica, picardía y veredicto definitivo.
+4. SALUDO CORTO Y RESPUESTA RELÁMPAGO (MÁXIMO 1 O 2 FRASES DE 15 A 25 PALABRAS):
    - Saluda brevemente a "{nombre_humano}" y dale un consejo certero, sabio y contundente sin rodeos.
-   - ¡TERMINANTEMENTE PROHIBIDO DAR DISCURSOS O PÁRRAFOS LARGOS! El live de TikTok exige respuestas ultra rápidas.
-4. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
-5. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
+   - ¡PROHIBIDO DAR DISCURSOS LARGOS! El live de TikTok exige respuestas ultra rápidas.
+5. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
+6. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
-Pregunta del espectador en TikTok: "{pregunta}"
+Nuevo comentario de {nombre_humano} en TikTok: "{pregunta}"
 Respuesta de {agent_name}:"""
 
     keys_a_probar = []
@@ -349,7 +380,8 @@ Respuesta de {agent_name}:"""
                         if resp.status == 200:
                             d = await resp.json()
                             raw_ans = d["choices"][0]["message"]["content"].strip()
-                            return parse_emocion_y_texto(raw_ans, pregunta)
+                            t, emo = parse_emocion_y_texto(raw_ans, pregunta)
+                            return registrar_y_retornar(t, emo)
                         else:
                             err_txt = await resp.text()
                             logger.warning(f"OpenAI API HTTP {resp.status}: {err_txt}")
@@ -368,7 +400,7 @@ Respuesta de {agent_name}:"""
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
                             "temperature": 0.7,
-                            "maxOutputTokens": 55,
+                            "maxOutputTokens": 60,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
                     }
@@ -383,7 +415,8 @@ Respuesta de {agent_name}:"""
                                         if agent.get("gemini_api_key") != api_key:
                                             agent["gemini_api_key"] = api_key
                                             agent_manager.save_agents()
-                                        return parse_emocion_y_texto(p["text"].strip(), pregunta)
+                                        t, emo = parse_emocion_y_texto(p["text"].strip(), pregunta)
+                                        return registrar_y_retornar(t, emo)
                             elif resp.status == 429:
                                 logger.info(f"Gemini API quota agotada en clave {api_key[:10]}... Probando siguiente.")
                                 break
@@ -400,15 +433,18 @@ Respuesta de {agent_name}:"""
 
     # 1. Agente de Perfumes (Salomé, Don Perfume o Boutique)
     if "perfume" in nicho or "perfume" in nombre_ag or "fragancia" in nicho or (tipo == "tienda_ventas" and "perfume" in str(agent.get("featured_products", "")).lower()):
-        return obtener_sommelier_experto(usuario, pregunta, agent)
+        t, emo = obtener_sommelier_experto(usuario, pregunta, agent)
+        return registrar_y_retornar(t, emo)
 
     # 2. Agente del Amor / Seducción
     elif "amor" in nicho or "seduccion" in nicho or "seducción" in nicho or "pareja" in nicho or "sensei" in nombre_ag:
-        return obtener_consejo_amor_sensei(usuario, pregunta)
+        t, emo = obtener_consejo_amor_sensei(usuario, pregunta)
+        return registrar_y_retornar(t, emo)
 
     # 3. Agente Personalizado creado desde cero por el usuario
     else:
-        return generar_respuesta_agente_personalizado(usuario, pregunta, agent)
+        t, emo = generar_respuesta_agente_personalizado(usuario, pregunta, agent)
+        return registrar_y_retornar(t, emo)
 
 def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
     """Oráculo de Sabiduría Local de Seducción y Relaciones."""
