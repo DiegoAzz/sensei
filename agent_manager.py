@@ -18,6 +18,7 @@ BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 AGENTS_FILE = DATA_DIR / "agents.json"
+BACKUP_AGENTS_FILE = BASE_DIR / "default_agents.json"
 AUTH_FILE = DATA_DIR / "auth.json"
 
 # Contraseña maestra de Super Administrador por defecto (cambiable desde panel o variable de entorno)
@@ -241,13 +242,25 @@ REGLAS SUPREMAS DEL SENSEI DE LAS FRAGANCIAS:
             "casi algo", "gusta", "gusto", "novio", "novia", "sensei", "consejo", "amor"
         ],
         "featured_products": [],
-        "system_prompt": """Eres el legendario 'Sensei del Amor y la Seducción', un maestro místico, sabio, carismático y con una personalidad vibrante y pícara en un live de TikTok.
+        "frases_enganche": [
+            "¿Sabías que entre más te demores en tener a tu futura esposa más duran disfrutándola otros? Jajaja. Despierta, papá, deja tu caso de amor en los comentarios y te enseño a conquistar como se debe.",
+            "🌹 Si quieres que responda tu caso de amor ya mismo sin esperar fila, ¡envía 1 Rosa ahora y te daré mi veredicto VIP en vivo!",
+            "¿Dudas si tu pareja te es infiel o si tu crush te ama? Envía un regalo en el chat para saltar la fila y revelarte la verdad.",
+            "El 90% de los hombres están en la friendzone por ser demasiado buenos y aburridos. Pon tu situación en el chat y te digo cómo salir de ahí hoy mismo.",
+            "¿Tu ex te busca y no sabes qué hacer? Envía 1 Rosa, dime tu caso en los comentarios y te daré la respuesta definitiva sin rodeos.",
+            "¡Atención dojo! Los que envían Rosas tienen prioridad número uno. Déjame tu caso de amor o conquista y pasa al frente del salón.",
+            "Si tu pareja empezó a esconder el celular boca abajo o cambió el patrón, algo oculta. Déjame su comportamiento en los comentarios y te saco de la duda."
+        ],
+        "system_prompt": """Eres el legendario 'Sensei del Amor y la Seducción', un maestro místico, sabio, carismático y con una personalidad vibrante, pícara y magnética en un live de TikTok.
 Tu estilo general: sabio, elegante, magnético y con alta autoestima.
 
 REGLAS DE ORO:
-1. Tu único universo es el amor, el desamor, la conquista, parejas y amor propio.
+1. Tu único universo es el amor, el desamor, la conquista, parejas, infidelidad y dignidad.
 2. Responde directamente al nombre de la persona, con sabiduría certera, sin rodeos y con frases memorables.
-3. Longitud: 2 a 4 oraciones impactantes.
+3. TRATO DISTINGUIDO A DONADORES Y MIEMBROS VIP (INSIGNIA DE REGALO / PAY GRADE / ROSAS):
+   - A todo donador o usuario con insignia de regalo, salúdalo con reverencia y honor de maestro, reconociendo su generosidad y estatus en el dojo.
+   - Dale trato aristocrático, preferencial y exclusivo: haz que se sienta valorado y responde con máxima profundidad y certeza.
+4. Longitud: 2 a 4 oraciones impactantes.
 """
     },
     "madame_tarot": {
@@ -387,16 +400,25 @@ class AgentManager:
         self.load_agents()
 
     def load_agents(self):
+        target_file = None
         if AGENTS_FILE.exists():
+            target_file = AGENTS_FILE
+        elif BACKUP_AGENTS_FILE.exists():
+            target_file = BACKUP_AGENTS_FILE
+
+        if target_file:
             try:
-                with open(AGENTS_FILE, "r", encoding="utf-8") as f:
+                with open(target_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.agents = data.get("agents", {})
                     self.active_agent_id = data.get("active_agent_id", "sensei-amor")
-                    if "sensei-amor" in self.agents and not self.agents["sensei-amor"].get("tiktok_username"):
-                        self.agents["sensei-amor"]["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
+                    if "sensei-amor" in self.agents:
+                        if not self.agents["sensei-amor"].get("tiktok_username"):
+                            self.agents["sensei-amor"]["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
+                        if not self.agents["sensei-amor"].get("frases_enganche"):
+                            self.agents["sensei-amor"]["frases_enganche"] = list(AGENT_TEMPLATES["sensei_amor"].get("frases_enganche", []))
             except Exception as e:
-                logger.error(f"Error cargando agents.json: {e}")
+                logger.error(f"Error cargando agents: {e}")
 
         # Si no hay agentes, inicializar con el Sensei, Salomé y Don Perfume
         if not self.agents:
@@ -522,14 +544,20 @@ class AgentManager:
             self.save_agents()
 
     def save_agents(self):
+        payload = {
+            "active_agent_id": self.active_agent_id,
+            "agents": self.agents
+        }
         try:
             with open(AGENTS_FILE, "w", encoding="utf-8") as f:
-                json.dump({
-                    "active_agent_id": self.active_agent_id,
-                    "agents": self.agents
-                }, f, indent=2, ensure_ascii=False)
+                json.dump(payload, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Error guardando agents.json: {e}")
+        try:
+            with open(BACKUP_AGENTS_FILE, "w", encoding="utf-8") as f_b:
+                json.dump(payload, f_b, indent=2, ensure_ascii=False)
+        except Exception as e_b:
+            logger.error(f"Error guardando backup de agents: {e_b}")
 
     def get_all_agents(self):
         return list(self.agents.values())
@@ -615,7 +643,7 @@ class AgentManager:
             "sales_mode",
             "theme_color", "accent_color", "avatar", "avatar_type", "video_idle", "video_talking",
             "bg_hex", "store_name", "call_to_action",
-            "keywords", "featured_products", "system_prompt", "tiktok_username", "rtmp_url",
+            "keywords", "featured_products", "frases_enganche", "system_prompt", "tiktok_username", "rtmp_url",
             "stream_key", "tiktok_session_id", "gemini_api_key", "client_name", "client_pin"
         ]
         for c in campos:

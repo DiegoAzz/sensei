@@ -1705,9 +1705,19 @@
             </div>
           </div>
 
+          <!-- Frases Virales de Enganche Programables -->
+          <div class="form-group" style="margin-top: 10px;">
+            <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>🔥 FRASES VIRALES Y GANCHOS PROGRAMADOS (1 por línea)</span>
+              <span style="font-size: 10px; color: var(--gold);">El Sensei las dice en vivo para atraer gente</span>
+            </label>
+            <textarea id="cfg-frases-enganche" class="input-field" rows="4" style="resize: vertical; font-size: 12px; line-height: 1.4; font-family: monospace;" placeholder="¿Sabías que entre más te demores en tener a tu futura esposa más duran disfrutándola otros? Jajaja. Despierta, papá..."></textarea>
+            <span style="font-size: 11px; color: var(--ink70); display: block; margin-top: 3px;">💡 Escribe ganchos picantes, verdades de conquista o llamados a donar Rosas. El Sensei las dirá automáticamente entre preguntas para llenar la sala.</span>
+          </div>
+
           <div style="margin-top: 6px; margin-bottom: 12px;">
             <button type="button" id="btn-save-agent-config" class="btn-admin-pill" style="width: 100%; justify-content: center; padding: 10px; font-weight: 700; background: rgba(0, 240, 255, 0.14); border-color: #00f0ff; color: #00f0ff; cursor: pointer;">
-              💾 Guardar Cambios y Prompt de este Agente
+              💾 Guardar Cambios, Prompt y Frases de este Agente
             </button>
           </div>
 
@@ -1761,6 +1771,9 @@
             <span>🚀 <b>Enviar al Live:</b> Sale en vivo en la pantalla de TikTok y se escucha a todos.</span>
           </div>
           <div class="preset-pills">
+            <button type="button" class="btn-preset" id="btn-simular-donador-vip" style="border-color: #ffd700; color: #ffd700; font-weight: 800; background: rgba(255, 215, 0, 0.12);">👑 Simular Entrada Donador VIP (Nivel 4)</button>
+            <button type="button" class="btn-preset" id="btn-soltar-gancho-viral" style="border-color: #ff2a6d; color: #ff2a6d; font-weight: 800; background: rgba(255, 42, 109, 0.12);">🔥 Soltar Frase Viral en Vivo</button>
+            <button type="button" class="btn-preset" id="btn-simular-regalo-rosa" style="border-color: #00ff88; color: #00ff88; font-weight: 800; background: rgba(0, 255, 136, 0.12);">🌹 Simular Regalo 1 Rosa</button>
             <button class="btn-preset" data-q="¿Debo perdonar una infidelidad?">¿Perdonar infidelidad?</button>
             <button class="btn-preset" data-q="¿Vale la pena volver con mi ex si me busca?">¿Volver con mi ex?</button>
             <button class="btn-preset" data-q="Me deja en visto y tarda horas en responder">Me deja en visto</button>
@@ -2348,6 +2361,32 @@
       if (cfgBannerTitle) cfgBannerTitle.value = agent.banner_title || "";
       if (cfgBannerSubtitle) cfgBannerSubtitle.value = agent.banner_subtitle || "";
 
+      // Frases virales de enganche
+      const cfgFrasesEnganche = document.getElementById("cfg-frases-enganche");
+      if (cfgFrasesEnganche) {
+        if (Array.isArray(agent.frases_enganche)) {
+          cfgFrasesEnganche.value = agent.frases_enganche.join("\n");
+        } else {
+          cfgFrasesEnganche.value = agent.frases_enganche || "";
+        }
+      }
+
+      // Respaldo de seguridad local (si el servidor se reinició o restauró imagen):
+      try {
+        const localBackup = localStorage.getItem("backup_agent_" + agent.id);
+        if (localBackup) {
+          const parsed = JSON.parse(localBackup);
+          if (parsed.system_prompt && (!agent.system_prompt || agent.system_prompt.length < 30)) {
+            if (cfgSystemPrompt) cfgSystemPrompt.value = parsed.system_prompt;
+          }
+          if (parsed.frases_enganche && (!agent.frases_enganche || agent.frases_enganche.length === 0)) {
+            if (cfgFrasesEnganche) {
+              cfgFrasesEnganche.value = Array.isArray(parsed.frases_enganche) ? parsed.frases_enganche.join("\n") : parsed.frases_enganche;
+            }
+          }
+        }
+      } catch(e) {}
+
       // Presentador: Imagen vs Video Loops
       const cfgAvatarType = document.getElementById("cfg-avatar-type");
       const cfgVideoIdle = document.getElementById("cfg-video-idle");
@@ -2667,12 +2706,16 @@
         btnSaveAgentConfig.textContent = "⏳ Guardando cambios...";
         btnSaveAgentConfig.disabled = true;
 
+        const cfgFrasesEng = document.getElementById("cfg-frases-enganche");
+        const frasesArr = cfgFrasesEng ? cfgFrasesEng.value.split("\n").map(f => f.trim()).filter(f => f.length > 0) : [];
+
         const updates = {
           system_prompt: cfgSystemPrompt ? cfgSystemPrompt.value.trim() : "",
           niche: cfgNiche ? cfgNiche.value.trim() : "",
           call_to_action: cfgCta ? cfgCta.value.trim() : "",
           banner_title: cfgBannerTitle ? cfgBannerTitle.value.trim() : "",
           banner_subtitle: cfgBannerSubtitle ? cfgBannerSubtitle.value.trim() : "",
+          frases_enganche: frasesArr,
           voice: cfgVoice.value,
           estilo: cfgEstilo.value,
           sales_mode: document.getElementById("cfg-sales-mode") ? document.getElementById("cfg-sales-mode").value : "modo_bestia",
@@ -2685,6 +2728,11 @@
           rtmp_url: cfgRtmpUrl.value.trim(),
           stream_key: cfgStreamKey.value.trim()
         };
+
+        // Guardar copia de seguridad inmediata en localStorage del navegador
+        try {
+          localStorage.setItem("backup_agent_" + currentAgent.id, JSON.stringify(updates));
+        } catch(e) {}
 
         try {
           const res = await fetch(`/api/agents/${currentAgent.id}`, {
@@ -3648,6 +3696,82 @@ REGLAS DE ORO:
         if (e.key === "Enter") {
           e.preventDefault();
           if (btnNudgeSensei) btnNudgeSensei.click();
+        }
+      });
+    }
+
+    // 👑 Botones de Pruebas Rápidas en Vivo (Donador VIP, Ganchos y Regalo)
+    const btnSimDonador = document.getElementById("btn-simular-donador-vip");
+    if (btnSimDonador) {
+      btnSimDonador.addEventListener("click", async () => {
+        btnSimDonador.disabled = true;
+        btnSimDonador.textContent = "⏳ Entrando Donador...";
+        try {
+          const res = await fetch("/api/test-gifter-join", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user: "SsEBbAS Lion", level: 4 })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            addLog(`👑 [SIMULADOR]: ¡Donador VIP @${d.user} (Nivel ${d.level}) saludado con todos los honores!`, "green");
+          }
+        } catch(e) {
+          alert("Error: " + e.message);
+        } finally {
+          btnSimDonador.disabled = false;
+          btnSimDonador.textContent = "👑 Simular Entrada Donador VIP (Nivel 4)";
+        }
+      });
+    }
+
+    const btnSoltarGancho = document.getElementById("btn-soltar-gancho-viral");
+    if (btnSoltarGancho) {
+      btnSoltarGancho.addEventListener("click", async () => {
+        btnSoltarGancho.disabled = true;
+        btnSoltarGancho.textContent = "⏳ Soltando Frase...";
+        try {
+          const res = await fetch("/api/trigger-viral-hook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+          const d = await res.json();
+          if (d.ok) {
+            addLog(`🔥 [GANCHO VIRAL]: "${d.phrase}"`, "hl");
+          }
+        } catch(e) {
+          alert("Error: " + e.message);
+        } finally {
+          btnSoltarGancho.disabled = false;
+          btnSoltarGancho.textContent = "🔥 Soltar Frase Viral en Vivo";
+        }
+      });
+    }
+
+    const btnSimRegalo = document.getElementById("btn-simular-regalo-rosa");
+    if (btnSimRegalo) {
+      btnSimRegalo.addEventListener("click", async () => {
+        btnSimRegalo.disabled = true;
+        btnSimRegalo.textContent = "⏳ Enviando Rosa...";
+        try {
+          const res = await fetch("/api/test-comment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              user: "Carlos_Medellin",
+              comment: "🎁 REGALO VIP: 1x Rosa",
+              enviar_al_live: true
+            })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            addLog(`🌹 [REGALO]: ¡1x Rosa enviada al directo con pase VIP!`, "green");
+          }
+        } catch(e) {
+          alert("Error: " + e.message);
+        } finally {
+          btnSimRegalo.disabled = false;
+          btnSimRegalo.textContent = "🌹 Simular Regalo 1 Rosa";
         }
       });
     }

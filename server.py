@@ -104,6 +104,53 @@ def registrar_usuario_vip(usuario: str, minutos: int = 15):
     if u:
         usuarios_vip[u] = time.time() + (minutos * 60)
 
+def obtener_info_donador(user) -> dict:
+    """
+    Determina si un espectador es donador activo / tiene insignia de donador de TikTok (Pay Grade / Gifter Level >= 1).
+    Detecta Pay Grade (Nivel 1 a 50+), Gifter Level, badges de regalo (scene 8/6),
+    o presencia de insignias de apoyo en su perfil/nombre.
+    """
+    if not user:
+        return {"es_donador": False, "nivel": 0, "tipo": None}
+
+    # 1. Pay Grade (Nivel de donaciones acumuladas de TikTok 1-50+)
+    pg = getattr(user, "pay_grade", None)
+    if pg:
+        lvl = getattr(pg, "level", 0) or (pg.get("level", 0) if isinstance(pg, dict) else 0)
+        if lvl and lvl > 0:
+            return {"es_donador": True, "nivel": lvl, "tipo": "pay_grade"}
+
+    # 2. Gifter Level directo
+    gl = getattr(user, "gifter_level", 0)
+    if gl and gl > 0:
+        return {"es_donador": True, "nivel": gl, "tipo": "gifter_level"}
+
+    # 3. Badges de TikTok (scene 8 = Gifter Level, scene 6 = Top Gifter)
+    badges = getattr(user, "badges", None) or getattr(user, "badge_list", None) or []
+    for b in badges:
+        scene = getattr(b, "badge_scene", None) or (b.get("badge_scene") if isinstance(b, dict) else None)
+        if scene in (8, 6):
+            lvl = getattr(b, "level", 0) or (b.get("level", 0) if isinstance(b, dict) else 0)
+            return {"es_donador": True, "nivel": lvl or 1, "tipo": f"badge_scene_{scene}"}
+        b_str = str(b).lower()
+        if any(w in b_str for w in ["gift", "donad", "regalo", "pay_grade", "honor"]):
+            return {"es_donador": True, "nivel": 1, "tipo": "badge_text"}
+
+    # 4. Helper has_badge de TikTokLive
+    if hasattr(user, "has_badge") and callable(user.has_badge):
+        try:
+            if user.has_badge("GIFT") or user.has_badge("GIFTER") or user.has_badge("PAY_GRADE"):
+                return {"es_donador": True, "nivel": 1, "tipo": "has_badge"}
+        except Exception:
+            pass
+
+    # 5. Símbolos o emojis de honor/donador en apodo
+    nick = getattr(user, "nickname", "") or getattr(user, "unique_id", "") or ""
+    if any(sym in nick for sym in ["👑", "💎", "🌹", "✨"]):
+        return {"es_donador": True, "nivel": 1, "tipo": "simbolo_honor"}
+
+    return {"es_donador": False, "nivel": 0, "tipo": None}
+
 async def encolar_pregunta(usuario: str, pregunta: str, es_vip: bool = False):
     """
     Encola una pregunta para El Sensei.
@@ -1020,11 +1067,39 @@ async def worker_preguntas():
             current_agent = agent_manager.get_active_agent() or {}
 
             es_regalo = pregunta.startswith("🎁 REGALO VIP:")
-            vip_activo = es_usuario_vip(usuario) or es_regalo
+            es_bienvenida_donador = pregunta.startswith("👑 BIENVENIDA DONADOR VIP:")
+            es_frase_viral = pregunta.startswith("📣 FRASE VIRAL:")
+            vip_activo = es_usuario_vip(usuario) or es_regalo or es_bienvenida_donador
 
-            if es_regalo:
+            if es_bienvenida_donador:
+                nivel_str = pregunta.replace("👑 BIENVENIDA DONADOR VIP:", "").strip()
+                registrar_usuario_vip(usuario, minutos=30)
+                estado["active_user"] = f"👑 {nombre_humano} [{nivel_str}]"
+                estado["active_question"] = "✨ ¡BIENVENIDO DE HONOR AL DOJO! ✨"
+                estado["status_phase"] = "respondiendo"
+                actualizar_overlay_video(nombre_humano, f"✨ {nivel_str}", estado_tipo="respondiendo", agent=current_agent)
+
+                import random
+                frases_saludo_elegante = [
+                    f"¡Atención a toda la sala del dojo! Hago una reverencia y saludo con los más altos honores a nuestro distinguido {nombre_humano}, portador del {nivel_str} de generosidad en TikTok. Es un verdadero privilegio contar con alguien de tu estatus y lealtad aquí. Pasa al frente: déjame en los comentarios tu dilema o consulta de amor y te daré mi sabiduría sin hacer fila.",
+                    f"Damos la bienvenida con alfombra roja a {nombre_humano}. Tu {nivel_str} de donaciones te precede como un miembro de honor en este templo. La caballerosidad, el estilo y la abundancia tienen asiento preferencial en mi sala. Cuéntame tu situación de conquista o pareja en el chat y el Sensei te responderá de inmediato.",
+                    f"El dojo se viste de gala con la llegada de {nombre_humano}. Tu generosidad de {nivel_str} te otorga pase VIP permanente en este live. Siéntete como en casa, mi distinguido amigo, y déjame tu pregunta amorosa en los comentarios para darte una respuesta exclusiva."
+                ]
+                respuesta = random.choice(frases_saludo_elegante)
+                emocion = "EMOCIONADO"
+
+            elif es_frase_viral:
+                frase_viral_txt = pregunta.replace("📣 FRASE VIRAL:", "").strip()
+                estado["active_user"] = "🔥 GANCHO VIRAL"
+                estado["active_question"] = "⛩️ SABIDURÍA DEL SENSEI ⛩️"
+                estado["status_phase"] = "respondiendo"
+                actualizar_overlay_video("El Sensei", "Reflexión del Sensei", estado_tipo="respondiendo", agent=current_agent)
+                respuesta = frase_viral_txt
+                emocion = "PICANTE" if any(k in frase_viral_txt.lower() for k in ["jajaja", "esposa", "cogiendola", "infiel", "celos"]) else "SABIO"
+
+            elif es_regalo:
                 regalo_desc = pregunta.replace("🎁 REGALO VIP:", "").strip()
-                registrar_usuario_vip(usuario, minutos=15)
+                registrar_usuario_vip(usuario, minutos=20)
                 estado["active_user"] = f"👑 {nombre_humano} [VIP]"
                 estado["active_question"] = f"🎁 ¡ENVIÓ {regalo_desc}! 🌹"
                 estado["status_phase"] = "respondiendo"
@@ -1193,10 +1268,17 @@ async def auto_enganche_tiempo_muerto_loop():
         tipo_ag = current_agent.get("type", "consultorio")
         nicho = (current_agent.get("niche") or "").lower()
 
-        # Si han pasado más de 38 segundos de silencio absoluto en el Live
+        # Si han pasado más de 26 segundos de silencio en el Live
         if time.time() - tiempo_ultima_actividad_comentario >= 26:
             import random
-            if "perfume" in nicho or tipo_ag == "tienda_ventas":
+            frases_custom = current_agent.get("frases_enganche") or []
+            if isinstance(frases_custom, str):
+                frases_custom = [f.strip() for f in frases_custom.splitlines() if f.strip()]
+
+            if frases_custom:
+                frase = random.choice(frases_custom)
+                emocion = "PICANTE" if any(k in frase.lower() for k in ["jajaja", "esposa", "cogiendola", "infiel", "celos"]) else "SABIO"
+            elif "perfume" in nicho or tipo_ag == "tienda_ventas":
                 frase = random.choice(FRASES_ENGANCHE_PERFUMES)
                 emocion = "AMIGABLE"
             else:
@@ -1282,7 +1364,7 @@ historial_comentarios_recientes = collections.deque(maxlen=80)
 
 async def escuchar_tiktok():
     from TikTokLive import TikTokLiveClient
-    from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent, GiftEvent
+    from TikTokLive.events import CommentEvent, ConnectEvent, DisconnectEvent, GiftEvent, JoinEvent
 
     while estado["is_streaming"]:
         current_agent = agent_manager.get_active_agent() or {}
@@ -1311,11 +1393,42 @@ async def escuchar_tiktok():
 
             global active_tiktok_client
             active_tiktok_client = client
+            saludos_donadores_recientes = {}
 
             @client.on(ConnectEvent)
             async def on_connect(event: ConnectEvent):
                 registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
                 registrar_log("🔥 En vivo: Escuchando comentarios nuevos en tiempo real.", "green")
+
+            @client.on(JoinEvent)
+            async def on_join(event: JoinEvent):
+                try:
+                    if time.time() < ignorar_buffer_hasta:
+                        return
+                    user = getattr(event, "user", None)
+                    if not user:
+                        return
+                    u = user.unique_id
+                    u_key = u.lower().strip()
+
+                    info_donador = obtener_info_donador(user)
+                    if not info_donador.get("es_donador"):
+                        return
+
+                    # Cooldown de 8 minutos para no repetir saludo al mismo donador si su conexión parpadea
+                    ahora = time.time()
+                    if ahora - saludos_donadores_recientes.get(u_key, 0) < 480:
+                        return
+                    saludos_donadores_recientes[u_key] = ahora
+
+                    nivel = info_donador.get("nivel", 1) or 1
+                    registrar_usuario_vip(u, minutos=30)
+                    registrar_log(f"👑 ¡DONADOR DETECTADO ENTRANDO AL LIVE! @{u} (Nivel {nivel})", "green")
+
+                    msg_saludo = f"👑 BIENVENIDA DONADOR VIP: Nivel {nivel}"
+                    await encolar_pregunta(u, msg_saludo, es_vip=True)
+                except Exception as e_join:
+                    logger.warning(f"Aviso procesando join de donador: {e_join}")
 
             @client.on(GiftEvent)
             async def on_gift(event: GiftEvent):
@@ -1343,8 +1456,8 @@ async def escuchar_tiktok():
                     total_diamantes = diamantes * repeticion
                     registrar_log(f"🎁 ¡REGALO RECIBIDO! @{u} envió {repeticion}x {regalo_nombre} ({total_diamantes} 💎)", "green")
 
-                    # Asignar pase VIP de 15 minutos al donador
-                    registrar_usuario_vip(u, minutos=15)
+                    # Asignar pase VIP de 20 minutos al donador
+                    registrar_usuario_vip(u, minutos=20)
 
                     # Inyectar al frente de la cola con prioridad VIP absoluta
                     msg_regalo = f"🎁 REGALO VIP: {repeticion}x {regalo_nombre}"
@@ -1365,15 +1478,20 @@ async def escuchar_tiktok():
                     if not c or len(c) < 2:
                         return
 
-                    # Filtro anti-duplicados estricto: evita responder el mismo comentario dos veces si TikTok lo retransmite
+                    # Filtro anti-duplicados estricto
                     clave_comentario = f"{u.lower()}:{c.lower()}"
                     if clave_comentario in historial_comentarios_recientes:
                         return
                     historial_comentarios_recientes.append(clave_comentario)
 
-                    vip_activo = es_usuario_vip(u)
+                    info_donador = obtener_info_donador(event.user)
+                    if info_donador.get("es_donador"):
+                        registrar_usuario_vip(u, minutos=30)
+
+                    vip_activo = es_usuario_vip(u) or info_donador.get("es_donador")
                     if vip_activo:
-                        registrar_log(f"👑 [CONSULTA VIP] de @{u}: \"{c}\"", "green")
+                        lvl_tag = f" [DONADOR NIVEL {info_donador.get('nivel', 1)}]" if info_donador.get("es_donador") else " [VIP]"
+                        registrar_log(f"👑 [CONSULTA{lvl_tag}] de @{u}: \"{c}\"", "green")
                     else:
                         registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
 
@@ -1528,12 +1646,63 @@ async def handle_create_agent(request):
     return web.json_response({"ok": True, "agent": nuevo})
 
 async def handle_update_agent(request):
-    if not is_super_admin(request):
-        return web.json_response({"ok": False, "error": "Solo el Super Administrador puede editar agentes"}, status=403)
-    agent_id = request.match_info.get("id")
-    data = await request.json()
-    ok = agent_manager.update_agent(agent_id, data)
-    return web.json_response({"ok": ok})
+    try:
+        if not is_super_admin(request):
+            return web.json_response({"ok": False, "error": "Solo el Super Administrador puede editar agentes"}, status=403)
+        agent_id = request.match_info.get("id")
+        data = await request.json()
+        ok = agent_manager.update_agent(agent_id, data)
+        if ok and agent_id == agent_manager.active_agent_id:
+            ag = agent_manager.get_active_agent()
+            actualizar_overlay_video("", "", estado_tipo="esperando", agent=ag)
+            registrar_log(f"💾 Configuración guardada y sincronizada para '{ag.get('name')}'", "green")
+        return web.json_response({"ok": ok})
+    except Exception as e:
+        logger.error(f"Error en handle_update_agent: {e}")
+        return web.json_response({"ok": False, "error": str(e)}, status=500)
+
+async def handle_test_gifter_join(request):
+    """
+    Simula la entrada de un donador VIP (con insignia de nivel) al directo.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    usuario = (data.get("user") or "SsEBbAS Lion").strip()
+    nivel = data.get("level", 4)
+    if not estado.get("is_streaming"):
+        estado["is_streaming"] = True
+
+    registrar_usuario_vip(usuario, minutos=30)
+    registrar_log(f"👑 [SIMULADOR]: Donador VIP @{usuario} (Nivel {nivel}) entra al live.", "green")
+    msg_saludo = f"👑 BIENVENIDA DONADOR VIP: Nivel {nivel}"
+    await encolar_pregunta(usuario, msg_saludo, es_vip=True)
+    return web.json_response({"ok": True, "user": usuario, "level": nivel})
+
+async def handle_trigger_viral_hook(request):
+    """
+    Fuerza al Sensei a decir una de las frases virales programadas de inmediato.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    frase_custom = (data.get("phrase") or "").strip()
+    current_agent = agent_manager.get_active_agent() or {}
+    if not frase_custom:
+        frases = current_agent.get("frases_enganche") or FRASES_ENGANCHE_AMOR
+        if isinstance(frases, str):
+            frases = [f.strip() for f in frases.splitlines() if f.strip()]
+        import random
+        frase_custom = random.choice(frases) if frases else "¡Atención dojo! Deja tu dilema en los comentarios."
+
+    if not estado.get("is_streaming"):
+        estado["is_streaming"] = True
+
+    msg_viral = f"📣 FRASE VIRAL: {frase_custom}"
+    await encolar_pregunta("El Sensei", msg_viral, es_vip=True)
+    return web.json_response({"ok": True, "phrase": frase_custom})
 
 async def handle_delete_agent(request):
     if not is_super_admin(request):
@@ -1971,6 +2140,8 @@ async def start_dual_servers():
     app.router.add_post("/api/stop", handle_stop)
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
+    app.router.add_post("/api/test-gifter-join", handle_test_gifter_join)
+    app.router.add_post("/api/trigger-viral-hook", handle_trigger_viral_hook)
     app.router.add_post("/api/nudge", handle_nudge)
     app.router.add_get("/api/audio-test", handle_audio_test)
 

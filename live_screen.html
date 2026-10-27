@@ -342,6 +342,25 @@
       box-shadow: 0 4px 15px rgba(0, 240, 255, 0.25);
       max-width: 95%;
       animation: popIn 0.3s ease-out;
+      transition: all 0.3s ease;
+    }
+
+    .hud-question-pill.is-vip-donator {
+      background: linear-gradient(135deg, rgba(30, 20, 5, 0.95), rgba(15, 10, 2, 0.95));
+      border: 1.5px solid #ffd700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 35px rgba(255, 42, 109, 0.4);
+      animation: vipPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .hud-question-pill.is-vip-donator .hud-q-badge {
+      color: #ffd700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+      font-weight: 900;
+    }
+
+    @keyframes vipPop {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
 
     .hud-q-badge {
@@ -855,6 +874,11 @@
           cardWaiting.style.display = "none";
           cardQuestion.style.display = "inline-flex";
           let rawU = (data.active_user || 'espectador').trim();
+          if (rawU.includes("👑")) {
+            cardQuestion.classList.add("is-vip-donator");
+          } else {
+            cardQuestion.classList.remove("is-vip-donator");
+          }
           if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤")) {
             cardQUser.textContent = rawU;
           } else {
@@ -869,6 +893,11 @@
           cardWaiting.style.display = "none";
           cardQuestion.style.display = "inline-flex";
           let rawU = (data.active_user || 'espectador').trim();
+          if (rawU.includes("👑")) {
+            cardQuestion.classList.add("is-vip-donator");
+          } else {
+            cardQuestion.classList.remove("is-vip-donator");
+          }
           if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤")) {
             cardQUser.textContent = rawU;
           } else {
