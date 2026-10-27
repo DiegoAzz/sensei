@@ -38,26 +38,30 @@
       color: #fff;
     }
 
-    /* Contenedor Vertical 9:16 para TikTok Live / OBS */
+    /* Contenedor Vertical Adaptable 9:16 para TikTok Live Studio y OBS */
     .stream-viewport {
       position: relative;
       width: 100%;
       height: 100%;
-      max-width: 600px;
+      max-width: 1080px;
       margin: 0 auto;
       overflow: hidden;
-      background: #000;
-      box-shadow: 0 0 50px rgba(0,0,0,0.9);
+      background: #030509;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
     }
 
-    @media (min-aspect-ratio: 9/16) {
-      .stream-viewport {
-        height: 100vh;
-        width: calc(100vh * (9 / 16));
-      }
+    /* Fondo ambiental dinámico místico y luxury */
+    .ambient-stream-bg {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 50% 28%, rgba(255, 42, 109, 0.22) 0%, rgba(212, 175, 55, 0.12) 32%, transparent 70%),
+        radial-gradient(circle at 50% 80%, rgba(0, 240, 255, 0.1) 0%, transparent 60%),
+        linear-gradient(180deg, #070a14 0%, #030408 100%);
+      z-index: 1;
+      pointer-events: none;
     }
 
     /* ==================== CAPA DE VIDEO / AVATAR ==================== */
@@ -66,9 +70,9 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
+      z-index: 2;
       overflow: hidden;
-      background: #000;
+      background: transparent;
     }
 
     .presenter-video {
@@ -99,13 +103,13 @@
       opacity: 1;
     }
 
-    /* Capa de Avatar Estático Levitando */
+    /* Capa de Avatar Estático Levitando (Alta Definición) */
     .avatar-static-layer {
       position: absolute;
-      top: 15.5%;
+      top: 14%;
       left: 0;
       right: 0;
-      height: 19%;
+      height: 28%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -117,23 +121,38 @@
 
     .avatar-orb-wrapper {
       position: relative;
-      width: 120px;
-      height: 120px;
+      width: clamp(170px, 42vw, 250px);
+      height: clamp(170px, 42vw, 250px);
       animation: levitate 3.6s ease-in-out infinite;
+    }
+
+    .avatar-halo-ring {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 2px dashed rgba(212, 175, 55, 0.65);
+      animation: rotateHalo 20s linear infinite;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      z-index: 1;
+    }
+
+    @keyframes rotateHalo {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .avatar-orb-glow {
       position: absolute;
-      inset: -12px;
+      inset: -18px;
       border-radius: 50%;
-      background: radial-gradient(circle, var(--gold-glow) 30%, transparent 70%);
+      background: radial-gradient(circle, var(--gold-glow) 35%, transparent 75%);
       animation: pulseGlow 2.4s ease-in-out infinite;
       z-index: 1;
     }
 
     body.is-speaking .avatar-orb-glow {
       animation: pulseSpeaking 0.8s ease-in-out infinite;
-      background: radial-gradient(circle, var(--cyan-glow) 40%, transparent 75%);
+      background: radial-gradient(circle, var(--cyan-glow) 45%, transparent 80%);
     }
 
     .avatar-orb-img {
@@ -142,15 +161,17 @@
       height: 100%;
       border-radius: 50%;
       object-fit: cover;
-      border: 3px solid var(--gold);
-      box-shadow: 0 10px 35px rgba(0,0,0,0.8), inset 0 0 20px rgba(212,175,55,0.4);
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      border: 4px solid var(--gold);
+      box-shadow: 0 15px 45px rgba(0,0,0,0.95), 0 0 35px var(--gold-glow), inset 0 0 25px rgba(212,175,55,0.4);
       z-index: 2;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     body.is-speaking .avatar-orb-img {
       border-color: var(--cyan);
-      box-shadow: 0 10px 35px rgba(0,240,255,0.5), inset 0 0 20px rgba(0,240,255,0.4);
+      box-shadow: 0 15px 50px rgba(0,240,255,0.7), 0 0 40px var(--cyan-glow), inset 0 0 30px rgba(0,240,255,0.5);
     }
 
     @keyframes levitate {
@@ -568,6 +589,9 @@
 
   <div class="stream-viewport">
 
+    <!-- FONDO AMBIENTAL DE ALTA DEFINICIÓN -->
+    <div class="ambient-stream-bg"></div>
+
     <!-- CAPA 1: PRESENTADOR (VIDEOS HÍBRIDOS O AVATAR ESTÁTICO LEVITANDO) -->
     <div class="presenter-container">
       <video id="video-idle" class="presenter-video" loop muted playsinline autoplay style="display: none;"></video>
@@ -576,6 +600,7 @@
       <!-- Capa de Avatar Estático Levitando (Siempre visible con El Sensei) -->
       <div id="avatar-static-layer" class="avatar-static-layer" style="display: flex;">
         <div class="avatar-orb-wrapper">
+          <div class="avatar-halo-ring"></div>
           <div class="avatar-orb-glow"></div>
           <img id="avatar-static-img" class="avatar-orb-img" src="/assets/logo_sensei.jpg" alt="El Sensei">
         </div>
