@@ -1780,7 +1780,7 @@
               🔥 Soltar Frase Viral en Vivo
             </button>
             <button type="button" id="btn-simular-regalo-rosa" style="border: 1.5px solid #00ff88; color: #00ff88; font-weight: 800; background: rgba(0, 255, 136, 0.15); padding: 8px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(0,255,136,0.25);">
-              🌹 Simular Regalo 1 Rosa
+              🎁 Simular Regalo TikTok
             </button>
           </div>
 
@@ -1830,30 +1830,38 @@
           </div>
         </div>
 
-        <!-- Tarjeta de Control Rápido: Pellizcar al Sensei (Forzar Respuesta en Vivo) -->
-        <div class="nudge-card" style="margin-bottom: 16px; background: linear-gradient(135deg, rgba(255, 42, 109, 0.12), rgba(255, 215, 0, 0.08)); border: 1.5px solid rgba(255, 42, 109, 0.45); border-radius: 12px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(255, 42, 109, 0.15);">
+        <!-- Tarjeta de Control: Intervención en Directo (Hablar como El Sensei) -->
+        <div class="nudge-card" style="margin-bottom: 16px; background: linear-gradient(135deg, rgba(20, 15, 35, 0.95), rgba(12, 18, 30, 0.95)); border: 1.5px solid #00f0ff; border-radius: 12px; padding: 14px 16px; box-shadow: 0 4px 18px rgba(0, 240, 255, 0.2);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 16px;">⚡</span>
-              <span style="font-size: 13px; font-weight: 800; color: #fff; letter-spacing: 0.5px; text-transform: uppercase;">Pellizcar al Sensei / Forzar Respuesta</span>
+              <span style="font-size: 16px;">🎙️</span>
+              <span style="font-size: 13px; font-weight: 800; color: #00f0ff; letter-spacing: 0.5px; text-transform: uppercase;">Intervención en Vivo (Hablar como El Sensei)</span>
             </div>
-            <span style="font-size: 10px; background: rgba(255, 42, 109, 0.25); color: #ff6b8b; padding: 2px 8px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(255, 42, 109, 0.4);">MODO RESCATE VIP</span>
+            <span style="font-size: 10px; background: rgba(0, 240, 255, 0.2); color: #00f0ff; padding: 2px 8px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(0, 240, 255, 0.4);">MODO RESCATE / CREADOR</span>
           </div>
           <div style="font-size: 11.5px; color: #bbb; margin-bottom: 12px; line-height: 1.4;">
-            ¿Un espectador preguntó y El Sensei no le ha contestado? Escribe su usuario y pregunta aquí para <strong style="color: var(--gold);">despertar al Sensei y obligarlo a responderle en voz alta ya mismo</strong>.
+            ¿El Sensei no le contestó a alguien o quieres responderle tú mismo en vivo? Escribe tu mensaje y <strong style="color: #ffd700;">El Sensei lo dirá en voz alta con su voz en el Live como si fuera suyo</strong>.
           </div>
           <div style="display: flex; flex-direction: column; gap: 9px;">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <div style="flex: 1; min-width: 130px;">
-                <input type="text" id="nudge-user-input" class="input-field" placeholder="@Usuario (ej: AppzPlay)" style="font-size: 12px; padding: 10px 12px; border-color: rgba(255,215,0,0.35);">
+                <input type="text" id="nudge-user-input" class="input-field" placeholder="@Usuario (ej: carlos_22)" style="font-size: 12px; padding: 8px 12px; border-color: rgba(0,240,255,0.4);">
               </div>
               <div style="flex: 2; min-width: 180px;">
-                <input type="text" id="nudge-comment-input" class="input-field" placeholder="Pregunta (ej: soy la segunda opción)" style="font-size: 12px; padding: 10px 12px; border-color: rgba(255,42,109,0.35);">
+                <input type="text" id="nudge-comment-input" class="input-field" placeholder="Pregunta o caso (ej: mi novia me dejó)" style="font-size: 12px; padding: 8px 12px; border-color: rgba(255,215,0,0.4);">
               </div>
             </div>
-            <button type="button" id="btn-nudge-sensei" style="width: 100%; padding: 12px 16px; background: linear-gradient(135deg, #ff2a6d, #ff5e3a); color: #fff; font-weight: 800; font-size: 12.5px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(255, 42, 109, 0.4); text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s ease;">
-              ⚡ PELLIZCAR AL SENSEI (FORZAR RESPUESTA EN VIVO)
-            </button>
+            <div>
+              <textarea id="manual-speak-answer" class="input-field" rows="2" placeholder="Escribe lo que quieres que El Sensei diga en voz alta con su voz (ej: Carlos, hermano mío, abre los ojos: si te busca es porque afuera fracasó. Valórate)..." style="font-size: 12px; padding: 8px 12px; width: 100%; border-color: rgba(255,42,109,0.5); resize: vertical;"></textarea>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button type="button" id="btn-manual-speak" style="flex: 2; min-width: 180px; padding: 11px 14px; background: linear-gradient(135deg, #00f0ff, #7928ca); color: #fff; font-weight: 800; font-size: 12px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(0, 240, 255, 0.4); text-transform: uppercase;">
+                🎙️ TRANSMITIR CON VOZ DEL SENSEI YA
+              </button>
+              <button type="button" id="btn-nudge-sensei" style="flex: 1; min-width: 140px; padding: 11px 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 215, 0, 0.5); color: #ffd700; font-weight: 700; font-size: 11px; border-radius: 8px; cursor: pointer;">
+                🤖 Dejar que IA responda
+              </button>
+            </div>
             <div id="nudge-status-msg" style="display: none; font-size: 11.5px; padding: 8px 12px; border-radius: 6px; text-align: center; font-weight: 600;"></div>
           </div>
         </div>
@@ -3697,7 +3705,54 @@ REGLAS DE ORO:
           alert("Error de conexión con el servidor: " + err.message);
         } finally {
           btnNudgeSensei.disabled = false;
-          btnNudgeSensei.innerHTML = "⚡ PELLIZCAR AL SENSEI (FORZAR RESPUESTA EN VIVO)";
+          btnNudgeSensei.innerHTML = "🤖 Dejar que IA responda";
+        }
+      });
+    }
+
+    const btnManualSpeak = document.getElementById("btn-manual-speak");
+    const manualAnswerInput = document.getElementById("manual-speak-answer");
+    if (btnManualSpeak) {
+      btnManualSpeak.addEventListener("click", async () => {
+        const user = (nudgeUserInput ? nudgeUserInput.value : "").trim();
+        const question = (nudgeCommentInput ? nudgeCommentInput.value : "").trim();
+        const answer = (manualAnswerInput ? manualAnswerInput.value : "").trim();
+
+        if (!answer) {
+          alert("Por favor escribe la respuesta que quieres que El Sensei diga en voz alta.");
+          if (manualAnswerInput) manualAnswerInput.focus();
+          return;
+        }
+
+        btnManualSpeak.disabled = true;
+        btnManualSpeak.innerHTML = "⏳ TRANSMITIENDO VOZ EN DIRECTO...";
+
+        try {
+          const res = await fetch("/api/manual-speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user: user || "amigo", question: question || "Consulta en vivo", answer: answer })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            if (nudgeStatusMsg) {
+              nudgeStatusMsg.style.display = "block";
+              nudgeStatusMsg.style.background = "rgba(0, 240, 255, 0.2)";
+              nudgeStatusMsg.style.color = "#00f0ff";
+              nudgeStatusMsg.style.border = "1px solid rgba(0, 240, 255, 0.5)";
+              nudgeStatusMsg.textContent = `🎙️ ¡Hablaste por El Sensei! Diciendo tu respuesta para @${d.user || user} en vivo ya mismo.`;
+              setTimeout(() => { nudgeStatusMsg.style.display = "none"; }, 8000);
+            }
+            addLog(`🎙️ [INTERVENCIÓN MANUAL]: El Sensei está diciendo tu respuesta para @${d.user || user} en vivo: "${answer}"`, "green");
+            if (manualAnswerInput) manualAnswerInput.value = "";
+          } else {
+            alert("Error: " + (d.error || "No se pudo transmitir"));
+          }
+        } catch (err) {
+          alert("Error de conexión: " + err.message);
+        } finally {
+          btnManualSpeak.disabled = false;
+          btnManualSpeak.innerHTML = "🎙️ TRANSMITIR CON VOZ DEL SENSEI YA";
         }
       });
     }
@@ -3776,13 +3831,13 @@ REGLAS DE ORO:
           });
           const d = await res.json();
           if (d.ok) {
-            addLog(`🌹 [REGALO]: ¡1x Rosa enviada al directo con pase VIP!`, "green");
+            addLog(`🎁 [REGALO]: ¡Regalo de apoyo enviado al directo!`, "green");
           }
         } catch(e) {
           alert("Error: " + e.message);
         } finally {
           btnSimRegalo.disabled = false;
-          btnSimRegalo.textContent = "🌹 Simular Regalo 1 Rosa";
+          btnSimRegalo.textContent = "🎁 Simular Regalo TikTok";
         }
       });
     }

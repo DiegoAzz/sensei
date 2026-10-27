@@ -1056,9 +1056,27 @@ async def worker_preguntas():
             es_regalo = pregunta.startswith("🎁 REGALO VIP:")
             es_bienvenida_donador = pregunta.startswith("👑 BIENVENIDA DONADOR VIP:")
             es_frase_viral = pregunta.startswith("📣 FRASE VIRAL:")
-            vip_activo = es_usuario_vip(usuario) or es_regalo or es_bienvenida_donador
+            es_intervencion_manual = pregunta.startswith("🎙️ INTERVENCION_MANUAL:")
+            vip_activo = es_usuario_vip(usuario) or es_regalo or es_bienvenida_donador or es_intervencion_manual
 
-            if es_bienvenida_donador:
+            if es_intervencion_manual:
+                raw_payload = pregunta.replace("🎙️ INTERVENCION_MANUAL:", "").strip()
+                if ":::" in raw_payload:
+                    preg_real, resp_real = raw_payload.split(":::", 1)
+                else:
+                    preg_real = "Caso en directo"
+                    resp_real = raw_payload
+                preg_real = preg_real.strip() or "Consulta en vivo"
+                resp_real = resp_real.strip()
+
+                estado["active_user"] = nombre_humano
+                estado["active_question"] = preg_real
+                estado["status_phase"] = "respondiendo"
+                actualizar_overlay_video(nombre_humano, preg_real, estado_tipo="respondiendo", agent=current_agent)
+                respuesta = resp_real
+                emocion = "PICANTE" if any(k in resp_real.lower() for k in ["jajaja", "infiel", "celos", "tóxica", "toxica", "amigo", "ex"]) else "SABIO"
+
+            elif es_bienvenida_donador:
                 nivel_str = pregunta.replace("👑 BIENVENIDA DONADOR VIP:", "").strip()
                 registrar_usuario_vip(usuario, minutos=30)
                 estado["active_user"] = f"👑 {nombre_humano} [{nivel_str}]"
@@ -1068,9 +1086,9 @@ async def worker_preguntas():
 
                 import random
                 frases_saludo_elegante = [
-                    f"¡Atención a toda la sala del dojo! Hago una reverencia y saludo con los más altos honores a nuestro distinguido {nombre_humano}, portador del {nivel_str} de generosidad en TikTok. Es un verdadero privilegio contar con alguien de tu estatus y lealtad aquí. Pasa al frente: déjame en los comentarios tu dilema o consulta de amor y te daré mi sabiduría sin hacer fila.",
-                    f"Damos la bienvenida con alfombra roja a {nombre_humano}. Tu {nivel_str} de donaciones te precede como un miembro de honor en este templo. La caballerosidad, el estilo y la abundancia tienen asiento preferencial en mi sala. Cuéntame tu situación de conquista o pareja en el chat y el Sensei te responderá de inmediato.",
-                    f"El dojo se viste de gala con la llegada de {nombre_humano}. Tu generosidad de {nivel_str} te otorga pase VIP permanente en este live. Siéntete como en casa, mi distinguido amigo, y déjame tu pregunta amorosa en los comentarios para darte una respuesta exclusiva."
+                    f"¡Atención a toda la sala del dojo! Saludo con los más altos honores a nuestro distinguido {nombre_humano}, portador del {nivel_str} en TikTok. Es un verdadero privilegio contar con alguien de tu lealtad y calibre aquí. Siéntete como en casa, déjame tu dilema en el chat y con gusto te daré mi veredicto.",
+                    f"Damos la bienvenida con alfombra roja a {nombre_humano}. Tu {nivel_str} te precede como un miembro de honor en este templo. La caballerosidad, el estilo y la lealtad brillan en ti. Cuéntame tu situación de amor o pareja en los comentarios y la analizamos.",
+                    f"El dojo se viste de gala con la llegada de {nombre_humano}. Tu presencia de {nivel_str} engalana este live. Bienvenido mi hermano, déjame tu consulta amorosa en el chat y te daré mi respuesta sincera."
                 ]
                 respuesta = random.choice(frases_saludo_elegante)
                 emocion = "EMOCIONADO"
@@ -1087,16 +1105,16 @@ async def worker_preguntas():
             elif es_regalo:
                 regalo_desc = pregunta.replace("🎁 REGALO VIP:", "").strip()
                 registrar_usuario_vip(usuario, minutos=20)
-                estado["active_user"] = f"👑 {nombre_humano} [VIP]"
-                estado["active_question"] = f"🎁 ¡ENVIÓ {regalo_desc}! 🌹"
+                estado["active_user"] = f"👑 {nombre_humano}"
+                estado["active_question"] = "✨ ¡GRACIAS POR EL APOYO! ✨"
                 estado["status_phase"] = "respondiendo"
                 actualizar_overlay_video(nombre_humano, f"🎁 {regalo_desc}", estado_tipo="respondiendo", agent=current_agent)
 
                 import random
                 frases_agradecimiento = [
-                    f"¡Alabado sea el dojo sagrado! Muchas gracias a {nombre_humano} por ese hermoso detalle de {regalo_desc}. Tienes prioridad VIP absoluta en este live. Escríbeme tu pregunta en los comentarios y te daré mi sabiduría al instante sin hacer fila.",
-                    f"¡Qué gran honor para este consultorio! Agradezco profundamente a {nombre_humano} por esa {regalo_desc}. Tu lealtad te da el pase VIP sin esperas. Cuéntame tu dilema de amor ya mismo en el chat y te revelo la verdad.",
-                    f"¡Poder y magnetismo para {nombre_humano}! Gracias por ese generoso regalo de {regalo_desc}. Eres miembro de honor en este dojo. Hazme tu consulta amorosa ahora mismo y pasarás de primero sin fila."
+                    f"¡Alabado sea el dojo sagrado! Mi total gratitud a {nombre_humano} por ese hermoso apoyo. Eres un miembro de honor en este templo. Déjame tu caso en los comentarios y te responderé con toda la dedicación.",
+                    f"¡Qué gran honor para este consultorio! Agradezco profundamente a {nombre_humano} por ese generoso detalle. Tu respeto y lealtad brillan en esta sala. Escribe tu dilema y lo analizamos en vivo.",
+                    f"¡Poder y magnetismo para {nombre_humano}! Gracias de corazón por respaldar este espacio de sabiduría. Es un verdadero privilegio tenerte aquí en el dojo. Cuéntame tu situación en el chat."
                 ]
                 respuesta = random.choice(frases_agradecimiento)
                 emocion = "EMOCIONADO"
@@ -1240,14 +1258,14 @@ async def worker_preguntas():
 tiempo_ultima_actividad_comentario = time.time()
 
 FRASES_ENGANCHE_AMOR = [
-    "🌹 Si quieres que responda tu caso de amor ya mismo sin esperar fila, ¡envía 1 Rosa ahora y te daré mi veredicto VIP en vivo!",
-    "El oráculo del amor está activo. ¿Dudas si tu pareja te es infiel o si tu crush te ama? Envía un regalo en el chat para saltar la fila y revelarte la verdad.",
-    "¿Tu ex te busca y no sabes qué hacer? Envía 1 Rosa, dime tu caso en los comentarios y te daré la respuesta definitiva sin rodeos.",
-    "¡Atención dojo! Los que envían Rosas tienen prioridad número uno. Déjame tu caso de amor o conquista y pasa al frente del salón.",
-    "No te quedes con la duda de si esa persona te engaña. Envía un regalito en el chat, pon tu pregunta y El Sensei te dirá lo que nadie se atreve a decirte.",
-    "Si tienes dudas con tu pareja, tu crush te dejó en visto o estás en la friendzone, escribe tu caso en los comentarios y te responderé en vivo.",
-    "A veces el corazón duele porque insistimos donde no nos valoran. Cuéntame tu dilema en el chat y te daré mi veredicto con total sinceridad.",
-    "¿Sientes que eres la segunda opción de alguien? No mendigues cariño. Cuéntame tu situación en los comentarios y recuperemos tu amor propio."
+    "¡Atención dojo! Si tu pareja te esconde el celular o tu casi algo te dejó en visto, deja tu caso en los comentarios. El Sensei te dirá la verdad sin anestesia.",
+    "Apoya la sala con tus dos toques a la pantalla y cuéntame tu dilema. Si estás sufriendo por amor, aquí te devolvemos la dignidad de golpe.",
+    "¿Sabías que entre más te demores en tener a tu futura esposa más duran disfrutándola otros? Jajaja. Despierta, papá, deja tu caso en los comentarios.",
+    "A veces insistimos donde ya nos demostraron con hechos que no somos prioridad. ¿Cuál es tu caso? Escríbelo en el chat y abramos los ojos.",
+    "¿Sientes que eres la segunda opción de alguien? La dignidad masculina no se mendiga. Escribe tu dilema y lo destripamos en vivo.",
+    "¿Dudas si esa persona de verdad te quiere o solo te busca cuando se aburre? Deja tu caso en los comentarios y te daré mi veredicto sin filtros.",
+    "Toca la pantalla dos veces para activar el dojo y comparte este live con ese amigo que sigue rogándole a la ex.",
+    "El amor correspondido da paz, no noches en vela. Si tu relación te genera ansiedad, cuéntamelo en el chat y te doy la medicina correcta."
 ]
 
 FRASES_ENGANCHE_PERFUMES = [
@@ -1306,7 +1324,7 @@ async def auto_enganche_tiempo_muerto_loop():
                     continue
 
                 estado["active_user"] = "EN VIVO"
-                estado["active_question"] = "🌹 1 ROSA = CONSULTA VIP SIN FILA 🌹"
+                estado["active_question"] = "❤️ TOCA LA PANTALLA · DEJA TU CASO"
                 estado["active_answer"] = frase
                 estado["active_emotion"] = emocion
                 estado["status_phase"] = "respondiendo"
@@ -1715,6 +1733,29 @@ async def handle_trigger_viral_hook(request):
     msg_viral = f"📣 FRASE VIRAL: {frase_custom}"
     await encolar_pregunta("El Sensei", msg_viral, es_vip=True)
     return web.json_response({"ok": True, "phrase": frase_custom})
+
+async def handle_manual_speak(request):
+    """
+    Permite al creador intervenir en tiempo real haciéndose pasar por El Sensei:
+    Escribe el usuario, la pregunta y el texto exacto a decir con la voz del Sensei.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    usuario = (data.get("user") or "amigo").strip().replace("@", "")
+    pregunta = (data.get("question") or "Consulta en directo").strip()
+    respuesta = (data.get("answer") or "").strip()
+    if not respuesta:
+        return web.json_response({"ok": False, "error": "La respuesta a decir no puede estar vacía"}, status=400)
+
+    if not estado.get("is_streaming"):
+        estado["is_streaming"] = True
+
+    msg_manual = f"🎙️ INTERVENCION_MANUAL:{pregunta}:::{respuesta}"
+    await encolar_pregunta(usuario, msg_manual, es_vip=True)
+    registrar_log(f"🎙️ [INTERVENCIÓN MANUAL]: Hablando como Sensei para @{usuario}: \"{respuesta}\"", "hl")
+    return web.json_response({"ok": True, "user": usuario, "question": pregunta, "answer": respuesta})
 
 async def handle_delete_agent(request):
     if not is_super_admin(request):
@@ -2156,6 +2197,7 @@ async def start_dual_servers():
     app.router.add_post("/api/test-comment", handle_test_comment)
     app.router.add_post("/api/test-gifter-join", handle_test_gifter_join)
     app.router.add_post("/api/trigger-viral-hook", handle_trigger_viral_hook)
+    app.router.add_post("/api/manual-speak", handle_manual_speak)
     app.router.add_post("/api/nudge", handle_nudge)
     app.router.add_get("/api/audio-test", handle_audio_test)
 
@@ -2177,7 +2219,7 @@ async def start_dual_servers():
         ag_sensei = agent_manager.get_agent("sensei-amor")
         if ag_sensei and not ag_sensei.get("tiktok_username"):
             ag_sensei["tiktok_username"] = os.environ.get("TIKTOK_USERNAME", "senseidelamor")
-            ag_sensei["call_to_action"] = "🌹 Envía 1 Rosa para saltar la fila y consulta VIP en vivo"
+            ag_sensei["call_to_action"] = "💬 Escribe tu caso en los comentarios y apoya con dos toques a la pantalla ❤️"
             ag_sensei["banner_subtitle"] = "Conquista · Infidelidad · Parejas · Amor Propio"
             agent_manager.save_agents()
     except Exception as e_init:

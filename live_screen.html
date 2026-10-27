@@ -598,6 +598,173 @@
     .audio-toggle-btn {
       display: none !important;
     }
+
+    /* Menú Flotante Lateral de Acciones (Estilo Lorenita / Live Interactivo) */
+    .hud-lateral-menu {
+      position: absolute;
+      right: 12px;
+      top: 19%;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: rgba(8, 12, 24, 0.82);
+      backdrop-filter: blur(8px);
+      border: 1.2px solid rgba(255, 215, 0, 0.4);
+      border-radius: 12px;
+      padding: 7px 9px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8);
+      z-index: 28;
+      pointer-events: none;
+    }
+
+    .hud-lateral-title {
+      font-size: 8px;
+      font-weight: 900;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+      padding-bottom: 3px;
+      margin-bottom: 2px;
+      text-align: center;
+    }
+
+    .hud-perk-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+      font-weight: 800;
+      color: #eee;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .hud-perk-icon {
+      font-size: 11px;
+      width: 14px;
+      text-align: center;
+    }
+
+    /* Podio MVP en Pantalla (Prestigio Social en Vivo) */
+    .hud-mvp-box {
+      position: absolute;
+      left: 12px;
+      top: 19%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(28, 18, 5, 0.9), rgba(12, 8, 2, 0.9));
+      border: 1.2px solid rgba(255, 215, 0, 0.65);
+      border-radius: 12px;
+      padding: 5px 9px;
+      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
+      z-index: 28;
+      pointer-events: none;
+    }
+
+    .hud-mvp-crown {
+      font-size: 14px;
+      animation: bounceSale 1.2s infinite alternate;
+    }
+
+    .hud-mvp-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hud-mvp-tag {
+      font-size: 7.5px;
+      font-weight: 900;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .hud-mvp-name {
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      max-width: 95px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Radar de Toxicidad / Infidelidad Picante */
+    .hud-radar-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: linear-gradient(90deg, #ff2a6d, #ff0044);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(255, 42, 109, 0.6);
+      animation: livePulse 1.4s infinite alternate;
+      margin-top: 2px;
+    }
+
+    /* Fila de Reacciones / Multiplicadores sobre el Chat (Estilo Lorenita) */
+    .hud-reaction-multipliers {
+      position: absolute;
+      bottom: 18px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      z-index: 26;
+      pointer-events: none;
+    }
+
+    .reaction-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(10, 14, 28, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 3px 7px;
+      font-size: 9.5px;
+      font-weight: 800;
+      color: #ddd;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    .reaction-pill.hl {
+      border-color: rgba(255, 42, 109, 0.6);
+      color: #ff6b8b;
+    }
+
+    .reaction-pill.gold {
+      border-color: rgba(255, 215, 0, 0.6);
+      color: #ffd700;
+    }
+
+    /* Banner de Debate Picante Rotativo */
+    .hud-debate-banner {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(20, 10, 35, 0.94), rgba(10, 5, 20, 0.94));
+      border: 1.2px solid #00f0ff;
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #00f0ff;
+      letter-spacing: 0.2px;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
+      max-width: 90%;
+      text-align: center;
+      animation: popIn 0.3s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -645,12 +812,30 @@
           <div class="store-badge" id="hud-store-badge">COLOMBIA 🇨🇴</div>
           <div class="vip-badge" id="hud-vip-badge">
             <span class="vip-pulse-dot"></span>
-            <span class="vip-text" id="hud-vip-text">🌹 1 ROSA = VIP</span>
+            <span class="vip-text" id="hud-vip-text">❤️ TOCA LA PANTALLA</span>
           </div>
         </div>
         <h1 class="boutique-title" id="hud-title">~ EL SENSEI DEL AMOR ~</h1>
         <p class="boutique-sub" id="hud-subtitle">Conquista · Infidelidad · Parejas · Amor Propio</p>
       </header>
+
+      <!-- PODIO MVP FLOTANTE (ESTILO LORENITA) -->
+      <div class="hud-mvp-box" id="hud-mvp-box">
+        <span class="hud-mvp-crown">👑</span>
+        <div class="hud-mvp-info">
+          <span class="hud-mvp-tag">MVP DEL DOJO</span>
+          <span class="hud-mvp-name" id="hud-mvp-name">@Destacado</span>
+        </div>
+      </div>
+
+      <!-- MENÚ FLOTANTE LATERAL DE REACCIONES (ESTILO LORENITA) -->
+      <div class="hud-lateral-menu">
+        <div class="hud-lateral-title">⚡ EVENTOS LIVE</div>
+        <div class="hud-perk-row"><span class="hud-perk-icon">💬</span><span>Dilema en Vivo</span></div>
+        <div class="hud-perk-row"><span class="hud-perk-icon">🔥</span><span>Veredicto Picante</span></div>
+        <div class="hud-perk-row"><span class="hud-perk-icon">🚨</span><span>Radar Infidelidad</span></div>
+        <div class="hud-perk-row"><span class="hud-perk-icon">👑</span><span>Nombre en Pantalla</span></div>
+      </div>
 
       <!-- POPUP FLOTANTE DE VENTA EN VIVO -->
       <div class="sale-alert-popup" id="sale-popup">
@@ -668,6 +853,11 @@
         <div class="hud-question-pill" id="card-question" style="display: none;">
           <span class="hud-q-badge" id="card-q-user">👤 @usuario</span>
           <span class="hud-q-content" id="card-q-text">"¿Pregunta?"</span>
+        </div>
+
+        <!-- Radar de Toxicidad / Infidelidad Picante -->
+        <div class="hud-radar-badge" id="hud-radar" style="display: none;">
+          <span>🚨 RADAR DE INFIDELIDAD: 96%</span>
         </div>
 
         <!-- 2. Subtítulo Dinámico (1 frase grande que cambia mientras habla) -->
@@ -691,6 +881,19 @@
           <span id="card-waiting-sub">⛩️ Deja tu dilema en los comentarios y te respondo en vivo 👇</span>
         </div>
 
+        <!-- Banner de Debate Polémico Rotativo para encender el chat -->
+        <div class="hud-debate-banner" id="hud-debate">
+          <span>⚡ DEBATE: "¿El que engaña una vez, vuelve a engañar? Comenta 1 (SÍ) o 2 (NO)"</span>
+        </div>
+
+      </div>
+
+      <!-- BARRA DE REACCIONES / MULTIPLICADORES SOBRE EL CHAT (ESTILO LORENITA) -->
+      <div class="hud-reaction-multipliers">
+        <div class="reaction-pill hl"><span>🔥</span><span>x1 Veredicto</span></div>
+        <div class="reaction-pill gold"><span>👑</span><span>x3 Destacado</span></div>
+        <div class="reaction-pill"><span>⚡</span><span>x5 Alarma</span></div>
+        <div class="reaction-pill hl"><span>❤️</span><span>x10 Respeto</span></div>
       </div>
 
     </div>
@@ -718,6 +921,23 @@
 
     const cardWaiting = document.getElementById("card-waiting");
     const cardWaitingSub = document.getElementById("card-waiting-sub");
+
+    const hudRadar = document.getElementById("hud-radar");
+    const hudDebate = document.getElementById("hud-debate");
+    const hudMvpName = document.getElementById("hud-mvp-name");
+
+    const debatesLista = [
+      '⚡ DEBATE: "¿El que engaña una vez, vuelve a engañar? Comenta 1 (SÍ) o 2 (NO)"',
+      '⚡ DEBATE: "¿Si mira historias de su ex, es infidelidad? Comenta SÍ o NO 👇"',
+      '⚡ DEBATE: "¿Quién miente más en una relación: hombres o mujeres? Comenta H o M"',
+      '⚡ DEBATE: "¿Tu pareja debe tener acceso a tu celular? Comenta SÍ o NO 👇"',
+      '⚡ DEBATE: "¿Existe la amistad entre hombre y mujer sin segundas intenciones? 👇"'
+    ];
+    let debateIdx = 0;
+    setInterval(() => {
+      debateIdx = (debateIdx + 1) % debatesLista.length;
+      if (hudDebate) hudDebate.textContent = debatesLista[debateIdx];
+    }, 10000);
 
     const salePopup = document.getElementById("sale-popup");
     const salePopupDesc = document.getElementById("sale-popup-desc");
@@ -837,7 +1057,7 @@
             if (data.type === "tienda_ventas") {
               cardWaitingSub.textContent = data.call_to_action || "Pide tu perfume árabe favorito o clon de diseñador y te respondemos en vivo.";
             } else {
-              cardWaitingSub.textContent = "⛩️ Deja tu dilema en el chat · 🌹 1 Rosa = Consulta VIP Prioritaria 👇";
+              cardWaitingSub.textContent = "⛩️ Deja tu dilema en el chat · Toca 2 veces la pantalla ❤️";
             }
           }
 
@@ -912,6 +1132,8 @@
 
         if (phase === "pensando") {
           cardWaiting.style.display = "none";
+          if (hudRadar) hudRadar.style.display = "none";
+          if (hudDebate) hudDebate.style.display = "none";
           cardQuestion.style.display = "inline-flex";
           let rawU = (data.active_user || 'espectador').replace(/GANCHO VIRAL/gi, "SABIDURÍA").trim();
           let rawQ = (data.active_question || '...').replace(/GANCHO VIRAL/gi, "").trim();
@@ -947,6 +1169,24 @@
           }
           cardQText.textContent = rawQ ? `"${rawQ}"` : '';
 
+          if (hudRadar) {
+            hudRadar.style.display = "inline-flex";
+            let pLow = (data.active_question || "").toLowerCase();
+            if (pLow.includes("infiel") || pLow.includes("engaño") || pLow.includes("celular") || pLow.includes("amig")) {
+              hudRadar.innerHTML = "<span>🚨 RADAR DE INFIDELIDAD: 96% [RED FLAG]</span>";
+            } else if (pLow.includes("ex") || pLow.includes("volver") || pLow.includes("bloque")) {
+              hudRadar.innerHTML = "<span>⚡ RADAR DE TOXICIDAD: 93% [SAL DE AHÍ]</span>";
+            } else if (pLow.includes("visto") || pLow.includes("tarda") || pLow.includes("segunda")) {
+              hudRadar.innerHTML = "<span>⏳ NIVEL DE DESINTERÉS: 100% [DIGNIDAD]</span>";
+            } else {
+              hudRadar.innerHTML = "<span>🔥 VEREDICTO PICANTE: SIN ANESTESIA</span>";
+            }
+          }
+          if (hudDebate) hudDebate.style.display = "none";
+          if (hudMvpName && rawU && !rawU.includes("espectador") && !rawU.includes("EN VIVO") && !rawU.includes("SABIDURÍA")) {
+            hudMvpName.textContent = rawU.replace("👑", "").trim();
+          }
+
           cardAnswer.style.display = "flex";
           const ans = data.active_answer || "...";
           if (phase === "soporte_escrito") {
@@ -968,6 +1208,8 @@
             cardWaiting.style.display = "inline-flex";
             cardQuestion.style.display = "none";
             cardAnswer.style.display = "none";
+            if (hudRadar) hudRadar.style.display = "none";
+            if (hudDebate) hudDebate.style.display = "inline-flex";
             if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           }
 
@@ -976,6 +1218,8 @@
           cardWaiting.style.display = "inline-flex";
           cardQuestion.style.display = "none";
           cardAnswer.style.display = "none";
+          if (hudRadar) hudRadar.style.display = "none";
+          if (hudDebate) hudDebate.style.display = "inline-flex";
           if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           lastRenderedAnswer = "";
         }
