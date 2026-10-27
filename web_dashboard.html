@@ -1555,6 +1555,13 @@
           </div>
 
           <div class="form-group">
+            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>TikTok Session ID <span style="font-size:10.5px; color:var(--cyan); font-weight:normal;">(Opcional · Para escribir en el chat en vivo)</span></span>
+            </label>
+            <input type="password" id="cfg-session-id" class="input-field" placeholder="Pega tu sessionid de tiktok.com si deseas soporte en chat">
+          </div>
+
+          <div class="form-group">
             <label class="form-label">Servidor RTMP de TikTok</label>
             <input type="text" id="cfg-rtmp-url" class="input-field" placeholder="ej: rtmp://live-push.tiktok.com/live">
           </div>
@@ -2109,6 +2116,7 @@
     const btnCopyUrlAction = document.getElementById("btn-copy-url-action");
 
     const cfgUsername = document.getElementById("cfg-username");
+    const cfgSessionId = document.getElementById("cfg-session-id");
     const cfgRtmpUrl = document.getElementById("cfg-rtmp-url");
     const cfgStreamKey = document.getElementById("cfg-stream-key");
     const cfgEstilo = document.getElementById("cfg-estilo");
@@ -2295,6 +2303,7 @@
 
       // Config form fields
       cfgUsername.value = agent.tiktok_username || (agent.id === "sensei-amor" ? "senseidelamor" : "");
+      if (cfgSessionId) cfgSessionId.value = agent.tiktok_session_id || "";
       cfgRtmpUrl.value = agent.rtmp_url || "";
       cfgStreamKey.value = agent.stream_key || "";
       cfgVoice.value = agent.voice || "es-MX-JorgeNeural";
@@ -2645,6 +2654,7 @@
           video_talking: document.getElementById("cfg-video-talking") ? document.getElementById("cfg-video-talking").value.trim() : "",
           avatar: currentAgent.avatar || "/assets/logo_sensei.jpg",
           tiktok_username: cfgUsername.value.trim(),
+          tiktok_session_id: cfgSessionId ? cfgSessionId.value.trim() : "",
           rtmp_url: cfgRtmpUrl.value.trim(),
           stream_key: cfgStreamKey.value.trim()
         };

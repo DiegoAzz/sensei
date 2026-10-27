@@ -864,7 +864,7 @@
           if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           lastRenderedAnswer = "";
 
-        } else if (phase === "respondiendo" || phase === "leyendo") {
+        } else if (phase === "respondiendo" || phase === "leyendo" || phase === "soporte_escrito") {
           cardWaiting.style.display = "none";
           cardQuestion.style.display = "inline-flex";
           let rawU = (data.active_user || 'espectador').trim();
@@ -877,8 +877,14 @@
 
           cardAnswer.style.display = "flex";
           const ans = data.active_answer || "...";
-          if (ans !== lastRenderedAnswer) {
+          if (phase === "soporte_escrito") {
+            // Modo Soporte Escrito: mantiene la respuesta completa visible en pantalla para lectura
+            if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
+            cardAnsSpeaker.textContent = "⛩️ VEREDICTO ESCRITO";
+            cardAnsText.textContent = ans;
+          } else if (ans !== lastRenderedAnswer) {
             lastRenderedAnswer = ans;
+            cardAnsSpeaker.textContent = (data.name || "SENSEI").split("·")[0].trim().toUpperCase();
             iniciarSubtitulosDinamicos(ans);
           }
 

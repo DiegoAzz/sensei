@@ -16,6 +16,7 @@ import subprocess
 import base64
 from pathlib import Path
 import collections
+import aiohttp
 from aiohttp import web
 
 from agent_manager import (
@@ -59,6 +60,7 @@ def obtener_gemini_key_default():
 estado = {
     "is_streaming": False,
     "tiktok_username": os.environ.get("TIKTOK_USERNAME", "senseidelamor"),
+    "tiktok_session_id": os.environ.get("TIKTOK_SESSION_ID", ""),
     "rtmp_url": os.environ.get("TIKTOK_RTMP_URL", ""),
     "stream_key": os.environ.get("TIKTOK_STREAM_KEY", ""),
     "voice": os.environ.get("VOICE", "es-MX-JorgeNeural"),
@@ -148,6 +150,44 @@ def guardar_configuracion():
             }, f, indent=2)
     except Exception as e:
         logger.error(f"Error al guardar config: {e}")
+
+# ==================== POOL HTTP PERSISTENTE (MODO DIOS VELOZ DEL OESTE) ====================
+_http_session = None
+
+async def get_http_session() -> aiohttp.ClientSession:
+    """Reutiliza una única sesión TCP/TLS con keep-alive para respuestas en <300ms."""
+    global _http_session
+    if _http_session is None or _http_session.closed:
+        connector = aiohttp.TCPConnector(limit=60, keepalive_timeout=75, enable_cleanup_closed=True)
+        timeout = aiohttp.ClientTimeout(total=3.5, connect=1.0)
+        _http_session = aiohttp.ClientSession(connector=connector, timeout=timeout)
+    return _http_session
+
+active_tiktok_client = None
+
+async def enviar_comentario_chat_tiktok(client, usuario: str, respuesta: str):
+    """
+    Envía la respuesta por escrito directamente al chat nativo de TikTok Live como soporte.
+    """
+    try:
+        if not client or not getattr(client, "connected", False):
+            return
+
+        resp_clean = re.sub(r"\[[A-Z_]+\]", "", respuesta).strip()
+        u_clean = usuario.replace("@", "").strip()
+        msg_chat = f"@{u_clean} {resp_clean}"
+        if len(msg_chat) > 140:
+            msg_chat = msg_chat[:137] + "..."
+
+        await client.send_room_chat(msg_chat)
+        registrar_log(f"💬 [SOPORTE CHAT TIKTOK] Enviado a @{u_clean}: \"{msg_chat}\"", "green")
+    except Exception as e_chat:
+        err_str = str(e_chat)
+        if "session" in err_str.lower() or "authenticated" in err_str.lower():
+            logger.info("ℹ️ Para enviar respuestas escritas al chat de TikTok, configura tu Session ID en el panel.")
+        else:
+            logger.warning(f"Aviso al enviar mensaje al chat de TikTok: {e_chat}")
+
 
 # ==================== CEREBRO IA: SABIDURÍA Y SEDUCCIÓN ====================
 # Memoria conversacional por usuario en TikTok Live para coherencia y seguimiento de hilos
@@ -380,9 +420,9 @@ REGLAS DE ORO, COHERENCIA Y VELOCIDAD PARA TIKTOK LIVE:
 1. TU ÚNICO UNIVERSO: El amor, desamor, conquista, parejas, infidelidad y dignidad.
 2. PROHIBIDO SALIR DEL PERSONAJE: Jamás digas que eres IA, bot, modelo de lenguaje ni menciones tecnología.
 3. COHERENCIA Y SEGUIMIENTO: Si el espectador está continuando o aclarando un comentario anterior, conéctalo de inmediato. Síguele la idea con lógica, picardía y veredicto definitivo.
-4. SALUDO CORTO Y RESPUESTA RELÁMPAGO (MÁXIMO 1 O 2 FRASES DE 15 A 25 PALABRAS):
-   - Saluda brevemente a "{nombre_humano}" y dale un consejo certero, sabio y contundente sin rodeos.
-   - ¡PROHIBIDO DAR DISCURSOS LARGOS! El live de TikTok exige respuestas ultra rápidas.
+4. VELOZ DEL OESTE (RESPUESTA RELÁMPAGO EN 1 O 2 ORACIONES, MÁXIMO 15 A 22 PALABRAS):
+   - Saluda brevemente a "{nombre_humano}" y dale tu veredicto contundente, certero y sin rodeos.
+   - ¡PROHIBIDO DISCURSOS LARGOS! Respuestas ultra rápidas, dinámicas y de alto impacto.
 5. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
 6. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
 
@@ -441,12 +481,12 @@ Respuesta de {agent_name}:"""
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
                             "temperature": 0.7,
-                            "maxOutputTokens": 60,
+                            "maxOutputTokens": 50,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
                     }
-                    async with aiohttp.ClientSession() as session:
-                        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=3.5)) as resp:
+                    session = await get_http_session()
+                    async with session.post(url, json=payload) as resp:
                             if resp.status == 200:
                                 d = await resp.json()
                                 parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
@@ -1048,7 +1088,7 @@ async def worker_preguntas():
                 estado["audio_version"] = int(time.time() * 1000)
 
                 # Estimar la duración del habla con voz ágil (+10% velocidad: ~16 caracteres por segundo)
-                duracion_estimada = max(2.0, len(respuesta) / 16.0)
+                duracion_estimada = max(1.8, len(respuesta) / 18.0)
 
                 # Solo si hay un stream RTMP FFmpeg activo procesamos PCM con subproceso
                 if ffmpeg_process and ffmpeg_process.poll() is None:
@@ -1081,16 +1121,24 @@ async def worker_preguntas():
                 estado["is_speaking"] = False
                 registrar_log(f"Error procesando voz en vivo: {e}", "err")
 
-            # Cero esperas artificiales: si hay preguntas en cola pasar de inmediato (0.15s); si no, 0.9s
-            espera_lectura = 0.15 if not cola_preguntas.empty() else 0.9
-            await asyncio.sleep(espera_lectura)
+            # 1. Soporte en el chat nativo de TikTok: enviar la respuesta por escrito al usuario
+            if active_tiktok_client and not es_regalo:
+                asyncio.create_task(enviar_comentario_chat_tiktok(active_tiktok_client, usuario, respuesta))
 
-            if cola_preguntas.empty():
-                estado["status_phase"] = "esperando"
-                estado["active_user"] = ""
-                estado["active_question"] = ""
-                estado["active_answer"] = ""
-                actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
+            # 2. Transición "Veloz del Oeste / Modo Dios":
+            # Si hay preguntas acumuladas en cola, pasar de inmediato (0.05s) para responder al siguiente usuario sin pausas
+            if not cola_preguntas.empty():
+                await asyncio.sleep(0.05)
+            else:
+                # Si no hay más preguntas, mantener la respuesta completa en pantalla como "SOPORTE ESCRITO"
+                estado["status_phase"] = "soporte_escrito"
+                start_soporte = time.time()
+                while cola_preguntas.empty() and (time.time() - start_soporte) < 16.0 and estado["is_streaming"]:
+                    await asyncio.sleep(0.15)
+
+                if cola_preguntas.empty():
+                    estado["status_phase"] = "esperando"
+                    actualizar_overlay_video("", "", estado_tipo="esperando", agent=current_agent)
 
         except Exception as e_proc:
             logger.error(f"Error en worker_preguntas procesando comentario: {e_proc}")
@@ -1243,6 +1291,18 @@ async def escuchar_tiktok():
         try:
             client = TikTokLiveClient(unique_id=f"@{usuario}")
 
+            # Vincular session_id para responder por escrito directamente en el chat en vivo
+            session_id = (current_agent.get("tiktok_session_id") or estado.get("tiktok_session_id") or os.environ.get("TIKTOK_SESSION_ID", "")).strip()
+            if session_id:
+                try:
+                    client._web.set_session(session_id, None)
+                    registrar_log("🔑 TikTok Session ID vinculado: Respuestas por escrito activadas en el chat.", "green")
+                except Exception as e_sid:
+                    logger.warning(f"Aviso configurando TikTok session_id: {e_sid}")
+
+            global active_tiktok_client
+            active_tiktok_client = client
+
             @client.on(ConnectEvent)
             async def on_connect(event: ConnectEvent):
                 registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
@@ -1314,6 +1374,8 @@ async def escuchar_tiktok():
 
             @client.on(DisconnectEvent)
             async def on_disconnect(event: DisconnectEvent):
+                global active_tiktok_client
+                active_tiktok_client = None
                 registrar_log(f"⚠️ Conexión de TikTokLive en pausa para @{usuario}. Reconectando...", "warn")
 
             # process_connect_events=False: IGNORA comentarios históricos viejos y solo toma los nuevos en vivo
@@ -1594,6 +1656,9 @@ async def handle_start(request):
     current_agent = agent_manager.get_active_agent() or {}
 
     if data.get("tiktok_username"): current_agent["tiktok_username"] = data["tiktok_username"]
+    if "tiktok_session_id" in data:
+        current_agent["tiktok_session_id"] = data["tiktok_session_id"]
+        estado["tiktok_session_id"] = data["tiktok_session_id"]
     if data.get("rtmp_url"): current_agent["rtmp_url"] = data["rtmp_url"]
     if data.get("stream_key"): current_agent["stream_key"] = data["stream_key"]
     if data.get("voice"): current_agent["voice"] = data["voice"]

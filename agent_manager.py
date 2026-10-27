@@ -616,7 +616,7 @@ class AgentManager:
             "theme_color", "accent_color", "avatar", "avatar_type", "video_idle", "video_talking",
             "bg_hex", "store_name", "call_to_action",
             "keywords", "featured_products", "system_prompt", "tiktok_username", "rtmp_url",
-            "stream_key", "gemini_api_key", "client_name", "client_pin"
+            "stream_key", "tiktok_session_id", "gemini_api_key", "client_name", "client_pin"
         ]
         for c in campos:
             if c in updates:
