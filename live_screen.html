@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>El Sensei del Amor · Holograma en Vivo para TikTok Live</title>
+  <title>El Sensei del Amor · Holograma en Vivo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -13,13 +13,14 @@
       --gold-glow: rgba(255, 215, 0, 0.55);
       --crimson: #ff2a6d;
       --crimson-glow: rgba(255, 42, 109, 0.55);
-      --crimson-dark: #8c0a32;
-      --bg: #08010d;
-      --card-bg: rgba(18, 4, 26, 0.85);
-      --border-sensei: rgba(255, 215, 0, 0.35);
+      --bg: #030005;
       --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
       --font-luxury: 'Cinzel', serif;
       --font-mono: 'JetBrains Mono', monospace;
+      
+      /* Zona segura oficial de TikTok LIVE Studio (Top bar: 94px, Bottom chat: 511px) */
+      --tiktok-top-safe: 102px;
+      --tiktok-bottom-safe: 511px;
     }
 
     * {
@@ -38,20 +39,53 @@
       color: #fff;
     }
 
-    /* Contenedor Vertical 9:16 Optimizado para TikTok Live Studio y OBS */
+    /* ==================== MODO RESPONSIVO INTELIGENTE (PC Y MÓVIL) ==================== */
+
+    /* 1. EN PC / NAVEGADOR HORIZONTAL: Centrado en marco vertical 9:16 elegante */
+    @media (min-aspect-ratio: 1/1) {
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 50% 50%, #16021e 0%, #030005 85%);
+      }
+      .stream-viewport {
+        height: 94vh;
+        max-height: 960px;
+        aspect-ratio: 9 / 16;
+        border-radius: 28px;
+        box-shadow: 
+          0 0 50px rgba(255, 42, 109, 0.28), 
+          0 0 100px rgba(255, 215, 0, 0.15),
+          0 25px 70px rgba(0, 0, 0, 0.95);
+        border: 2px solid rgba(255, 215, 0, 0.35);
+      }
+    }
+
+    /* 2. EN MÓVIL / TIKTOK LIVE STUDIO: 100% Pantalla completa sin bordes ni recortes */
+    @media (max-aspect-ratio: 1/1) {
+      body, html {
+        width: 100%;
+        height: 100%;
+      }
+      .stream-viewport {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+    }
+
     .stream-viewport {
       position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 1080px;
-      margin: 0 auto;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 36%, #22052e 0%, #08010d 75%);
+      background: radial-gradient(circle at 50% 32%, #1e0326 0%, #030005 70%);
       display: flex;
       flex-direction: column;
     }
 
-    /* Fondo de Partículas Cósmicas / Polvo Dorado y Carmesí Flotante */
+    /* Fondo de Partículas Cósmicas / Polvo Dorado y Carmesí */
     #starfield-canvas {
       position: absolute;
       inset: 0;
@@ -61,51 +95,58 @@
       z-index: 1;
     }
 
-    /* ==================== 1. HEADER SUPERIOR (ESTILO MINIMALISTA VIRAL DEL SENSEI) ==================== */
+    /* ==================== 1. HEADER SUPERIOR (DEBAJO DE LOS 94px DE TIKTOK) ==================== */
     .holo-header {
       position: absolute;
-      top: 3.5%;
-      left: 6%;
-      right: 6%;
+      top: var(--tiktok-top-safe);
+      left: 0;
+      right: 0;
+      width: 100%;
+      padding: 0 20px;
       z-index: 20;
       display: flex;
       flex-direction: column;
-      gap: 5px;
-      text-align: left;
+      align-items: center;
+      text-align: center;
+      gap: 3px;
     }
 
     .holo-title {
-      font-size: clamp(24px, 3.2vw, 36px);
+      font-size: clamp(20px, 2.7vw, 30px);
       font-weight: 800;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.2px;
       color: #ffffff;
-      text-shadow: 0 0 20px rgba(255, 42, 109, 0.8), 0 0 40px rgba(255, 215, 0, 0.45);
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      text-shadow: 0 0 20px rgba(255, 42, 109, 0.85), 0 0 35px rgba(255, 215, 0, 0.5);
+      line-height: 1.15;
+      max-width: 100%;
+      word-break: break-word;
     }
 
     .holo-subtitle {
-      font-size: clamp(13px, 1.6vw, 17px);
+      font-size: clamp(12px, 1.4vw, 15px);
       color: #cbd5e1;
       font-weight: 500;
       letter-spacing: 0.2px;
+      line-height: 1.3;
+      max-width: 95%;
     }
 
     .holo-meta-row {
-      margin-top: 6px;
+      margin-top: 4px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      font-size: 12px;
+      font-size: 11px;
       color: #94a3b8;
       font-family: var(--font-mono);
+      flex-wrap: wrap;
     }
 
     .live-dot-pulse {
       display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: #ff2a6d;
       box-shadow: 0 0 10px #ff2a6d;
@@ -123,13 +164,42 @@
       text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
     }
 
-    /* ==================== 2. ESCENARIO HOLOGRÁFICO CENTRAL ==================== */
+    /* Toast Flotante Compacto al Entrar Espectador */
+    .holo-join-pill {
+      position: absolute;
+      top: calc(var(--tiktok-top-safe) + 72px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 42, 109, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.55);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffd700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.35);
+      animation: toastIn 0.35s ease-out;
+      z-index: 30;
+      white-space: nowrap;
+    }
+
+    @keyframes toastIn {
+      0% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
+      100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    }
+
+    /* ==================== 2. ESCENARIO CENTRAL HOLOGRÁFICO ==================== */
+    /* SIN MARCO, SIN CÍRCULO, SIN BORDE: PURE PARTICLE HOLOGRAM IN SPACE */
     .holo-stage {
       position: absolute;
-      top: 17%;
+      top: calc(var(--tiktok-top-safe) + 76px);
       left: 0;
       right: 0;
-      height: 38%;
+      height: clamp(210px, 28vh, 310px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -137,11 +207,11 @@
       pointer-events: none;
     }
 
-    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) */
+    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO */
     .holo-core-container {
       position: absolute;
-      width: clamp(230px, 32vw, 360px);
-      height: clamp(230px, 32vw, 360px);
+      width: clamp(220px, 30vh, 320px);
+      height: clamp(220px, 30vh, 320px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -156,11 +226,11 @@
       filter: drop-shadow(0 0 35px rgba(255, 42, 109, 0.75)) drop-shadow(0 0 65px rgba(255, 215, 0, 0.5));
     }
 
-    /* B) EL SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR */
+    /* B) EL SENSEI HOLOGRAMA FLOTANDO LIBRE EN EL ESPACIO (COMO LA NIÑA DE LA FOTO) */
     .holo-sensei-container {
       position: absolute;
-      width: clamp(230px, 32vw, 360px);
-      height: clamp(230px, 32vw, 360px);
+      width: clamp(240px, 32vh, 350px);
+      height: clamp(240px, 32vh, 350px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -170,53 +240,50 @@
       pointer-events: none;
     }
 
-    /* Envoltorio con efecto holográfico, aura de oro y carmesí */
+    /* Contenedor SIN marco, SIN borde, SIN circulo: difuminado suave en el vacio cósmico */
     .holo-avatar-wrap {
       position: relative;
-      width: 88%;
-      height: 88%;
-      border-radius: 50%;
-      overflow: hidden;
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 
-        0 0 40px rgba(255, 42, 109, 0.85),
-        0 0 80px rgba(255, 215, 0, 0.45),
-        inset 0 0 45px rgba(255, 215, 0, 0.55);
-      border: 2px solid rgba(255, 215, 0, 0.9);
       animation: holoFloat 3.2s ease-in-out infinite;
+      /* Mascara elíptica orgánica que disuelve el cuerpo en la oscuridad sin marco ni borde */
+      -webkit-mask-image: radial-gradient(ellipse 46% 46% at 50% 45%, black 25%, rgba(0,0,0,0.7) 45%, transparent 64%);
+      mask-image: radial-gradient(ellipse 46% 46% at 50% 45%, black 25%, rgba(0,0,0,0.7) 45%, transparent 64%);
     }
 
     .holo-avatar-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: 
-        drop-shadow(0 0 25px rgba(255, 42, 109, 0.8))
-        brightness(1.15) 
-        contrast(1.08);
       mix-blend-mode: screen;
+      filter: 
+        drop-shadow(0 0 25px rgba(255, 42, 109, 0.85))
+        drop-shadow(0 0 45px rgba(255, 215, 0, 0.55))
+        brightness(1.15) 
+        contrast(1.15);
       transition: transform 0.12s ease-out;
     }
 
-    /* Scanlines holográficas doradas y carmesí sobre el avatar */
+    /* Líneas de escaneo holográficas sutiles */
     .holo-scanlines {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         to bottom,
         rgba(255, 215, 0, 0) 50%,
-        rgba(255, 42, 109, 0.22) 51%,
-        rgba(0, 0, 0, 0.4) 52%
+        rgba(255, 42, 109, 0.18) 51%,
+        rgba(0, 0, 0, 0.3) 52%
       );
-      background-size: 100% 6px;
+      background-size: 100% 5px;
       pointer-events: none;
       z-index: 5;
-      opacity: 0.65;
+      opacity: 0.6;
     }
 
-    /* Rayo de escaneo holográfico vertical */
+    /* Rayo de luz de escáner digital vertical */
     .holo-beam {
       position: absolute;
       top: -100%;
@@ -236,7 +303,7 @@
 
     @keyframes holoFloat {
       0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-10px) scale(1.02); }
+      50% { transform: translateY(-7px) scale(1.02); }
     }
 
     /* CONMUTACIÓN DINÁMICA: CUANDO EL SENSEI ESTÁ HABLANDO */
@@ -251,94 +318,76 @@
       transform: scale(1);
     }
 
-    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS (COLORES DEL SENSEI) ==================== */
+    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS ==================== */
+    /* Ubicada con precisión justo debajo del holograma, libre de los 511px del chat de TikTok */
     .holo-response-area {
       position: absolute;
-      top: 56%;
-      left: 6%;
-      right: 6%;
+      top: calc(var(--tiktok-top-safe) + 76px + clamp(210px, 28vh, 310px) + 6px);
+      left: 0;
+      right: 0;
+      width: 100%;
+      padding: 0 20px;
       z-index: 25;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      text-align: center;
+      gap: 6px;
     }
 
     .holo-user-badge {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 700;
       color: #ffd700;
       letter-spacing: 0.2px;
-      text-transform: none;
       text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
     }
 
     .holo-user-badge .prefix-label {
       color: #ff2a6d;
       font-weight: 800;
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      background: rgba(255, 42, 109, 0.15);
+      background: rgba(255, 42, 109, 0.16);
       padding: 2px 8px;
       border-radius: 4px;
       border: 1px solid rgba(255, 42, 109, 0.35);
     }
 
     .holo-answer-box {
-      font-size: clamp(16px, 2.2vw, 24px);
+      font-size: clamp(14px, 1.8vh, 20px);
       font-weight: 600;
-      line-height: 1.45;
+      line-height: 1.4;
       color: #ffffff;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
-      transition: color 0.3s ease;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+      max-width: 94%;
+      margin: 0 auto;
+      word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .holo-answer-box.is-vip {
       color: #ffd700;
-      text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.65);
     }
 
     .holo-answer-box.is-speaking-text {
       color: #ffffff;
-      text-shadow: 0 0 16px rgba(255, 42, 109, 0.65), 0 0 30px rgba(255, 215, 0, 0.3);
+      text-shadow: 0 0 16px rgba(255, 42, 109, 0.75), 0 0 30px rgba(255, 215, 0, 0.35);
     }
 
-    /* Toast Flotante Compacto para cuando alguien entra */
-    .holo-join-pill {
-      position: absolute;
-      top: 13.5%;
-      left: 6%;
-      background: rgba(255, 42, 109, 0.16);
-      border: 1px solid rgba(255, 215, 0, 0.45);
-      border-radius: 999px;
-      padding: 5px 14px;
-      font-size: 12px;
-      font-weight: 700;
-      color: #ffd700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 0 15px rgba(255, 42, 109, 0.3);
-      animation: toastIn 0.35s ease-out;
-      z-index: 30;
-    }
-
-    @keyframes toastIn {
-      0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    /* Espacio inferior completamente limpio para TikTok Live Chat (40% libre) */
+    /* ZONA INFERIOR TOTALMENTE LIBRE PARA EL CHAT DE TIKTOK LIVE (~511px) */
     .tiktok-chat-safe-zone {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 38%;
+      height: var(--tiktok-bottom-safe);
       pointer-events: none;
       z-index: 5;
     }
@@ -354,7 +403,7 @@
       color: #ffd700;
       padding: 6px 12px;
       border-radius: 8px;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       display: none;
@@ -369,7 +418,7 @@
     <!-- CANVAS FONDO ESTELAR DINÁMICO (POLVO DORADO Y CARMESÍ) -->
     <canvas id="starfield-canvas"></canvas>
 
-    <!-- 1. HEADER MINIMALISTA CON LOS COLORES DEL SENSEI -->
+    <!-- 1. HEADER CENTRADO Y RESPONSIVO DEBAJO DEL TOP BAR DE TIKTOK (94px) -->
     <header class="holo-header">
       <h1 class="holo-title" id="hdr-title">⛩️ Pregúntale al Sensei</h1>
       <p class="holo-subtitle" id="hdr-subtitle">Escribe tu dilema de amor, ex o conquista</p>
@@ -390,7 +439,7 @@
       <span id="join-pill-text">¡Bienvenido al dojo!</span>
     </div>
 
-    <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO -->
+    <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO (SIN MARCOS NI CÍRCULOS) -->
     <div class="holo-stage">
 
       <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) -->
@@ -398,7 +447,7 @@
         <canvas id="holo-orb-canvas" width="400" height="400"></canvas>
       </div>
 
-      <!-- B) EL SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR -->
+      <!-- B) EL SENSEI HOLOGRÁFICO HABLANDO (SILUETA FLOTANTE DIFUMINADA SIN BORDE) -->
       <div class="holo-sensei-container" id="holo-sensei">
         <div class="holo-avatar-wrap">
           <div class="holo-scanlines"></div>
@@ -409,7 +458,7 @@
 
     </div>
 
-    <!-- 3. TARJETA DE RESPUESTA / SUBTÍTULOS -->
+    <!-- 3. TARJETA DE RESPUESTA / SUBTÍTULOS (SOBRE LA LÍNEA DE LOS 511px DEL CHAT) -->
     <div class="holo-response-area">
       <div class="holo-user-badge" id="resp-user-badge">
         <span class="prefix-label" id="resp-prefix">ÚLTIMA RESPUESTA</span>
@@ -420,7 +469,7 @@
       </div>
     </div>
 
-    <!-- ZONA INFERIOR LIBRE PARA EL CHAT DE TIKTOK LIVE -->
+    <!-- ZONA INFERIOR LIBRE PARA EL CHAT DE TIKTOK LIVE (~511px) -->
     <div class="tiktok-chat-safe-zone"></div>
 
     <!-- BOTÓN DE DESBLOQUEO DE AUDIO PARA NAVEGADOR -->
@@ -499,7 +548,6 @@
     renderStarfield();
 
     // ==================== 3. EL PRIMER SÍMBOLO: CORE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) ====================
-    // Dibuja una esfera 3D de partículas de energía del Sensei rotando con respiración orgánica
     const orbCanvas = document.getElementById("holo-orb-canvas");
     const orbCtx = orbCanvas ? orbCanvas.getContext("2d") : null;
     const NUM_ORB_POINTS = 185;
@@ -516,7 +564,7 @@
           baseRadius: 105 + (Math.random() * 16 - 8),
           pulseOffset: Math.random() * Math.PI * 2,
           size: Math.random() * 2.2 + 1.1,
-          colorType: i % 3 // 0: Oro brillante, 1: Carmesí neón, 2: Blanco puro
+          colorType: i % 3
         });
       }
     }
@@ -535,7 +583,6 @@
       orbTime += 0.022;
       orbRotY += 0.014;
 
-      // Resplandor central del núcleo de energía del Sensei (Oro cálido en el centro, Carmesí en el exterior)
       const grad = orbCtx.createRadialGradient(cx, cy, 10, cx, cy, 140);
       grad.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
       grad.addColorStop(0.35, 'rgba(255, 42, 109, 0.3)');
@@ -546,10 +593,8 @@
       orbCtx.arc(cx, cy, 140, 0, Math.PI * 2);
       orbCtx.fill();
 
-      // Respiración armónica de la esfera
       const breathing = 1.0 + 0.07 * Math.sin(orbTime * 1.6);
 
-      // Dibujar partículas holográficas en coordenadas 3D proyectadas
       for (let p of orbPoints) {
         const r = p.baseRadius * breathing;
         let x = r * Math.sin(p.theta) * Math.cos(p.phi);
@@ -591,7 +636,7 @@
     }
     renderHoloOrb();
 
-    // ==================== 4. EL SENSEI HABLANDO: MOTOR LABIAL ====================
+    // ==================== 4. EL SENSEI HABLANDO ====================
     const avatarImg = document.getElementById("holo-avatar-img");
     const AVATAR_FRAMES = [
       "/assets/logo_circle_talk.png",
@@ -709,7 +754,7 @@
         if (!res.ok) return;
         const data = await res.json();
 
-        // 1. Actualizar títulos de agente
+        // 1. Títulos de agente
         if (data.banner_title && hdrTitle.textContent !== data.banner_title) {
           hdrTitle.textContent = data.banner_title;
         }
@@ -729,7 +774,7 @@
           }
         }
 
-        // 3. Control de Estado de Habla: Core Orb vs Muñeca Sensei
+        // 3. Control de Estado de Habla
         const speakingNow = !!data.is_speaking;
         if (speakingNow !== isSpeakingState) {
           isSpeakingState = speakingNow;
@@ -744,7 +789,7 @@
           }
         }
 
-        // 4. Reproducir audio si hay una nueva versión de voz
+        // 4. Audio
         const audioVer = data.audio_version || 0;
         if (!initialLoadDone) {
           initialLoadDone = true;
@@ -754,7 +799,7 @@
           reproducirAudioSensei(`/api/live-audio?v=${audioVer}`);
         }
 
-        // 5. Renderizado de Texto (Colores del Sensei: Oro y Carmesí)
+        // 5. Renderizado de Texto
         const phase = data.status_phase || "esperando";
         let u = (data.active_user || "espectador").trim();
         let q = (data.active_question || "").trim();
