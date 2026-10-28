@@ -3790,23 +3790,15 @@ REGLAS DE ORO:
     // Auto-formateo inteligente de '@': añade automáticamente el arroba donde se pida
     function autoFormatearArroba(input) {
       if (!input) return;
-      input.addEventListener("input", () => {
+      input.addEventListener("blur", () => {
         let val = input.value.trim();
         if (val) {
           val = val.replace(/^@+/, "");
           if (val.length > 0) {
             input.value = "@" + val;
+          } else {
+            input.value = "";
           }
-        }
-      });
-      input.addEventListener("focus", () => {
-        if (!input.value.trim()) {
-          input.value = "@";
-        }
-      });
-      input.addEventListener("blur", () => {
-        if (input.value.trim() === "@") {
-          input.value = "";
         }
       });
     }

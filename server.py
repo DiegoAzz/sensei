@@ -207,7 +207,7 @@ async def get_http_session() -> aiohttp.ClientSession:
     global _http_session
     if _http_session is None or _http_session.closed:
         connector = aiohttp.TCPConnector(limit=60, keepalive_timeout=75, enable_cleanup_closed=True)
-        timeout = aiohttp.ClientTimeout(total=3.5, connect=1.0)
+        timeout = aiohttp.ClientTimeout(total=10.0, connect=3.0)
         _http_session = aiohttp.ClientSession(connector=connector, timeout=timeout)
     return _http_session
 
@@ -289,12 +289,25 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
     saludos_cortos = ["hola", "buenas", "buenas noches", "buen dia", "saludos", "que tal", "hola sensei", "holaa", "como estas", "cómo estás", "como va"]
     p_clean = pregunta.lower().strip().rstrip(".!?¿¡")
     if p_clean in saludos_cortos or len(p_clean) <= 3:
+        import random
         if agent_type == "tienda_ventas":
-            return (f"¡Hola {nombre_humano}! Bienvenida a la boutique en vivo. ¿Qué aroma o perfume buscas hoy?", "AMIGABLE")
+            return (f"¡Hola {nombre_humano}! Bienvenida a la boutique en vivo. ¿Qué aroma o producto buscas hoy?", "AMIGABLE")
         elif "perfume" in (agent.get("niche") or "").lower() or "perfume" in agent_name.lower():
-            return (f"¡Saludos {nombre_humano}! Un placer saludarte. Dime qué perfume usas hoy o qué fragancia buscas calificar.", "SABIO")
+            opc_perf = [
+                f"¡Saludos {nombre_humano}! Un placer saludarte. Dime qué perfume usas hoy o qué fragancia buscas calificar.",
+                f"¡Hola {nombre_humano}! Bienvenido al consultorio olfativo. ¿Qué aroma te tiene pensando hoy?",
+                f"¡Qué tal {nombre_humano}! Pasa al templo de los aromas. ¿Buscas un perfume para conquistar o para uso diario?"
+            ]
+            return (random.choice(opc_perf), "SABIO")
         else:
-            return (f"¡Qué tal {nombre_humano}! Bienvenido al templo. Dime, ¿qué dilema de amor o pareja tienes hoy?", "SABIO")
+            opc_amor = [
+                f"¡Qué tal {nombre_humano}! Bienvenido al templo. Dime, ¿qué dilema de amor o conquista tienes hoy?",
+                f"¡Saludos {nombre_humano}! Pasa adelante. Cuéntame tu caso de amor o desamor y te digo la verdad sin anestesia.",
+                f"¡Hombre {nombre_humano}! Bienvenido al dojo del amor. Deja tu situación en el chat y la destripamos en vivo.",
+                f"¡Epa {nombre_humano}! Activo en la sala. Cuéntame: ¿estás sufriendo por amor o quieres aprender a conquistar?",
+                f"¡Bienvenido {nombre_humano}! Apoya la sala con dos toques a la pantalla y cuéntame qué te tiene pensando en esa persona."
+            ]
+            return (random.choice(opc_amor), "SABIO")
 
     base_prompt = agent.get("system_prompt", "").strip()
     sales_mode = agent.get("sales_mode")
@@ -467,7 +480,7 @@ Respuesta del Asesor en Directo:"""
 
     else:
         tono = "sabio, elegante, magnético y con alta autoestima" if agent.get("estilo") == "sabio_directo" else "picante, directo a la llaga y con verdades sin anestesia"
-        vip_tag_prompt = f"\n⭐ ATENCIÓN VIP: {nombre_humano} es un donador VIP del live (ha enviado regalos/rosas). Dale trato preferencial de honor, reconócelo como miembro distinguido del dojo y dale un consejo certero y exclusivo.\n" if es_usuario_vip(usuario) else ""
+        vip_tag_prompt = f"\n⭐ ATENCIÓN VIP: {nombre_humano} es un donador VIP del live. Dale trato preferencial de honor, reconócelo como miembro distinguido del dojo y dale un consejo certero y exclusivo.\n" if es_usuario_vip(usuario) else ""
         prompt = f"""{base_prompt}
 Tu estilo general: {tono}.
 {vip_tag_prompt}{contexto_conversacion}
@@ -480,6 +493,8 @@ REGLAS DE ORO, COHERENCIA Y VELOCIDAD PARA TIKTOK LIVE:
    - Inmediatamente después dale tu veredicto o consejo sabio, contundente y memorable en 1 o 2 oraciones de alto impacto.
 5. Si el espectador se ríe ("jajaja", "xd"): ¡Ríete con él y vacílalo con gracia!
 6. Al puro inicio pon la emoción: [RISA], [SABIO], [PICANTE] o [ESTOICO].
+7. POLÍTICA ANTI-BLOQUEO TIKTOK (ESTRICTO): PROHIBIDO pedir regalos, rosas, monedas o dinero. TikTok bloquea y suspende transmisiones que piden regalos. En su lugar pide toques a la pantalla (likes) o dile que comente su caso.
+8. MÁXIMA VARIEDAD Y CERO REPETICIÓN: Sé original, fresco e impredecible. Varía el tono, las analogías y el remate en cada caso.
 
 Nuevo comentario de {nombre_humano} en TikTok: "{pregunta}"
 Respuesta de {agent_name}:"""
@@ -528,14 +543,14 @@ Respuesta de {agent_name}:"""
         else:
             import aiohttp
             # Modelos oficiales vigentes en v1beta sin 404
-            modelos_gemini = ["gemini-flash-latest", "gemini-1.5-flash-latest"]
+            modelos_gemini = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-flash-lite-latest"]
             for modelo in modelos_gemini:
                 try:
                     url = f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent?key={api_key}"
                     payload = {
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
-                            "temperature": 0.7,
+                            "temperature": 0.85,
                             "maxOutputTokens": 180,
                             "thinkingConfig": {"thinkingBudget": 0}
                         }
@@ -583,60 +598,130 @@ Respuesta de {agent_name}:"""
         return registrar_y_retornar(t, emo)
 
 def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
-    """Oráculo de Sabiduría Local de Seducción y Relaciones."""
-    q = pregunta.lower()
-    nombre = usuario.split("_")[0].capitalize()
+    """Oráculo de Sabiduría Local de Seducción y Relaciones con Respuestas Rotativas y Dinámicas."""
+    import random
+    q = pregunta.lower().strip()
+    nombre = limpiar_nombre_usuario(usuario)
 
-    # Blindaje contra preguntas técnicas / fuera de nicho
-    if any(k in q for k in ["ia", "robot", "bot", "inteligencia artificial", "python", "servidor", "codigo", "código", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó"]):
-        return (f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de tecnología; aquí venimos a sanar el corazón y aprender a seducir con dignidad. Cuéntame sobre tu crush o tu ex, y déjate de rodeos.", "SABIO")
+    # Blindaje contra preguntas técnicas / fuera de nicho (palabras completas exactas)
+    palabras_q = set(re.findall(r"\b[a-záéíóúñ]+\b", q))
+    tech_words = {"ia", "robot", "bot", "python", "servidor", "codigo", "código", "algoritmo", "prompt", "programado"}
+    if tech_words.intersection(palabras_q) or any(f in q for f in ["inteligencia artificial", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó", "que modelo eres"]):
+        respuestas_tech = [
+            f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de códigos; aquí venimos a sanar el corazón y aprender a conquistar con dignidad. Cuéntame sobre tu caso amoroso y déjate de rodeos.",
+            f"¡Hombre {nombre}! El único algoritmo que enseñamos aquí es el del amor propio y la seducción magnética. Déjame tu duda con esa persona y te digo la verdad sin anestesia.",
+            f"Atento, {nombre}: no te distraigas con preguntas técnicas. La verdadera maestría está en saber cuándo retirarse y cuándo dar el paso en el amor. ¿Qué te tiene desvelado hoy?"
+        ]
+        return (random.choice(respuestas_tech), "SABIO")
 
     # Risa / Humor local
     if any(k in q for k in ["jaja", "jeje", "xd", "chiste", "gracioso", "broma"]):
-        return (f"¡Jajaja! Ay, {nombre}, te ríes para no llorar, pero la verdad es clara: si estás aquí preguntando es porque esa persona te mueve el piso. ¡Párate firme, ríete del pasado y que el chiste no sea tu dignidad!", "RISA")
+        respuestas_risa = [
+            f"¡Jajaja! Ay, {nombre}, te ríes para no llorar, pero la verdad es clara: si estás aquí preguntando es porque esa persona te mueve el piso. ¡Párate firme, ríete del pasado y que el chiste no sea tu dignidad!",
+            f"¡Jajaja! {nombre}, la risa es la mejor terapia para sacudirse el desamor, pero después de reírte hay que tomar decisiones firmes. Cuéntame el chisme completo para darte el veredicto.",
+            f"¡Qué risa, {nombre}! En este dojo nos reímos de las derrotas de ayer porque mañana salimos a conquistar como reyes. ¡Arriba ese ánimo!"
+        ]
+        return (random.choice(respuestas_risa), "RISA")
 
     # 1. Salir de la Friendzone
     elif any(k in q for k in ["friendzone", "amigo", "amiga", "hermano", "zona de amigos"]):
-        return (f"Escucha bien, {nombre}. Para salir de la friendzone debes romper el papel de 'amigo incondicional': toma distancia, deja de estar disponible a toda hora y demuestra intención clara sin miedo al rechazo.", "SABIO")
+        respuestas_fz = [
+            f"{nombre} nos pregunta: «{pregunta}»... Para salir de la friendzone debes romper el papel de consejero incondicional: toma distancia, deja de estar disponible a toda hora y demuestra intención clara sin miedo al rechazo.",
+            f"{nombre} pregunta cómo salir de la zona de amigos... Hermano, el que se queda de amigo esperando que ella se dé cuenta, solo ve cómo otro se lleva el premio. Desaparece un tiempo, sube tu valor y vuelve con intención, o retírate con honor.",
+            f"{nombre} consulta sobre la friendzone... Escucha: si te trata como a su mejor amiga, es porque tú aceptaste ese contrato. Rompe ese pacto hoy mismo; la escasez genera deseo, la disponibilidad excesiva genera desinterés."
+        ]
+        return (random.choice(respuestas_fz), "SABIO")
 
     # 2. Cómo hablarle a la crush / Iniciar conversación
     elif any(k in q for k in ["hablarle", "iniciar", "acercarme", "que le digo", "qué le digo", "romper el hielo"]):
-        return (f"Hola {nombre}. Nunca empieces con un soso 'hola, qué haces'. Haz una observación divertida sobre lo que está pasando a su alrededor o hazle un cumplido genuino a su actitud; la naturalidad siempre conquista.", "PICANTE")
+        respuestas_hablar = [
+            f"{nombre} nos pregunta: «{pregunta}»... Nunca empieces con un soso 'hola, qué haces'. Haz una observación divertida sobre su entorno o un cumplido a su actitud; la naturalidad y el buen humor siempre conquistan.",
+            f"{nombre} quiere saber cómo romper el hielo... Lo que atrae no son frases ensayadas de internet, sino la seguridad al decirlas. Sé directo, hazle una pregunta interesante que desafíe su mente y mantén contacto visual relajado.",
+            f"{nombre} nos consulta cómo hablarle... Entra con una vibra alegre, hazla reír en los primeros 10 segundos y luego retira un poco tu atención; la intriga es el imán más potente de la seducción."
+        ]
+        return (random.choice(respuestas_hablar), "PICANTE")
 
     # 3. Responder historias de Instagram / WhatsApp
     elif any(k in q for k in ["historia", "storie", "responderle", "instagram", "mensaje", "escribirle"]):
-        return (f"Atento, {nombre}. Jamás respondas con un fueguito o un 'qué hermosa'. Comenta algo ingenioso que abra debate o hazle una pregunta que despierte su curiosidad; dale una razón real para querer contestarte.", "PICANTE")
+        respuestas_historias = [
+            f"{nombre} nos pregunta: «{pregunta}»... Jamás respondas con un fueguito o un 'qué hermosa'. Comenta algo ingenioso que abra debate o hazle una pregunta que despierte su curiosidad; dale una razón real para querer contestarte.",
+            f"{nombre} pregunta qué responder a sus historias... Un hombre de alto valor no adula en vano. Si subió una foto de comida o viaje, haz un comentario pícaro o una broma sobre sus gustos; haz que se ría y quiera justificarse.",
+            f"{nombre} duda qué escribirle... Si solo reaccionas con emojis eres uno más en su bandeja de entrada. Desafíala con ingenio y déjala esperando tu próxima respuesta; el misterio atrae."
+        ]
+        return (random.choice(respuestas_historias), "PICANTE")
 
     # 4. Generar misterio y atracción
     elif any(k in q for k in ["misterio", "atraer", "atractivo", "interesar", "gustarle"]):
-        return (f"El secreto de la seducción, {nombre}, es no entregar todo el libro en la primera página. Deja las charlas en su punto más alto y ten metas apasionantes; lo que es escaso se valora, lo regalado aburre.", "SABIO")
+        respuestas_misterio = [
+            f"{nombre} nos pregunta: «{pregunta}»... El secreto de la seducción es no entregar todo el libro en la primera página. Deja las charlas en su punto más alto y ten metas apasionantes; lo que es escaso se valora, lo regalado aburre.",
+            f"{nombre} busca generar misterio... Quien cuenta toda su vida en dos horas mata la curiosidad. Ten proyectos propios, no contestes al segundo y haz que descubrirte sea un premio para la otra persona.",
+            f"{nombre} nos pide claves de atracción... La atracción nace de la polaridad: ten tu propio camino, no mendigues validación y sonríe con la seguridad de quien sabe perfectamente lo que vale."
+        ]
+        return (random.choice(respuestas_misterio), "SABIO")
 
     # 5. Primera cita
     elif any(k in q for k in ["primera cita", "cita", "invitarla", "invitarlo", "adonde", "a dónde"]):
-        return (f"Para tu primera cita, {nombre}, evita cenas formales y aburridas. Elige un plan dinámico donde puedan caminar, reírse y compartir un café; el objetivo no es impresionarle con dinero, sino conectar con tu personalidad.", "PICANTE")
+        respuestas_cita = [
+            f"{nombre} nos pregunta: «{pregunta}»... Para tu primera cita, evita cenas formales y aburridas. Elige un plan dinámico donde puedan caminar, reírse y compartir un café; el objetivo no es impresionarle con dinero, sino conectar con tu personalidad.",
+            f"{nombre} nos consulta sobre la primera cita... Lleva a tu crush a un lugar interactivo donde la conversación fluya sin presión. Escucha el 70% del tiempo, habla el 30% y déjala con ganas de una segunda vuelta.",
+            f"{nombre} pregunta por la cita ideal... Haz que se sienta cómoda y segura. No te esfuerces de más por agradar; actúa como si ya fuera tu cómplice de aventuras y la chispa se encenderá sola."
+        ]
+        return (random.choice(respuestas_cita), "PICANTE")
 
     # 6. Saber si le gustas / Señales
     elif any(k in q for k in ["le gusto", "señal", "señales", "interesada", "interesado"]):
-        return (f"Aprende esto, {nombre}: quien tiene interés verdadero busca pretextos para hablarte y facilita verse. Si tienes que dudar o siempre hay una excusa para no salir, la respuesta ya es un no.", "ESTOICO")
+        respuestas_senales = [
+            f"{nombre} nos pregunta: «{pregunta}»... Quien tiene interés verdadero busca pretextos para hablarte y facilita verse. Si tienes que dudar o siempre hay una excusa para no salir, la respuesta ya es un no.",
+            f"{nombre} busca señales de interés... El interés se nota, el desinterés se nota todavía más. Si te busca, te hace preguntas y te mira con atención, avanza; si siempre tarda o es cortante, retira tu atención de inmediato.",
+            f"{nombre} nos pregunta si le gusta... La regla de oro del dojo: el interés genuino es mutuo y fluido. Nunca persigas a quien camina despacio cuando tú estás corriendo por verlo."
+        ]
+        return (random.choice(respuestas_senales), "ESTOICO")
 
     # 7. Infidelidades
     elif any(k in q for k in ["infiel", "engañó", "engaño", "cuerno", "traicion", "traición", "otra"]):
-        return (f"Escucha, {nombre}. La infidelidad no es un descuido, es una decisión consciente. Quien te traiciona una vez te demuestra que no respeta tu valor; ten dignidad y sal de ahí.", "ESTOICO")
+        respuestas_infiel = [
+            f"{nombre} nos pregunta: «{pregunta}»... La infidelidad no es un error de cálculo ni un tropiezo, es una decisión consciente. Quien te traiciona una vez te demuestra que no respeta tu valor; ten dignidad y sal de ahí.",
+            f"{nombre} consulta sobre infidelidad... Perdonar una traición casi siempre es comprar un boleto para que te la vuelvan a hacer con mayor confianza. Cierra esa puerta, sana tu amor propio y busca a alguien leal.",
+            f"{nombre} nos habla de una traición... Mi hermano, la lealtad es un valor no negociable. Si rompen tu confianza, no discutas ni mendigues explicaciones; retírate en silencio y que tu ausencia sea su mayor lección."
+        ]
+        return (random.choice(respuestas_infiel), "ESTOICO")
 
     # 8. Volver con el ex
     elif any(k in q for k in ["volver", "ex", "regresar", "extraño", "bloqueo", "bloquear"]):
-        return (f"Querido {nombre}, volver con tu ex es como comprar tu propia ropa usada esperando que huela a nuevo. Recuerda por qué terminó la historia y aplica contacto cero absoluto.", "SABIO")
+        respuestas_ex = [
+            f"{nombre} nos pregunta: «{pregunta}»... Volver con tu ex es como comprar tu propia ropa usada esperando que huela a nuevo. Recuerda exactamente por qué terminó la historia y aplica contacto cero absoluto.",
+            f"{nombre} pregunta si debe volver con su ex... El basurero pasa a recoger los desechos, no a llevarlos de nuevo a la sala. Mira hacia adelante; hay 8 mil millones de personas en el planeta para quedarse estancado en el pasado.",
+            f"{nombre} consulta si regresar con su ex... Si vuelven sin que ninguno haya cambiado de verdad, el final ya está escrito en la misma página de antes. Date la oportunidad de conocer a alguien que sí te valore desde el día uno."
+        ]
+        return (random.choice(respuestas_ex), "SABIO")
 
     # 9. Dejar en visto / Ghosting
     elif any(k in q for k in ["visto", "ignora", "escribe", "tarda", "frio", "fría"]):
-        return (f"Aprende esto, {nombre}: la falta de interés también es una respuesta clara. Quien te quiere te busca, quien no, te pone pretextos. No mendigues la atención de nadie.", "ESTOICO")
+        respuestas_visto = [
+            f"{nombre} nos pregunta: «{pregunta}»... La falta de interés también es una respuesta clara y rotunda. Quien te quiere te busca, quien no, te pone pretextos. No mendigues la atención ni el tiempo de nadie.",
+            f"{nombre} pregunta qué hacer si lo dejan en visto... Si te deja en visto, tú déjalo en el pasado. No vuelvas a escribir para reclamar; el silencio absoluto es la respuesta más elegante y poderosa que existe.",
+            f"{nombre} duda qué hacer ante la frialdad... La atención no se ruega ni se exige. Si baja la intensidad, tú bajas el volumen por completo y enfocas tu energía en ti mismo."
+        ]
+        return (random.choice(respuestas_visto), "ESTOICO")
 
     # 10. Los "Casi Algo"
     elif any(k in q for k in ["casi algo", "formalizar", "amigos con derecho", "etiqueta"]):
-        return (f"Atento, {nombre}. Si ya llevan meses y te dice que 'no busca nada serio', lo que te dice es que no lo busca contigo. Retira tu cariño de donde no hay compromiso.", "SABIO")
+        respuestas_casialgo = [
+            f"{nombre} nos pregunta: «{pregunta}»... Si ya llevan meses y te dice que 'no busca nada serio', lo que en realidad te está diciendo es que no lo busca contigo. Retira tu cariño de donde no hay compromiso.",
+            f"{nombre} consulta sobre su casi algo... Los 'casi algo' duelen porque se idealiza lo que pudo ser. No te quedes en el limbo de la incertidumbre; o te dan tu lugar como corresponde o que siga su camino.",
+            f"{nombre} pregunta por su situación de casi algo... No regales beneficios de pareja a quien solo te ofrece migajas de atención. Exige claridad o da un paso al costado con orgullo."
+        ]
+        return (random.choice(respuestas_casialgo), "SABIO")
 
     else:
-        return (f"Recuerda esto, {nombre}: en el amor y en la seducción, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.", "SABIO")
+        respuestas_generales = [
+            f"{nombre} nos pregunta: «{pregunta}»... En el amor y en la conquista, tu mayor atractivo siempre será tu seguridad y tu amor propio. Camina firme y nunca te conformes con migajas.",
+            f"{nombre} nos comparte su caso: «{pregunta}»... La regla suprema de este dojo es muy simple: donde no puedas amar con dignidad y reciprocidad, no te demores. Valórate primero.",
+            f"{nombre} nos plantea este dilema: «{pregunta}»... El que sabe lo que vale no compite por atención; atrae por presencia y repele por respeto propio. Pon límites claros hoy mismo.",
+            f"{nombre} nos consulta: «{pregunta}»... Para que alguien te admire afuera, primero tienes que respetarte tú adentro. Toma la iniciativa con calma y que tu paz mental sea innegociable.",
+            f"{nombre} nos dice: «{pregunta}»... Si una situación te quita la tranquilidad más de lo que te aporta alegría, la respuesta ya la tienes en el pecho. Da el salto con coraje."
+        ]
+        return (random.choice(respuestas_generales), "SABIO")
 
 def generar_respuesta_agente_personalizado(usuario: str, pregunta: str, agent: dict) -> tuple:
     """Responde de forma profesional y personalizada según el nicho, productos y reglas de cualquier agente creado desde cero."""
@@ -1274,12 +1359,15 @@ FRASES_ENGANCHE_PERFUMES = [
     "En nuestra boutique tenemos fragancias exclusivas disponibles con despacho hoy. Déjame en los comentarios tu duda olfativa y te respondemos en directo."
 ]
 
+ultima_frase_enganche = ""
+
 async def auto_enganche_tiempo_muerto_loop():
     """
-    Cuando hay tiempo muerto en el Live (35 a 45 segundos sin comentarios),
-    El Sensei toma la palabra en vivo con su voz para animar a los espectadores a comentar.
+    Cuando hay tiempo muerto prolongado en el Live (>55 segundos sin comentarios),
+    El Sensei toma la palabra en vivo con su voz para animar a los espectadores a comentar
+    sin repetir la misma frase consecutiva.
     """
-    global tiempo_ultima_actividad_comentario
+    global tiempo_ultima_actividad_comentario, ultima_frase_enganche
     while estado["is_streaming"]:
         await asyncio.sleep(6)
         if not estado["is_streaming"]:
@@ -1294,22 +1382,21 @@ async def auto_enganche_tiempo_muerto_loop():
         tipo_ag = current_agent.get("type", "consultorio")
         nicho = (current_agent.get("niche") or "").lower()
 
-        # Si han pasado más de 26 segundos de silencio en el Live
-        if time.time() - tiempo_ultima_actividad_comentario >= 26:
+        # Si han pasado más de 55 segundos de silencio en el Live
+        if time.time() - tiempo_ultima_actividad_comentario >= 55:
             import random
             frases_custom = current_agent.get("frases_enganche") or []
             if isinstance(frases_custom, str):
                 frases_custom = [f.strip() for f in frases_custom.splitlines() if f.strip()]
 
-            if frases_custom:
-                frase = random.choice(frases_custom)
-                emocion = "PICANTE" if any(k in frase.lower() for k in ["jajaja", "esposa", "cogiendola", "infiel", "celos"]) else "SABIO"
-            elif "perfume" in nicho or tipo_ag == "tienda_ventas":
-                frase = random.choice(FRASES_ENGANCHE_PERFUMES)
-                emocion = "AMIGABLE"
-            else:
-                frase = random.choice(FRASES_ENGANCHE_AMOR)
-                emocion = "SABIO"
+            pool = frases_custom or (FRASES_ENGANCHE_PERFUMES if ("perfume" in nicho or tipo_ag == "tienda_ventas") else FRASES_ENGANCHE_AMOR)
+            candidatas = [f for f in pool if f != ultima_frase_enganche]
+            frase = random.choice(candidatas) if candidatas else (random.choice(pool) if pool else "")
+            if not frase:
+                continue
+            ultima_frase_enganche = frase
+
+            emocion = "PICANTE" if any(k in frase.lower() for k in ["jajaja", "esposa", "infiel", "celos", "casi algo"]) else "SABIO"
 
             registrar_log(f"📣 [LLAMADO EN VIVO]: \"{frase}\"", "hl")
             tiempo_ultima_actividad_comentario = time.time()
