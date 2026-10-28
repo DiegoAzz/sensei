@@ -1776,8 +1776,11 @@
             <span>🚀 <b>Enviar al Live:</b> Sale en vivo en la pantalla de TikTok y se escucha a todos.</span>
           </div>
 
-          <!-- Botones de Acción Rápida en Directo: Donador, Frases Virales y Rosas -->
+          <!-- Botones de Acción Rápida en Directo: Donador, Frases Virales, Entrada y Rosas -->
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; margin-bottom: 6px;">
+            <button type="button" id="btn-simular-user-join" style="border: 1.5px solid #00f0ff; color: #00f0ff; font-weight: 800; background: rgba(0, 240, 255, 0.15); padding: 8px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(0,240,255,0.25);">
+              👋 Simular Entrada de Espectador
+            </button>
             <button type="button" id="btn-simular-donador-vip" style="border: 1.5px solid #ffd700; color: #ffd700; font-weight: 800; background: rgba(255, 215, 0, 0.15); padding: 8px 14px; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(255,215,0,0.25);">
               👑 Simular Entrada Donador VIP (Nivel 4)
             </button>
@@ -1790,10 +1793,13 @@
           </div>
 
           <div class="preset-pills">
+            <button class="btn-preset" data-q="¿Cuántas novias has tenido?">¿Cuántas novias has tenido?</button>
+            <button class="btn-preset" data-q="¿Cómo conquistar a una mujer difícil?">¿Conquistar mujer difícil?</button>
             <button class="btn-preset" data-q="¿Debo perdonar una infidelidad?">¿Perdonar infidelidad?</button>
             <button class="btn-preset" data-q="¿Vale la pena volver con mi ex si me busca?">¿Volver con mi ex?</button>
             <button class="btn-preset" data-q="Me deja en visto y tarda horas en responder">Me deja en visto</button>
             <button class="btn-preset" data-q="jajaja sensei mi novia me cambió por uno que mide 1.50 jajaja 😂">😂 ¿Risa / Me cambió?</button>
+            <button class="btn-preset" data-q="¿Quién eres y cuál es tu misión aquí?">¿Quién eres?</button>
             <button class="btn-preset" data-q="¿Con qué programa estás hecho y dónde está tu servidor?">🛡️ Prueba de Blindaje (Meta/IA)</button>
           </div>
 
@@ -3854,7 +3860,33 @@ REGLAS DE ORO:
     autoFormatearArroba(nudgeUserInput);
     autoFormatearArroba(cfgUsername);
 
-    // 👑 Botones de Pruebas Rápidas en Vivo (Donador VIP, Ganchos y Regalo)
+    // 👑 Botones de Pruebas Rápidas en Vivo (Entrada Espectador, Donador VIP, Ganchos y Regalo)
+    const btnSimUserJoin = document.getElementById("btn-simular-user-join");
+    if (btnSimUserJoin) {
+      btnSimUserJoin.addEventListener("click", async () => {
+        btnSimUserJoin.disabled = true;
+        btnSimUserJoin.textContent = "⏳ Entrando...";
+        try {
+          const randomNames = ["Carlos", "Valentina", "Mateo", "Camila", "Andrés", "Sofía", "Diego", "Sebastián"];
+          const randomUser = randomNames[Math.floor(Math.random() * randomNames.length)];
+          const res = await fetch("/api/test-user-join", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user: randomUser })
+          });
+          const d = await res.json();
+          if (d.ok) {
+            addLog(`👋 [SIMULADOR]: Espectador @${d.user} acaba de entrar al Live. El Sensei lo saluda de inmediato.`, "green");
+          }
+        } catch(e) {
+          alert("Error simulando entrada: " + e.message);
+        } finally {
+          btnSimUserJoin.disabled = false;
+          btnSimUserJoin.textContent = "👋 Simular Entrada de Espectador";
+        }
+      });
+    }
+
     const btnSimDonador = document.getElementById("btn-simular-donador-vip");
     if (btnSimDonador) {
       btnSimDonador.addEventListener("click", async () => {

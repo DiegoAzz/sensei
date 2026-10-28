@@ -19,7 +19,7 @@
       --font-mono: 'JetBrains Mono', monospace;
       
       /* Zona segura oficial de TikTok LIVE Studio (Top bar: 94px, Bottom chat: 511px) */
-      --tiktok-top-safe: 102px;
+      --tiktok-top-safe: 104px;
       --tiktok-bottom-safe: 511px;
     }
 
@@ -95,24 +95,35 @@
       z-index: 1;
     }
 
-    /* ==================== 1. HEADER SUPERIOR (DEBAJO DE LOS 94px DE TIKTOK) ==================== */
-    .holo-header {
-      position: absolute;
-      top: var(--tiktok-top-safe);
-      left: 0;
-      right: 0;
+    /* ==================== FLUJO VERTICAL FLEXBOX (CERO SUPERPOSICIONES / NUNCA SE MONTAN) ==================== */
+    .stream-content-flow {
+      position: relative;
       width: 100%;
-      padding: 0 20px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: var(--tiktok-top-safe);
+      padding-left: 18px;
+      padding-right: 18px;
       z-index: 20;
+    }
+
+    /* 1. HEADER SUPERIOR */
+    .holo-header {
+      position: relative;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       gap: 3px;
+      margin-bottom: 10px;
+      flex-shrink: 0;
     }
 
     .holo-title {
-      font-size: clamp(20px, 2.7vw, 30px);
+      font-size: clamp(19px, 2.6vw, 28px);
       font-weight: 800;
       letter-spacing: -0.2px;
       color: #ffffff;
@@ -123,7 +134,7 @@
     }
 
     .holo-subtitle {
-      font-size: clamp(12px, 1.4vw, 15px);
+      font-size: clamp(11.5px, 1.35vw, 14.5px);
       color: #cbd5e1;
       font-weight: 500;
       letter-spacing: 0.2px;
@@ -132,7 +143,7 @@
     }
 
     .holo-meta-row {
-      margin-top: 4px;
+      margin-top: 3px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -164,16 +175,16 @@
       text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
     }
 
-    /* Toast Flotante Compacto al Entrar Espectador */
+    /* Toast Flotante al Entrar Espectador */
     .holo-join-pill {
       position: absolute;
-      top: calc(var(--tiktok-top-safe) + 72px);
+      top: calc(var(--tiktok-top-safe) + 68px);
       left: 50%;
       transform: translateX(-50%);
       background: rgba(255, 42, 109, 0.2);
       border: 1px solid rgba(255, 215, 0, 0.55);
       border-radius: 999px;
-      padding: 4px 14px;
+      padding: 3px 12px;
       font-size: 11px;
       font-weight: 700;
       color: #ffd700;
@@ -192,26 +203,24 @@
       100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
     }
 
-    /* ==================== 2. ESCENARIO CENTRAL HOLOGRÁFICO ==================== */
-    /* SIN MARCO, SIN CÍRCULO, SIN BORDE: PURE PARTICLE HOLOGRAM IN SPACE */
+    /* 2. ESCENARIO CENTRAL HOLOGRÁFICO (SECUENCIAL, NUNCA SE MONTA) */
     .holo-stage {
-      position: absolute;
-      top: calc(var(--tiktok-top-safe) + 76px);
-      left: 0;
-      right: 0;
-      height: clamp(210px, 28vh, 310px);
+      position: relative;
+      width: 100%;
+      height: clamp(180px, 24vh, 250px);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10;
+      margin-bottom: 12px;
       pointer-events: none;
+      flex-shrink: 0;
     }
 
-    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO */
+    /* A) EL PRIMER SÍMBOLO: ORBE HOLOGRÁFICO EN REPOSO */
     .holo-core-container {
       position: absolute;
-      width: clamp(220px, 30vh, 320px);
-      height: clamp(220px, 30vh, 320px);
+      width: clamp(190px, 25vh, 260px);
+      height: clamp(190px, 25vh, 260px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -226,11 +235,11 @@
       filter: drop-shadow(0 0 35px rgba(255, 42, 109, 0.75)) drop-shadow(0 0 65px rgba(255, 215, 0, 0.5));
     }
 
-    /* B) EL SENSEI HOLOGRAMA FLOTANDO LIBRE EN EL ESPACIO (COMO LA NIÑA DE LA FOTO) */
+    /* B) EL SENSEI HOLOGRÁFICO HABLANDO (SIN MARCOS NI CÍRCULOS) */
     .holo-sensei-container {
       position: absolute;
-      width: clamp(240px, 32vh, 350px);
-      height: clamp(240px, 32vh, 350px);
+      width: clamp(210px, 27vh, 280px);
+      height: clamp(210px, 27vh, 280px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -240,7 +249,6 @@
       pointer-events: none;
     }
 
-    /* Contenedor SIN marco, SIN borde, SIN circulo: difuminado suave en el vacio cósmico */
     .holo-avatar-wrap {
       position: relative;
       width: 100%;
@@ -249,7 +257,6 @@
       align-items: center;
       justify-content: center;
       animation: holoFloat 3.2s ease-in-out infinite;
-      /* Mascara elíptica orgánica que disuelve el cuerpo en la oscuridad sin marco ni borde */
       -webkit-mask-image: radial-gradient(ellipse 46% 46% at 50% 45%, black 25%, rgba(0,0,0,0.7) 45%, transparent 64%);
       mask-image: radial-gradient(ellipse 46% 46% at 50% 45%, black 25%, rgba(0,0,0,0.7) 45%, transparent 64%);
     }
@@ -267,7 +274,6 @@
       transition: transform 0.12s ease-out;
     }
 
-    /* Líneas de escaneo holográficas sutiles */
     .holo-scanlines {
       position: absolute;
       inset: 0;
@@ -283,7 +289,6 @@
       opacity: 0.6;
     }
 
-    /* Rayo de luz de escáner digital vertical */
     .holo-beam {
       position: absolute;
       top: -100%;
@@ -306,7 +311,6 @@
       50% { transform: translateY(-7px) scale(1.02); }
     }
 
-    /* CONMUTACIÓN DINÁMICA: CUANDO EL SENSEI ESTÁ HABLANDO */
     body.is-speaking .holo-core-container {
       opacity: 0;
       transform: scale(0.45);
@@ -318,21 +322,18 @@
       transform: scale(1);
     }
 
-    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS ==================== */
-    /* Ubicada con precisión justo debajo del holograma, libre de los 511px del chat de TikTok */
+    /* ==================== 3. TARJETA DE RESPUESTA Y PREGUNTA DISCRETA ==================== */
     .holo-response-area {
-      position: absolute;
-      top: calc(var(--tiktok-top-safe) + 76px + clamp(210px, 28vh, 310px) + 6px);
-      left: 0;
-      right: 0;
+      position: relative;
       width: 100%;
-      padding: 0 20px;
+      max-width: 96%;
       z-index: 25;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
       gap: 6px;
+      flex-shrink: 0;
     }
 
     .holo-user-badge {
@@ -340,7 +341,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      font-size: 13.5px;
+      font-size: 13px;
       font-weight: 700;
       color: #ffd700;
       letter-spacing: 0.2px;
@@ -350,22 +351,47 @@
     .holo-user-badge .prefix-label {
       color: #ff2a6d;
       font-weight: 800;
-      font-size: 11px;
+      font-size: 10.5px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       background: rgba(255, 42, 109, 0.16);
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       border: 1px solid rgba(255, 42, 109, 0.35);
     }
 
+    /* PREGUNTA DEL USUARIO (FUENTE PEQUEÑA, DISCRETA Y ELEGANTE) */
+    .holo-user-question-box {
+      font-size: clamp(11px, 1.35vh, 13px);
+      font-weight: 500;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      border-radius: 6px;
+      padding: 3px 10px;
+      max-width: 92%;
+      margin: 0 auto;
+      line-height: 1.35;
+      font-style: italic;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-word;
+    }
+
+    .holo-user-question-box .q-icon {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    /* VEREDICTO DEL SENSEI (FUENTE GRANDE, CLARA Y PROMINENTE) */
     .holo-answer-box {
-      font-size: clamp(14px, 1.8vh, 20px);
-      font-weight: 600;
-      line-height: 1.4;
+      font-size: clamp(15px, 2.0vh, 21px);
+      font-weight: 700;
+      line-height: 1.42;
       color: #ffffff;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
-      max-width: 94%;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+      max-width: 96%;
       margin: 0 auto;
       word-break: break-word;
       overflow-wrap: break-word;
@@ -395,19 +421,25 @@
     /* Botón flotante para activar audio si el navegador bloquea autoplay */
     .audio-unlock-btn {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: calc(var(--tiktok-top-safe) + 12px);
+      right: 18px;
       z-index: 100;
-      background: rgba(255, 42, 109, 0.25);
-      border: 1px solid #ffd700;
+      background: rgba(255, 42, 109, 0.35);
+      border: 1.5px solid #ffd700;
       color: #ffd700;
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 6px 14px;
+      border-radius: 999px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       cursor: pointer;
       display: none;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.45);
+      animation: pulseBtn 1.5s infinite alternate;
+    }
+
+    @keyframes pulseBtn {
+      from { transform: scale(1); box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+      to { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 42, 109, 0.7); }
     }
   </style>
 </head>
@@ -418,55 +450,66 @@
     <!-- CANVAS FONDO ESTELAR DINÁMICO (POLVO DORADO Y CARMESÍ) -->
     <canvas id="starfield-canvas"></canvas>
 
-    <!-- 1. HEADER CENTRADO Y RESPONSIVO DEBAJO DEL TOP BAR DE TIKTOK (94px) -->
-    <header class="holo-header">
-      <h1 class="holo-title" id="hdr-title">⛩️ Pregúntale al Sensei</h1>
-      <p class="holo-subtitle" id="hdr-subtitle">Escribe tu dilema de amor, ex o conquista</p>
-      <div class="holo-meta-row">
-        <span class="live-dot-pulse"></span>
-        <span>EN VIVO</span>
-        <span id="live-clock">--:--:--</span>
-        <span>·</span>
-        <span id="live-viewers">12 en el Dojo</span>
-        <span>·</span>
-        <span class="holo-meta-tag" id="live-stats">Consultorio Activo</span>
-      </div>
-    </header>
+    <!-- CONTENEDOR FLEX VERTICAL ÚNICO (CERO SUPERPOSICIONES / NUNCA SE MONTAN) -->
+    <div class="stream-content-flow">
 
-    <!-- TOAST DE SALUDO FLOTANTE -->
-    <div class="holo-join-pill" id="join-pill" style="display: none;">
-      <span>👋</span>
-      <span id="join-pill-text">¡Bienvenido al dojo!</span>
-    </div>
+      <!-- 1. HEADER CENTRADO Y RESPONSIVO DEBAJO DEL TOP BAR DE TIKTOK (94px) -->
+      <header class="holo-header">
+        <h1 class="holo-title" id="hdr-title">⛩️ Pregúntale al Sensei</h1>
+        <p class="holo-subtitle" id="hdr-subtitle">Escribe tu dilema de amor, ex o conquista</p>
+        <div class="holo-meta-row">
+          <span class="live-dot-pulse"></span>
+          <span>EN VIVO</span>
+          <span id="live-clock">--:--:--</span>
+          <span>·</span>
+          <span id="live-viewers">12 en el Dojo</span>
+          <span>·</span>
+          <span class="holo-meta-tag" id="live-stats">Consultorio Activo</span>
+        </div>
+      </header>
 
-    <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO (SIN MARCOS NI CÍRCULOS) -->
-    <div class="holo-stage">
-
-      <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) -->
-      <div class="holo-core-container" id="holo-core">
-        <canvas id="holo-orb-canvas" width="400" height="400"></canvas>
+      <!-- TOAST DE SALUDO FLOTANTE -->
+      <div class="holo-join-pill" id="join-pill" style="display: none;">
+        <span>👋</span>
+        <span id="join-pill-text">¡Bienvenido al dojo!</span>
       </div>
 
-      <!-- B) EL SENSEI HOLOGRÁFICO HABLANDO (SILUETA FLOTANTE DIFUMINADA SIN BORDE) -->
-      <div class="holo-sensei-container" id="holo-sensei">
-        <div class="holo-avatar-wrap">
-          <div class="holo-scanlines"></div>
-          <div class="holo-beam"></div>
-          <img id="holo-avatar-img" class="holo-avatar-img" src="/assets/logo_circle.png" alt="El Sensei">
+      <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO -->
+      <div class="holo-stage">
+        <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO EN REPOSO -->
+        <div class="holo-core-container" id="holo-core">
+          <canvas id="holo-orb-canvas" width="400" height="400"></canvas>
+        </div>
+
+        <!-- B) EL SENSEI HOLOGRÁFICO HABLANDO (SILUETA FLOTANTE DIFUMINADA) -->
+        <div class="holo-sensei-container" id="holo-sensei">
+          <div class="holo-avatar-wrap">
+            <div class="holo-scanlines"></div>
+            <div class="holo-beam"></div>
+            <img id="holo-avatar-img" class="holo-avatar-img" src="/assets/logo_circle.png" alt="El Sensei">
+          </div>
         </div>
       </div>
 
-    </div>
+      <!-- 3. TARJETA DE RESPUESTA: PREGUNTA PEQUEÑA Y RESPUESTA DESTACADA -->
+      <div class="holo-response-area">
+        <div class="holo-user-badge" id="resp-user-badge">
+          <span class="prefix-label" id="resp-prefix">ÚLTIMA RESPUESTA</span>
+          <span id="resp-username">@espectador</span>
+        </div>
 
-    <!-- 3. TARJETA DE RESPUESTA / SUBTÍTULOS (SOBRE LA LÍNEA DE LOS 511px DEL CHAT) -->
-    <div class="holo-response-area">
-      <div class="holo-user-badge" id="resp-user-badge">
-        <span class="prefix-label" id="resp-prefix">ÚLTIMA RESPUESTA</span>
-        <span id="resp-username">@espectador</span>
+        <!-- Pregunta del usuario (EN LETRA PEQUEÑA Y DISCRETA) -->
+        <div class="holo-user-question-box" id="resp-user-question" style="display: none;">
+          <span class="q-icon">💬</span>
+          <span class="q-text" id="resp-user-question-text">«Pregunta del usuario»</span>
+        </div>
+
+        <!-- Veredicto del Sensei (EN LETRA GRANDE Y DESTACADA) -->
+        <div class="holo-answer-box" id="resp-text">
+          Deja tu caso de amor o pareja en los comentarios y te daré mi veredicto en directo.
+        </div>
       </div>
-      <div class="holo-answer-box" id="resp-text">
-        Deja tu caso de amor o pareja en los comentarios y te daré mi veredicto en directo.
-      </div>
+
     </div>
 
     <!-- ZONA INFERIOR LIBRE PARA EL CHAT DE TIKTOK LIVE (~511px) -->
@@ -726,7 +769,13 @@
     }
 
     function desbloquearAudio() {
-      getAudioContext();
+      const ctx = getAudioContext();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      if (speechAudio) {
+        speechAudio.play().then(() => speechAudio.pause()).catch(() => {});
+      }
       if (bgMusic) {
         bgMusic.volume = 0.04;
         bgMusic.play().catch(() => {});
@@ -734,7 +783,9 @@
       if (btnUnlock) btnUnlock.style.display = "none";
     }
 
-    document.addEventListener("click", () => desbloquearAudio(), { once: true });
+    document.addEventListener("click", () => desbloquearAudio());
+    document.addEventListener("touchstart", () => desbloquearAudio());
+    document.addEventListener("keydown", () => desbloquearAudio());
 
     // ==================== 6. POLLING DE ESTADO EN TIEMPO REAL ====================
     const hdrTitle = document.getElementById("hdr-title");
@@ -742,6 +793,8 @@
     const respPrefix = document.getElementById("resp-prefix");
     const respUsername = document.getElementById("resp-username");
     const respText = document.getElementById("resp-text");
+    const respQuestionBox = document.getElementById("resp-user-question");
+    const respQuestionText = document.getElementById("resp-user-question-text");
     const joinPill = document.getElementById("join-pill");
     const joinPillText = document.getElementById("join-pill-text");
 
@@ -799,7 +852,7 @@
           reproducirAudioSensei(`/api/live-audio?v=${audioVer}`);
         }
 
-        // 5. Renderizado de Texto
+        // 5. Renderizado de Texto con Pregunta Pequeña y Respuesta Prominente
         const phase = data.status_phase || "esperando";
         let u = (data.active_user || "espectador").trim();
         let q = (data.active_question || "").trim();
@@ -808,16 +861,38 @@
         if (phase === "pensando") {
           respPrefix.textContent = "CONSULTA EN VIVO";
           respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
+          if (respQuestionBox && respQuestionText) {
+            respQuestionBox.style.display = "inline-flex";
+            respQuestionText.textContent = q ? `«${q}»` : "Analizando dilema...";
+          }
           respText.className = "holo-answer-box";
-          respText.textContent = q ? `«${q}»` : "Analizando dilema...";
+          respText.textContent = "El Sensei está analizando tu caso con sabiduría...";
         } else if (phase === "respondiendo" || phase === "leyendo" || phase === "soporte_escrito") {
           respPrefix.textContent = speakingNow ? "RESPONDIENDO" : "ÚLTIMA RESPUESTA";
           respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
+
+          // Mostrar la pregunta del usuario en letra pequeña
+          if (respQuestionBox && respQuestionText && q) {
+            respQuestionBox.style.display = "inline-flex";
+            respQuestionText.textContent = `«${q}»`;
+          } else if (respQuestionBox) {
+            respQuestionBox.style.display = "none";
+          }
+
+          // Limpiar prefijo repetitivo en el texto de respuesta principal para que solo quede el consejo
+          let cleanAnswer = a;
+          if (q && cleanAnswer.includes("«") && cleanAnswer.includes("»")) {
+            cleanAnswer = cleanAnswer.replace(/^.*?»(?:\.\.\.|\.)?\s*(?:Escucha bien:\s*)?/, "").trim();
+          }
+          if (!cleanAnswer) cleanAnswer = a;
+
           respText.className = speakingNow ? "holo-answer-box is-speaking-text" : "holo-answer-box";
           if (u.includes("👑")) respText.classList.add("is-vip");
-          respText.textContent = a || q || "El Sensei está compartiendo su veredicto.";
+          respText.textContent = cleanAnswer || "El Sensei está compartiendo su veredicto.";
         } else {
+          // Fase esperando
           respPrefix.textContent = "ÚLTIMA RESPUESTA";
+          if (respQuestionBox) respQuestionBox.style.display = "none";
           if (a) {
             respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
             respText.className = "holo-answer-box";

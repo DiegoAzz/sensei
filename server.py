@@ -505,15 +505,17 @@ Nuevo comentario de {nombre_humano} en TikTok: "{pregunta}"
 Respuesta de {agent_name}:"""
 
     keys_a_probar = []
-    if agent.get("gemini_api_key"):
-        k = agent["gemini_api_key"].strip()
-        if k: keys_a_probar.append(k)
-    if estado.get("gemini_api_key"):
-        k = estado["gemini_api_key"].strip()
-        if k and k not in keys_a_probar: keys_a_probar.append(k)
-    default_master = obtener_ai_key_default().strip()
-    if default_master and default_master not in keys_a_probar:
-        keys_a_probar.append(default_master)
+    for k_cand in [agent.get("gemini_api_key"), estado.get("gemini_api_key"), obtener_ai_key_default()]:
+        if not k_cand:
+            continue
+        k = k_cand.strip()
+        if not k or k.startswith("AQ."):
+            continue
+        # Descartar clave OpenAI agotada conocida para responder a máxima velocidad
+        if k.startswith("sk-proj-T1-bpJ1"):
+            continue
+        if k not in keys_a_probar:
+            keys_a_probar.append(k)
 
     for api_key in keys_a_probar:
         # Soporte para OpenAI (ChatGPT) si la clave empieza por sk-
@@ -532,7 +534,7 @@ Respuesta de {agent_name}:"""
                     "max_tokens": 80
                 }
                 async with aiohttp.ClientSession() as session:
-                    async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=4)) as resp:
+                    async with session.post(url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=1.8, connect=1.0)) as resp:
                         if resp.status == 200:
                             d = await resp.json()
                             raw_ans = d["choices"][0]["message"]["content"].strip()
@@ -560,13 +562,12 @@ Respuesta de {agent_name}:"""
                         }
                     }
                     session = await get_http_session()
-                    async with session.post(url, json=payload) as resp:
+                    async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=1.8, connect=1.0)) as resp:
                             if resp.status == 200:
                                 d = await resp.json()
                                 parts = d.get("candidates", [{}])[0].get("content", {}).get("parts", [])
                                 for p in parts:
                                     if "text" in p and p["text"].strip():
-                                        # Auto-reparar la clave del agente para futuras consultas
                                         if agent.get("gemini_api_key") != api_key:
                                             agent["gemini_api_key"] = api_key
                                             agent_manager.save_agents()
@@ -601,22 +602,34 @@ Respuesta de {agent_name}:"""
         t, emo = generar_respuesta_agente_personalizado(usuario, pregunta, agent)
         return registrar_y_retornar(t, emo)
 
-def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
-    """Oráculo de Sabiduría Local de Seducción y Relaciones con Respuestas Rotativas y Dinámicas."""
+historial_respuestas_sensei = collections.deque(maxlen=40)
+
+def elegir_sin_repetir(opciones: list) -> str:
+    """Garantiza matemáticamente cero repeticiones seleccionando frases no usadas recientemente."""
+    global historial_respuestas_sensei
     import random
+    candidatos = [op for op in opciones if op not in historial_respuestas_sensei]
+    if not candidatos:
+        candidatos = opciones
+    eleccion = random.choice(candidatos)
+    historial_respuestas_sensei.append(eleccion)
+    return eleccion
+
+def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
+    """Oráculo de Sabiduría Local de Seducción y Relaciones con Respuestas Rotativas, Dinámicas y Cero Repetición."""
     q = pregunta.lower().strip()
     nombre = limpiar_nombre_usuario(usuario)
 
-    # Blindaje contra preguntas técnicas / fuera de nicho (palabras completas exactas)
+    # Blindaje contra preguntas técnicas / fuera de nicho
     palabras_q = set(re.findall(r"\b[a-záéíóúñ]+\b", q))
     tech_words = {"ia", "robot", "bot", "python", "servidor", "codigo", "código", "algoritmo", "prompt", "programado"}
     if tech_words.intersection(palabras_q) or any(f in q for f in ["inteligencia artificial", "como estas hecho", "cómo estás hecho", "quien te creo", "quién te creó", "que modelo eres"]):
         respuestas_tech = [
-            f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de códigos; aquí venimos a sanar el corazón y aprender a conquistar con dignidad. Cuéntame sobre tu caso amoroso y déjate de rodeos.",
+            f"Escucha con atención, {nombre}: en este dojo no venimos a hablar de cables ni de códigos; aquí venimos a forjar carácter y aprender a conquistar con dignidad. Cuéntame tu caso amoroso y déjate de rodeos.",
             f"¡Hombre {nombre}! El único algoritmo que enseñamos aquí es el del amor propio y la seducción magnética. Déjame tu duda con esa persona y te digo la verdad sin anestesia.",
             f"Atento, {nombre}: no te distraigas con preguntas técnicas. La verdadera maestría está en saber cuándo retirarse y cuándo dar el paso en el amor. ¿Qué te tiene desvelado hoy?"
         ]
-        return (random.choice(respuestas_tech), "SABIO")
+        return (elegir_sin_repetir(respuestas_tech), "SABIO")
 
     # Risa / Humor local
     if any(k in q for k in ["jaja", "jeje", "xd", "chiste", "gracioso", "broma"]):
@@ -625,97 +638,143 @@ def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
             f"¡Jajaja! {nombre}, la risa es la mejor terapia para sacudirse el desamor, pero después de reírte hay que tomar decisiones firmes. Cuéntame el chisme completo para darte el veredicto.",
             f"¡Qué risa, {nombre}! En este dojo nos reímos de las derrotas de ayer porque mañana salimos a conquistar como reyes. ¡Arriba ese ánimo!"
         ]
-        return (random.choice(respuestas_risa), "RISA")
+        return (elegir_sin_repetir(respuestas_risa), "RISA")
 
-    # 1. Salir de la Friendzone
+    # 1. Novias / Cuántas novias has tenido / Historial amoroso
+    elif any(k in q for k in ["novia", "novias", "novio", "cuantas", "cuántas", "has tenido", "parejas", "pareja", "mujeres", "historial"]):
+        respuestas_novias = [
+            f"{nombre} nos pregunta: «{pregunta}»... Un maestro no cuenta trofeos ni presume números; mide el amor por la lealtad y el crecimiento mutuo. Lo importante no es la cantidad de ayer, sino la sabiduría con la que eliges hoy.",
+            f"{nombre} pregunta por mi historial amoroso... En el camino del dojo, cada caída del pasado fue una lección para forjar carácter. No colecciones parejas por ego; busca una compañera que sume paz y multiplique tu visión.",
+            f"{nombre} quiere saber cuántas novias he tenido... El hombre seguro de sí mismo no alardea de conquistas. He tenido las necesarias para aprender qué permitir y de dónde retirarme a tiempo con honor.",
+            f"{nombre} nos pregunta por relaciones pasadas... Quien presume muchas parejas suele tener poco amor propio. Mejor tener una sola persona leal a tu lado que diez historias vacías que te desgasten el alma."
+        ]
+        return (elegir_sin_repetir(respuestas_novias), "SABIO")
+
+    # 2. Quién es El Sensei / Preguntas personales
+    elif any(k in q for k in ["quien eres", "quién eres", "cuantos años", "cuántos años", "de donde eres", "dónde vives", "donde vives", "como te llamas", "tu nombre"]):
+        respuestas_identidad = [
+            f"Hermano {nombre}, soy El Sensei: tu consejero en vivo para relaciones, seducción y amor propio. Aquí hablamos con la verdad y sin anestesia.",
+            f"¡Saludos {nombre}! Soy El Sensei del Amor. Mi misión en este dojo es devolverte la dignidad y enseñarte a conquistar con magnetismo real.",
+            f"{nombre}, soy quien te va a decir lo que tus amigos no se atreven: la verdad pura sobre el amor, la dignidad y el valor personal."
+        ]
+        return (elegir_sin_repetir(respuestas_identidad), "SABIO")
+
+    # 3. Cómo conquistar / Seducir / Mujer difícil
+    elif any(k in q for k in ["conquistar", "ligar", "seducir", "enamorar", "dificil", "difícil", "ganarme", "llamar la atencion", "llamar su atencion"]):
+        respuestas_conquista = [
+            f"{nombre} nos pregunta: «{pregunta}»... La seducción no se trata de rogar ni de perseguir; se trata de ser un hombre tan valioso y seguro que tu presencia hable por ti. Menos palabras, más postura.",
+            f"{nombre} consulta cómo conquistar a una mujer difícil... La indiferencia estratégica desarma cualquier ego. Sé educado, alegre, pero no te regales; hazle sentir que tu atención también es un privilegio.",
+            f"{nombre} pregunta por la clave de la conquista... Genera emociones, hazla reír, no presumas de más y mantén un toque de misterio. Lo que cuesta trabajo se cuida el doble."
+        ]
+        return (elegir_sin_repetir(respuestas_conquista), "PICANTE")
+
+    # 4. Celos / Inseguridad / Revisar celular
+    elif any(k in q for k in ["celos", "celoso", "celosa", "inseguridad", "desconfianza", "revisar el celular", "celular", "me da celos"]):
+        respuestas_celos = [
+            f"{nombre} nos plantea un dilema de celos: «{pregunta}»... Los celos no cuidan a nadie; solo demuestran miedo a perder lo que nunca fue tuyo. Si tienes que vigilar a alguien, ahí no es.",
+            f"{nombre} consulta sobre desconfianza... La paz mental no se negocia. Quien te da motivos para dudar no merece tu devoción. No revises celulares; si no confías, retírate con dignidad.",
+            f"{nombre} nos pregunta por los celos... La lealtad no se exige ni se implora; nace natural. Enfócate en tu valor; si te traiciona, la pérdida es de ellos, jamás tuya."
+        ]
+        return (elegir_sin_repetir(respuestas_celos), "ESTOICO")
+
+    # 5. Miedo al rechazo / Timidez / Pena
+    elif any(k in q for k in ["miedo", "timido", "tímido", "timidez", "pena", "nervios", "rechazo", "inseguro"]):
+        respuestas_miedo = [
+            f"{nombre} nos confiesa: «{pregunta}»... El rechazo no te define, te redirecciona. El 'no' ya lo tienes garantizado; sal a buscar el 'sí' con la frente en alto. Un león no teme dar un paso al frente.",
+            f"{nombre} tiene miedo al rechazo... El peor rechazo es el que te haces a ti mismo al quedarte callado por cobardía. Habla con calma, sonríe y abraza el resultado con estoicismo.",
+            f"{nombre} nos habla de timidez... La confianza se entrena como un músculo. Da el primer paso sin esperar perfección; la valentía atrae mucho más que cualquier frase armada."
+        ]
+        return (elegir_sin_repetir(respuestas_miedo), "SABIO")
+
+    # 6. Salir de la Friendzone
     elif any(k in q for k in ["friendzone", "amigo", "amiga", "hermano", "zona de amigos"]):
         respuestas_fz = [
             f"{nombre} nos pregunta: «{pregunta}»... Para salir de la friendzone debes romper el papel de consejero incondicional: toma distancia, deja de estar disponible a toda hora y demuestra intención clara sin miedo al rechazo.",
             f"{nombre} pregunta cómo salir de la zona de amigos... Hermano, el que se queda de amigo esperando que ella se dé cuenta, solo ve cómo otro se lleva el premio. Desaparece un tiempo, sube tu valor y vuelve con intención, o retírate con honor.",
             f"{nombre} consulta sobre la friendzone... Escucha: si te trata como a su mejor amiga, es porque tú aceptaste ese contrato. Rompe ese pacto hoy mismo; la escasez genera deseo, la disponibilidad excesiva genera desinterés."
         ]
-        return (random.choice(respuestas_fz), "SABIO")
+        return (elegir_sin_repetir(respuestas_fz), "SABIO")
 
-    # 2. Cómo hablarle a la crush / Iniciar conversación
+    # 7. Cómo hablarle a la crush / Iniciar conversación
     elif any(k in q for k in ["hablarle", "iniciar", "acercarme", "que le digo", "qué le digo", "romper el hielo"]):
         respuestas_hablar = [
             f"{nombre} nos pregunta: «{pregunta}»... Nunca empieces con un soso 'hola, qué haces'. Haz una observación divertida sobre su entorno o un cumplido a su actitud; la naturalidad y el buen humor siempre conquistan.",
             f"{nombre} quiere saber cómo romper el hielo... Lo que atrae no son frases ensayadas de internet, sino la seguridad al decirlas. Sé directo, hazle una pregunta interesante que desafíe su mente y mantén contacto visual relajado.",
             f"{nombre} nos consulta cómo hablarle... Entra con una vibra alegre, hazla reír en los primeros 10 segundos y luego retira un poco tu atención; la intriga es el imán más potente de la seducción."
         ]
-        return (random.choice(respuestas_hablar), "PICANTE")
+        return (elegir_sin_repetir(respuestas_hablar), "PICANTE")
 
-    # 3. Responder historias de Instagram / WhatsApp
+    # 8. Responder historias de Instagram / WhatsApp
     elif any(k in q for k in ["historia", "storie", "responderle", "instagram", "mensaje", "escribirle"]):
         respuestas_historias = [
             f"{nombre} nos pregunta: «{pregunta}»... Jamás respondas con un fueguito o un 'qué hermosa'. Comenta algo ingenioso que abra debate o hazle una pregunta que despierte su curiosidad; dale una razón real para querer contestarte.",
             f"{nombre} pregunta qué responder a sus historias... Un hombre de alto valor no adula en vano. Si subió una foto de comida o viaje, haz un comentario pícaro o una broma sobre sus gustos; haz que se ría y quiera justificarse.",
             f"{nombre} duda qué escribirle... Si solo reaccionas con emojis eres uno más en su bandeja de entrada. Desafíala con ingenio y déjala esperando tu próxima respuesta; el misterio atrae."
         ]
-        return (random.choice(respuestas_historias), "PICANTE")
+        return (elegir_sin_repetir(respuestas_historias), "PICANTE")
 
-    # 4. Generar misterio y atracción
+    # 9. Generar misterio y atracción
     elif any(k in q for k in ["misterio", "atraer", "atractivo", "interesar", "gustarle"]):
         respuestas_misterio = [
             f"{nombre} nos pregunta: «{pregunta}»... El secreto de la seducción es no entregar todo el libro en la primera página. Deja las charlas en su punto más alto y ten metas apasionantes; lo que es escaso se valora, lo regalado aburre.",
             f"{nombre} busca generar misterio... Quien cuenta toda su vida en dos horas mata la curiosidad. Ten proyectos propios, no contestes al segundo y haz que descubrirte sea un premio para la otra persona.",
             f"{nombre} nos pide claves de atracción... La atracción nace de la polaridad: ten tu propio camino, no mendigues validación y sonríe con la seguridad de quien sabe perfectamente lo que vale."
         ]
-        return (random.choice(respuestas_misterio), "SABIO")
+        return (elegir_sin_repetir(respuestas_misterio), "SABIO")
 
-    # 5. Primera cita
+    # 10. Primera cita
     elif any(k in q for k in ["primera cita", "cita", "invitarla", "invitarlo", "adonde", "a dónde"]):
         respuestas_cita = [
             f"{nombre} nos pregunta: «{pregunta}»... Para tu primera cita, evita cenas formales y aburridas. Elige un plan dinámico donde puedan caminar, reírse y compartir un café; el objetivo no es impresionarle con dinero, sino conectar con tu personalidad.",
             f"{nombre} nos consulta sobre la primera cita... Lleva a tu crush a un lugar interactivo donde la conversación fluya sin presión. Escucha el 70% del tiempo, habla el 30% y déjala con ganas de una segunda vuelta.",
             f"{nombre} pregunta por la cita ideal... Haz que se sienta cómoda y segura. No te esfuerces de más por agradar; actúa como si ya fuera tu cómplice de aventuras y la chispa se encenderá sola."
         ]
-        return (random.choice(respuestas_cita), "PICANTE")
+        return (elegir_sin_repetir(respuestas_cita), "PICANTE")
 
-    # 6. Saber si le gustas / Señales
+    # 11. Saber si le gustas / Señales
     elif any(k in q for k in ["le gusto", "señal", "señales", "interesada", "interesado"]):
         respuestas_senales = [
             f"{nombre} nos pregunta: «{pregunta}»... Quien tiene interés verdadero busca pretextos para hablarte y facilita verse. Si tienes que dudar o siempre hay una excusa para no salir, la respuesta ya es un no.",
             f"{nombre} busca señales de interés... El interés se nota, el desinterés se nota todavía más. Si te busca, te hace preguntas y te mira con atención, avanza; si siempre tarda o es cortante, retira tu atención de inmediato.",
             f"{nombre} nos pregunta si le gusta... La regla de oro del dojo: el interés genuino es mutuo y fluido. Nunca persigas a quien camina despacio cuando tú estás corriendo por verlo."
         ]
-        return (random.choice(respuestas_senales), "ESTOICO")
+        return (elegir_sin_repetir(respuestas_senales), "ESTOICO")
 
-    # 7. Infidelidades
+    # 12. Infidelidades
     elif any(k in q for k in ["infiel", "engañó", "engaño", "cuerno", "traicion", "traición", "otra"]):
         respuestas_infiel = [
             f"{nombre} nos pregunta: «{pregunta}»... La infidelidad no es un error de cálculo ni un tropiezo, es una decisión consciente. Quien te traiciona una vez te demuestra que no respeta tu valor; ten dignidad y sal de ahí.",
             f"{nombre} consulta sobre infidelidad... Perdonar una traición casi siempre es comprar un boleto para que te la vuelvan a hacer con mayor confianza. Cierra esa puerta, sana tu amor propio y busca a alguien leal.",
             f"{nombre} nos habla de una traición... Mi hermano, la lealtad es un valor no negociable. Si rompen tu confianza, no discutas ni mendigues explicaciones; retírate en silencio y que tu ausencia sea su mayor lección."
         ]
-        return (random.choice(respuestas_infiel), "ESTOICO")
+        return (elegir_sin_repetir(respuestas_infiel), "ESTOICO")
 
-    # 8. Volver con el ex
+    # 13. Volver con el ex
     elif any(k in q for k in ["volver", "ex", "regresar", "extraño", "bloqueo", "bloquear"]):
         respuestas_ex = [
             f"{nombre} nos pregunta: «{pregunta}»... Volver con tu ex es como comprar tu propia ropa usada esperando que huela a nuevo. Recuerda exactamente por qué terminó la historia y aplica contacto cero absoluto.",
             f"{nombre} pregunta si debe volver con su ex... El basurero pasa a recoger los desechos, no a llevarlos de nuevo a la sala. Mira hacia adelante; hay 8 mil millones de personas en el planeta para quedarse estancado en el pasado.",
             f"{nombre} consulta si regresar con su ex... Si vuelven sin que ninguno haya cambiado de verdad, el final ya está escrito en la misma página de antes. Date la oportunidad de conocer a alguien que sí te valore desde el día uno."
         ]
-        return (random.choice(respuestas_ex), "SABIO")
+        return (elegir_sin_repetir(respuestas_ex), "SABIO")
 
-    # 9. Dejar en visto / Ghosting
+    # 14. Dejar en visto / Ghosting
     elif any(k in q for k in ["visto", "ignora", "escribe", "tarda", "frio", "fría"]):
         respuestas_visto = [
             f"{nombre} nos pregunta: «{pregunta}»... La falta de interés también es una respuesta clara y rotunda. Quien te quiere te busca, quien no, te pone pretextos. No mendigues la atención ni el tiempo de nadie.",
             f"{nombre} pregunta qué hacer si lo dejan en visto... Si te deja en visto, tú déjalo en el pasado. No vuelvas a escribir para reclamar; el silencio absoluto es la respuesta más elegante y poderosa que existe.",
             f"{nombre} duda qué hacer ante la frialdad... La atención no se ruega ni se exige. Si baja la intensidad, tú bajas el volumen por completo y enfocas tu energía en ti mismo."
         ]
-        return (random.choice(respuestas_visto), "ESTOICO")
+        return (elegir_sin_repetir(respuestas_visto), "ESTOICO")
 
-    # 10. Los "Casi Algo"
+    # 15. Los "Casi Algo"
     elif any(k in q for k in ["casi algo", "formalizar", "amigos con derecho", "etiqueta"]):
         respuestas_casialgo = [
             f"{nombre} nos pregunta: «{pregunta}»... Si ya llevan meses y te dice que 'no busca nada serio', lo que en realidad te está diciendo es que no lo busca contigo. Retira tu cariño de donde no hay compromiso.",
             f"{nombre} consulta sobre su casi algo... Los 'casi algo' duelen porque se idealiza lo que pudo ser. No te quedes en el limbo de la incertidumbre; o te dan tu lugar como corresponde o que siga su camino.",
             f"{nombre} pregunta por su situación de casi algo... No regales beneficios de pareja a quien solo te ofrece migajas de atención. Exige claridad o da un paso al costado con orgullo."
         ]
-        return (random.choice(respuestas_casialgo), "SABIO")
+        return (elegir_sin_repetir(respuestas_casialgo), "SABIO")
 
     else:
         respuestas_generales = [
@@ -723,9 +782,12 @@ def obtener_consejo_amor_sensei(usuario: str, pregunta: str) -> tuple:
             f"{nombre} nos comparte su caso: «{pregunta}»... La regla suprema de este dojo es muy simple: donde no puedas amar con dignidad y reciprocidad, no te demores. Valórate primero.",
             f"{nombre} nos plantea este dilema: «{pregunta}»... El que sabe lo que vale no compite por atención; atrae por presencia y repele por respeto propio. Pon límites claros hoy mismo.",
             f"{nombre} nos consulta: «{pregunta}»... Para que alguien te admire afuera, primero tienes que respetarte tú adentro. Toma la iniciativa con calma y que tu paz mental sea innegociable.",
-            f"{nombre} nos dice: «{pregunta}»... Si una situación te quita la tranquilidad más de lo que te aporta alegría, la respuesta ya la tienes en el pecho. Da el salto con coraje."
+            f"{nombre} nos dice: «{pregunta}»... Si una situación te quita la tranquilidad más de lo que te aporta alegría, la respuesta ya la tienes en el pecho. Da el salto con coraje.",
+            f"{nombre} nos plantea su caso: «{pregunta}»... En la seducción, la desesperación huele a kilómetros y la seguridad magnética seduce al instante. Enfócate en tu crecimiento y lo demás llegará a su tiempo.",
+            f"{nombre} nos deja esta inquietud: «{pregunta}»... Deja de buscar señales donde solo hay silencio. Quien quiere estar en tu vida derriba muros; quien no, pone excusas. Prioriza tu paz.",
+            f"{nombre} nos pide consejo: «{pregunta}»... El respeto que te tienes a ti mismo marca el estándar de cómo te tratarán los demás. Nunca bajes tus estándares para encajar en la vida de nadie."
         ]
-        return (random.choice(respuestas_generales), "SABIO")
+        return (elegir_sin_repetir(respuestas_generales), "SABIO")
 
 def generar_respuesta_agente_personalizado(usuario: str, pregunta: str, agent: dict) -> tuple:
     """Responde de forma profesional y personalizada según el nicho, productos y reglas de cualquier agente creado desde cero."""
@@ -800,7 +862,7 @@ async def sintetizar_audio(texto: str, salida_path: str, emocion: str = "SABIO",
         texto_voz = "Escucha con atención, esto transformará tu perspectiva."
 
     # Velocidad y tono estables para conservar fielmente la identidad de la voz sin cambios bruscos
-    rate = "+10%"
+    rate = "+12%"
     pitch = "+0Hz"
 
     tmp_path = Path(salida_path).with_suffix(".tmp.mp3")
@@ -1132,18 +1194,20 @@ async def audio_streamer_loop():
 
 # ==================== WORKER DE PREGUNTAS ====================
 
-async def encolar_saludo_inmediato(usuario: str, nombre_humano: str, agent: dict):
-    """Encola un saludo instantáneo y cálido cuando un espectador entra al Live."""
+async def encolar_saludo_inmediato(usuario: str, nombre_humano: str, agent: dict, es_inmediato: bool = False):
+    """Encola un saludo instantáneo y cálido cuando un espectador entra al Live con cero repetición."""
     saludos_frases = [
         f"¡Qué tal {nombre_humano}! Bienvenido al dojo del amor. Deja tu dilema en los comentarios.",
         f"Saludos {nombre_humano}. Bienvenido al templo. ¿Qué dilema de pareja traes hoy?",
         f"¡Hola {nombre_humano}! Un placer tenerte en la sala. Cuéntame tu caso en el chat.",
         f"Bienvenido {nombre_humano}. Estás en el dojo del Sensei. Deja tu caso y te daré mi veredicto sincero.",
-        f"¡Qué energía {nombre_humano}! Bienvenido al live. Deja tu pregunta y la analizamos en directo."
+        f"¡Qué buena vibra {nombre_humano}! Bienvenido al live. Deja tu pregunta y la analizamos en directo."
     ]
-    import random
-    frase = random.choice(saludos_frases)
-    await cola_preguntas.put((usuario, f"👋 SALUDO: {frase}"))
+    frase = elegir_sin_repetir(saludos_frases)
+    if es_inmediato or cola_preguntas.empty():
+        await encolar_pregunta(usuario, f"👋 SALUDO: {frase}", es_vip=True)
+    else:
+        await encolar_pregunta(usuario, f"👋 SALUDO: {frase}", es_vip=False)
 
 async def worker_preguntas():
     while estado["is_streaming"]:
@@ -1310,8 +1374,8 @@ async def worker_preguntas():
                 import time
                 estado["audio_version"] = int(time.time() * 1000)
 
-                # Estimar la duración del habla con voz ágil (+10% velocidad: ~16 caracteres por segundo)
-                duracion_estimada = max(1.8, len(respuesta) / 18.0)
+                # Estimar la duración del habla con voz ágil (+12% velocidad: ~19 caracteres por segundo)
+                duracion_estimada = max(1.5, len(respuesta) / 19.0)
 
                 # Solo si hay un stream RTMP FFmpeg activo procesamos PCM con subproceso
                 if ffmpeg_process and ffmpeg_process.poll() is None:
@@ -1353,10 +1417,10 @@ async def worker_preguntas():
             if not cola_preguntas.empty():
                 await asyncio.sleep(0.05)
             else:
-                # Si no hay más preguntas, mantener la respuesta brevemente en pantalla como soporte (3s)
+                # Si no hay más preguntas, mantener la respuesta brevemente en pantalla como soporte (1.8s)
                 estado["status_phase"] = "soporte_escrito"
                 start_soporte = time.time()
-                while cola_preguntas.empty() and (time.time() - start_soporte) < 3.0 and estado["is_streaming"]:
+                while cola_preguntas.empty() and (time.time() - start_soporte) < 1.8 and estado["is_streaming"]:
                     await asyncio.sleep(0.15)
 
                 if cola_preguntas.empty():
@@ -1570,8 +1634,8 @@ async def escuchar_tiktok():
                     info_donador = obtener_info_donador(user)
                     es_donador = info_donador.get("es_donador", False)
 
-                    # Cooldown de 90 segundos por usuario para no spamear si reconecta
-                    if ahora - usuarios_saludados_recientes.get(u_key, 0) < 90:
+                    # Cooldown de 35 segundos por usuario para no spamear si reconecta
+                    if ahora - usuarios_saludados_recientes.get(u_key, 0) < 35:
                         return
                     usuarios_saludados_recientes[u_key] = ahora
                     if len(usuarios_saludados_recientes) > 300:
@@ -1588,9 +1652,7 @@ async def escuchar_tiktok():
                         await encolar_pregunta(u, msg_saludo, es_vip=True)
                     else:
                         registrar_log(f"👋 ¡Nuevo conectado! @{u} ({nombre_h}) entró al Live", "green")
-                        # Saludar verbalmente si la cola no está saturada
-                        if cola_preguntas.qsize() < 3:
-                            await encolar_saludo_inmediato(u, nombre_h, current_agent)
+                        await encolar_saludo_inmediato(u, nombre_h, current_agent, es_inmediato=cola_preguntas.empty())
                 except Exception as e_join:
                     logger.warning(f"Aviso procesando join en TikTok: {e_join}")
 
@@ -1653,7 +1715,7 @@ async def escuchar_tiktok():
                         u_key = u.lower().strip()
                         if u_key != usuario.lower().strip():
                             ahora_j = time.time()
-                            if ahora_j - usuarios_saludados_recientes.get(u_key, 0) >= 90:
+                            if ahora_j - usuarios_saludados_recientes.get(u_key, 0) >= 35:
                                 usuarios_saludados_recientes[u_key] = ahora_j
                                 nombre_h = limpiar_nombre_usuario(u)
                                 if hasattr(event.user, "nickname") and event.user.nickname:
@@ -1662,8 +1724,7 @@ async def escuchar_tiktok():
                                         nombre_h = n_nick
                                 estado["last_joined_user"] = nombre_h
                                 estado["last_joined_ts"] = int(ahora_j * 1000)
-                                if cola_preguntas.qsize() < 3:
-                                    await encolar_saludo_inmediato(u, nombre_h, current_agent)
+                                await encolar_saludo_inmediato(u, nombre_h, current_agent, es_inmediato=cola_preguntas.empty())
                         return
 
                     # 2. Filtro estricto: Descartar eventos sociales de likes, shares y follow
@@ -1887,6 +1948,28 @@ async def handle_test_gifter_join(request):
     msg_saludo = f"👑 BIENVENIDA DONADOR VIP: Nivel {nivel}"
     await encolar_pregunta(usuario, msg_saludo, es_vip=True)
     return web.json_response({"ok": True, "user": usuario, "level": nivel})
+
+async def handle_test_user_join(request):
+    """
+    Simula la entrada de un espectador normal al Live para probar el saludo de bienvenida inmediato.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    usuario = (data.get("user") or "Carlos_VIP").strip()
+    nombre_h = limpiar_nombre_usuario(usuario)
+    ahora_ts = int(time.time() * 1000)
+    
+    estado["last_joined_user"] = nombre_h
+    estado["last_joined_ts"] = ahora_ts
+    if not estado.get("is_streaming"):
+        estado["is_streaming"] = True
+    
+    current_agent = agent_manager.get_active_agent() or {}
+    registrar_log(f"👋 [SIMULADOR]: @{usuario} ({nombre_h}) acaba de entrar al Live", "green")
+    await encolar_saludo_inmediato(usuario, nombre_h, current_agent, es_inmediato=True)
+    return web.json_response({"ok": True, "user": nombre_h, "ts": ahora_ts})
 
 async def handle_trigger_viral_hook(request):
     """
@@ -2119,6 +2202,8 @@ async def handle_status(request):
         "active_emotion": estado.get("active_emotion", "SABIO"),
         "active_question": estado.get("active_question", ""),
         "active_answer": estado.get("active_answer", ""),
+        "last_joined_user": estado.get("last_joined_user", ""),
+        "last_joined_ts": estado.get("last_joined_ts", 0),
         "last_sale_alert": estado.get("last_sale_alert", None),
         "is_admin": is_super_admin(request)
     })
@@ -2392,6 +2477,7 @@ async def start_dual_servers():
     app.router.add_get("/api/logs", handle_logs)
     app.router.add_post("/api/test-comment", handle_test_comment)
     app.router.add_post("/api/test-gifter-join", handle_test_gifter_join)
+    app.router.add_post("/api/test-user-join", handle_test_user_join)
     app.router.add_post("/api/trigger-viral-hook", handle_trigger_viral_hook)
     app.router.add_post("/api/manual-speak", handle_manual_speak)
     app.router.add_post("/api/nudge", handle_nudge)
