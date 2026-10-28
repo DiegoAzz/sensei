@@ -765,6 +765,87 @@
       text-align: center;
       animation: popIn 0.3s ease-out;
     }
+  
+    /* ==================== CAPA DE CHISPAS DINÁMICAS (ANTI-ESTÁTICO TIKTOK) ==================== */
+    .sparks-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 12;
+      overflow: hidden;
+    }
+
+    .spark {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #ffd700;
+      box-shadow: 0 0 10px #ffd700, 0 0 20px #ff2a6d;
+      opacity: 0;
+      animation: floatSpark 4s infinite linear;
+    }
+
+    .spark:nth-child(1) { left: 15%; animation-duration: 3.5s; animation-delay: 0s; background: #00f0ff; box-shadow: 0 0 8px #00f0ff; }
+    .spark:nth-child(2) { left: 35%; animation-duration: 4.8s; animation-delay: 1.2s; background: #ffd700; }
+    .spark:nth-child(3) { left: 55%; animation-duration: 4.0s; animation-delay: 0.5s; background: #ff2a6d; box-shadow: 0 0 10px #ff2a6d; }
+    .spark:nth-child(4) { left: 75%; animation-duration: 5.2s; animation-delay: 2.1s; background: #00ff88; box-shadow: 0 0 8px #00ff88; }
+    .spark:nth-child(5) { left: 25%; animation-duration: 3.8s; animation-delay: 1.8s; background: #ffd700; }
+    .spark:nth-child(6) { left: 85%; animation-duration: 4.5s; animation-delay: 0.8s; background: #00f0ff; }
+    .spark:nth-child(7) { left: 45%; animation-duration: 5.0s; animation-delay: 2.5s; background: #ff2a6d; }
+    .spark:nth-child(8) { left: 65%; animation-duration: 4.2s; animation-delay: 1.0s; background: #ffd700; }
+
+    @keyframes floatSpark {
+      0% { transform: translateY(105vh) scale(0.6); opacity: 0; }
+      20% { opacity: 0.9; }
+      80% { opacity: 0.7; }
+      100% { transform: translateY(-5vh) scale(1.4); opacity: 0; }
+    }
+
+    /* Anillo giratorio de energía mística alrededor del Sensei */
+    .avatar-spin-ring {
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 2px dashed rgba(255, 215, 0, 0.45);
+      box-shadow: 0 0 18px rgba(255, 42, 109, 0.35);
+      animation: spinRing 12s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Pastilla flotante de Saludo Instantáneo a Nuevos Conectados */
+    .hud-join-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(255, 42, 109, 0.92), rgba(212, 175, 55, 0.92));
+      border: 1.5px solid #ffffff;
+      border-radius: 20px;
+      padding: 5px 14px;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: clamp(11.5px, 3.2vw, 13.5px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 42, 109, 0.6);
+      animation: popJoin 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 35;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      max-width: 90%;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @keyframes popJoin {
+      0% { transform: scale(0.7) translateY(-10px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
   </style>
 </head>
 <body>
@@ -775,6 +856,13 @@
     <div class="ambient-stream-bg"></div>
 
     <!-- CAPA 1: PRESENTADOR (VIDEOS HÍBRIDOS O AVATAR ESTÁTICO LEVITANDO) -->
+    
+    <!-- CAPA DE CHISPAS FLOTANTES ACTIVAS (PREVIENE DETECCIÓN DE LIVE ESTÁTICO EN TIKTOK) -->
+    <div class="sparks-layer">
+      <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
+      <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
+    </div>
+
     <div class="presenter-container">
       <video id="video-idle" class="presenter-video" loop muted playsinline autoplay style="display: none;"></video>
       <video id="video-talking" class="presenter-video" loop muted playsinline style="display: none;"></video>
@@ -782,6 +870,7 @@
       <!-- Capa de Avatar Estático Levitando (Siempre visible con El Sensei) -->
       <div id="avatar-static-layer" class="avatar-static-layer" style="display: flex;">
         <div class="avatar-orb-wrapper">
+          <div class="avatar-spin-ring"></div>
           <div class="avatar-halo-ring"></div>
           <div class="avatar-orb-glow"></div>
           <img id="avatar-static-img" class="avatar-orb-img" src="/assets/logo_sensei.jpg" alt="El Sensei">
@@ -850,6 +939,11 @@
 
       <!-- ==================== SUBTÍTULOS DINÁMICOS PROFESIONALES (TIPO CAPCUT / TIKTOK VIRAL) ==================== -->
       <div class="stream-subtitles-hud" id="stream-subtitles-hud">
+
+        <!-- 0. Toast de Saludo Instantáneo a Nuevos Conectados -->
+        <div class="hud-join-pill" id="card-join-toast" style="display: none;">
+          <span id="card-join-text">👋 ¡Bienvenido/a @usuario al dojo! Deja tu caso 👇</span>
+        </div>
 
         <!-- 1. Pastilla de Pregunta Compacta (1 sola línea) -->
         <div class="hud-question-pill" id="card-question" style="display: none;">
@@ -1040,6 +1134,66 @@
       }, 1250);
     }
 
+    
+    // ==================== MOTOR DE ANIMACIÓN DEL SENSEI (ANTI-ESTÁTICO TIKTOK) ====================
+    let avatarAnimInterval = null;
+    let idleBlinkTimeout = null;
+    let currentAvatarFrame = 0;
+
+    const AVATAR_IMG_IDLE = "/assets/logo_sensei.jpg";
+    const AVATAR_IMG_TALK = "/assets/logo_sensei_talk.jpg";
+    const AVATAR_IMG_LAUGH = "/assets/logo_sensei_laugh.jpg";
+
+    function iniciarAnimacionAvatar(hablando, emocion) {
+      if (avatarAnimInterval) {
+        clearInterval(avatarAnimInterval);
+        avatarAnimInterval = null;
+      }
+      if (idleBlinkTimeout) {
+        clearTimeout(idleBlinkTimeout);
+        idleBlinkTimeout = null;
+      }
+
+      const img = avatarStaticImg;
+      if (!img) return;
+
+      if (hablando) {
+        // Expresiones activas y movimiento labial mientras habla
+        const frames = (emocion === "RISA" || emocion === "PICANTE")
+          ? [AVATAR_IMG_LAUGH, AVATAR_IMG_TALK, AVATAR_IMG_LAUGH, AVATAR_IMG_IDLE]
+          : [AVATAR_IMG_TALK, AVATAR_IMG_IDLE, AVATAR_IMG_TALK, AVATAR_IMG_LAUGH];
+
+        currentAvatarFrame = 0;
+        avatarAnimInterval = setInterval(() => {
+          currentAvatarFrame = (currentAvatarFrame + 1) % frames.length;
+          img.src = frames[currentAvatarFrame];
+          // Micro-balanceo para mayor dinamismo
+          const microScale = 1.0 + (Math.sin(Date.now() / 150) * 0.016);
+          img.style.transform = `scale(${microScale})`;
+        }, 190);
+      } else {
+        // En reposo: volver al rostro neutral con micro-respiración y parpadeos
+        img.src = AVATAR_IMG_IDLE;
+        img.style.transform = "scale(1.0)";
+
+        function planearBlink() {
+          const delay = 3200 + Math.random() * 2400;
+          idleBlinkTimeout = setTimeout(() => {
+            if (!isSpeakingState) {
+              img.style.filter = "brightness(0.92) contrast(1.05)";
+              setTimeout(() => {
+                img.style.filter = "none";
+              }, 160);
+              planearBlink();
+            }
+          }, delay);
+        }
+        planearBlink();
+      }
+    }
+
+    iniciarAnimacionAvatar(false, "SABIO");
+
     let isPolling = false;
     async function pollStatus() {
       if (isPolling) return;
@@ -1119,6 +1273,7 @@
         const speakingNow = !!data.is_speaking;
         if (speakingNow !== isSpeakingState) {
           isSpeakingState = speakingNow;
+          iniciarAnimacionAvatar(speakingNow, data.active_emotion || "SABIO");
           if (speakingNow) {
             document.body.classList.add("is-speaking");
             if (vidTalking.paused) vidTalking.play().catch(() => {});
@@ -1199,13 +1354,11 @@
           cardAnswer.style.display = "flex";
           const ans = data.active_answer || "...";
           if (phase === "soporte_escrito") {
-            // Modo Soporte Escrito: texto fino y compacto sin desbordar la pantalla
-            if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
-            cardAnsSpeaker.textContent = "⛩️ CONSEJO FINAL";
-            if (ans.length > 85) {
-              cardAnsText.textContent = ans.slice(0, 82) + "...";
-            } else {
-              cardAnsText.textContent = ans;
+            // Modo Soporte Escrito: subtítulos dinámicos de 3-4 palabras sin desbordar el móvil
+            cardAnsSpeaker.textContent = "⛩️ VEREDICTO FINAL";
+            if (ans !== lastRenderedAnswer) {
+              lastRenderedAnswer = ans;
+              iniciarSubtitulosDinamicos(ans);
             }
           } else if (ans !== lastRenderedAnswer) {
             lastRenderedAnswer = ans;
@@ -1231,6 +1384,22 @@
           if (hudDebate) hudDebate.style.display = "inline-flex";
           if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
           lastRenderedAnswer = "";
+        }
+
+        
+        // 4.5. Toast de Saludo Instantáneo a Nuevos Conectados
+        if (data.last_joined_ts && data.last_joined_ts !== lastJoinTs) {
+          lastJoinTs = data.last_joined_ts;
+          const uJoin = data.last_joined_user || "amigo";
+          const cardJoinToast = document.getElementById("card-join-toast");
+          const cardJoinText = document.getElementById("card-join-text");
+          if (cardJoinToast && cardJoinText) {
+            cardJoinText.textContent = `👋 ¡Bienvenido/a @${uJoin} al dojo! Deja tu caso 👇`;
+            cardJoinToast.style.display = "inline-flex";
+            setTimeout(() => {
+              cardJoinToast.style.display = "none";
+            }, 6000);
+          }
         }
 
         // 5. Pop-up de Venta en Vivo
