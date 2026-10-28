@@ -733,10 +733,16 @@
       return audioCtx;
     }
 
+    let currentWebAudioSource = null;
+
     function reproducirAudioSensei(url) {
       if (!speechAudio) return;
 
       try {
+        if (currentWebAudioSource) {
+          try { currentWebAudioSource.stop(); } catch(e) {}
+          currentWebAudioSource = null;
+        }
         speechAudio.pause();
         speechAudio.currentTime = 0;
         speechAudio.src = url;
@@ -752,10 +758,14 @@
                   .then(r => r.arrayBuffer())
                   .then(buf => ctx.decodeAudioData(buf))
                   .then(decoded => {
+                    if (currentWebAudioSource) {
+                      try { currentWebAudioSource.stop(); } catch(e) {}
+                    }
                     const source = ctx.createBufferSource();
                     source.buffer = decoded;
                     source.connect(ctx.destination);
                     source.start(0);
+                    currentWebAudioSource = source;
                   })
                   .catch(e => console.warn("WebAudio fallback err:", e));
               }

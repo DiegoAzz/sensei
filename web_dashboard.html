@@ -1493,9 +1493,9 @@
           🎬 Pantalla Live / OBS
         </a>
 
-        <button type="button" id="btn-toggle-live-audio" class="btn-admin-pill" style="background: rgba(0, 240, 255, 0.15); border-color: #00f0ff; color: #00f0ff; padding: 6px 12px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);" title="Suena en tu PC para que TikTok LIVE Studio lo capture en el directo">
-          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 6px #00f0ff;"></span>
-          <span id="lbl-live-audio-status">🔊 Audio PC (TikTok Studio): ACTIVO</span>
+        <button type="button" id="btn-toggle-live-audio" class="btn-admin-pill" style="background: rgba(255, 255, 255, 0.05); border-color: var(--line); color: var(--ink45); padding: 6px 12px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Silenciado por defecto para evitar eco. TikTok Studio ya captura el audio desde la fuente del navegador.">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #64748b; box-shadow: none;"></span>
+          <span id="lbl-live-audio-status">🔇 Audio Monitor PC: SILENCIADO</span>
         </button>
 
         <div class="stream-status-pill offline" id="stream-status-badge">
@@ -3446,7 +3446,7 @@ REGLAS DE ORO:
       terminalLogs.scrollTop = terminalLogs.scrollHeight;
     }
 
-    let pcAudioMonitorEnabled = true;
+    let pcAudioMonitorEnabled = false;
     let lastDashboardAudioVersion = 0;
     let initialDashboardAudio = false;
 
