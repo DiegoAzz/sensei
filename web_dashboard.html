@@ -1493,6 +1493,11 @@
           🎬 Pantalla Live / OBS
         </a>
 
+        <button type="button" id="btn-toggle-live-audio" class="btn-admin-pill" style="background: rgba(0, 240, 255, 0.15); border-color: #00f0ff; color: #00f0ff; padding: 6px 12px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);" title="Suena en tu PC para que TikTok LIVE Studio lo capture en el directo">
+          <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #00f0ff; box-shadow: 0 0 6px #00f0ff;"></span>
+          <span id="lbl-live-audio-status">🔊 Audio PC (TikTok Studio): ACTIVO</span>
+        </button>
+
         <div class="stream-status-pill offline" id="stream-status-badge">
           <span class="dot-led"></span>
           <span id="stream-status-text">TRANSMISIÓN EN ESPERA</span>
@@ -1801,9 +1806,10 @@
             <div id="sandbox-response-text" style="font-size: 13.5px; color: var(--gold); font-style: italic; line-height: 1.5; text-shadow: 0 0 8px rgba(255,215,0,0.3);"></div>
           </div>
 
-          <!-- Reproductores de audio HTML5 para Sandbox -->
+          <!-- Reproductores de audio HTML5 para Sandbox y Live Stream -->
           <audio id="bg-music-player" loop src="/assets/musica_misteriosa.mp3" preload="auto"></audio>
           <audio id="voice-player" preload="auto"></audio>
+          <audio id="live-stream-audio-monitor" preload="auto"></audio>
         </div>
       </section>
 
@@ -3434,6 +3440,32 @@ REGLAS DE ORO:
       terminalLogs.scrollTop = terminalLogs.scrollHeight;
     }
 
+    let pcAudioMonitorEnabled = true;
+    let lastDashboardAudioVersion = 0;
+    let initialDashboardAudio = false;
+
+    const btnToggleLiveAudio = document.getElementById("btn-toggle-live-audio");
+    const lblLiveAudioStatus = document.getElementById("lbl-live-audio-status");
+    const liveStreamAudioMonitor = document.getElementById("live-stream-audio-monitor");
+
+    if (btnToggleLiveAudio) {
+      btnToggleLiveAudio.addEventListener("click", () => {
+        pcAudioMonitorEnabled = !pcAudioMonitorEnabled;
+        if (pcAudioMonitorEnabled) {
+          btnToggleLiveAudio.style.background = "rgba(0, 240, 255, 0.15)";
+          btnToggleLiveAudio.style.borderColor = "#00f0ff";
+          btnToggleLiveAudio.style.color = "#00f0ff";
+          if (lblLiveAudioStatus) lblLiveAudioStatus.textContent = "🔊 Audio PC (TikTok Studio): ACTIVO";
+        } else {
+          btnToggleLiveAudio.style.background = "rgba(255, 255, 255, 0.05)";
+          btnToggleLiveAudio.style.borderColor = "var(--line)";
+          btnToggleLiveAudio.style.color = "var(--ink45)";
+          if (lblLiveAudioStatus) lblLiveAudioStatus.textContent = "🔇 Audio PC: SILENCIADO";
+          if (liveStreamAudioMonitor) liveStreamAudioMonitor.pause();
+        }
+      });
+    }
+
     async function cargarEstado() {
       try {
         const res = await fetch("/api/status");
@@ -3444,9 +3476,26 @@ REGLAS DE ORO:
         } else {
           actualizarUI(false);
         }
+
+        // Monitor de Audio del Sensei en Altavoces de la PC para TikTok LIVE Studio
+        if (data.audio_version && pcAudioMonitorEnabled) {
+          if (!initialDashboardAudio) {
+            initialDashboardAudio = true;
+            lastDashboardAudioVersion = data.audio_version;
+          } else if (data.audio_version !== lastDashboardAudioVersion) {
+            lastDashboardAudioVersion = data.audio_version;
+            if (liveStreamAudioMonitor) {
+              liveStreamAudioMonitor.src = "/api/live-audio?v=" + data.audio_version;
+              liveStreamAudioMonitor.volume = 1.0;
+              liveStreamAudioMonitor.play().catch(e => console.log("Monitor audio err:", e));
+            }
+          }
+        }
       } catch (e) {
         console.error("Error cargando estado:", e);
       }
+    }
+    setInterval(cargarEstado, 1200);
     }
 
     function actualizarUI(streaming) {

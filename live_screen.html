@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pantalla de Transmisión en Vivo · TikTok Live Shopping</title>
+  <title>El Sensei del Amor · Holograma en Vivo para TikTok Live</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --gold: #d4af37;
-      --gold-glow: rgba(212, 175, 55, 0.45);
       --cyan: #00f0ff;
-      --cyan-glow: rgba(0, 240, 255, 0.45);
-      --pink: #ff2a6d;
-      --bg: #07090e;
-      --card-bg: rgba(10, 13, 24, 0.78);
-      --card-border: rgba(212, 175, 55, 0.35);
+      --cyan-glow: rgba(0, 240, 255, 0.55);
+      --cyan-dark: #0084a8;
+      --gold: #ffd700;
+      --gold-glow: rgba(255, 215, 0, 0.45);
+      --bg: #030508;
+      --card-bg: rgba(6, 11, 20, 0.85);
+      --border-cyan: rgba(0, 240, 255, 0.28);
       --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
       --font-luxury: 'Cinzel', serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -38,7 +38,7 @@
       color: #fff;
     }
 
-    /* Contenedor Vertical Adaptable 9:16 para TikTok Live Studio y OBS */
+    /* Contenedor Vertical 9:16 Optimizado para TikTok Live Studio y OBS */
     .stream-viewport {
       position: relative;
       width: 100%;
@@ -46,1382 +46,741 @@
       max-width: 1080px;
       margin: 0 auto;
       overflow: hidden;
-      background: #030509;
+      background: radial-gradient(circle at 50% 36%, #0b1526 0%, #030508 72%);
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
     }
 
-    /* Fondo ambiental dinámico místico y luxury */
-    .ambient-stream-bg {
-      position: absolute;
-      inset: 0;
-      background: 
-        radial-gradient(circle at 50% 28%, rgba(255, 42, 109, 0.22) 0%, rgba(212, 175, 55, 0.12) 32%, transparent 70%),
-        radial-gradient(circle at 50% 80%, rgba(0, 240, 255, 0.1) 0%, transparent 60%),
-        linear-gradient(180deg, #070a14 0%, #030408 100%);
-      z-index: 1;
-      pointer-events: none;
-    }
-
-    /* ==================== CAPA DE VIDEO / AVATAR ==================== */
-    .presenter-container {
+    /* Fondo de Partículas Cósmicas / Polvo Estelar Flotante */
+    #starfield-canvas {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 2;
-      overflow: hidden;
-      background: transparent;
-    }
-
-    .presenter-video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 30%;
-      transition: opacity 0.45s ease-in-out;
-    }
-
-    #video-idle {
-      opacity: 1;
-      z-index: 2;
-    }
-
-    #video-talking {
-      opacity: 0;
-      z-index: 3;
-    }
-
-    /* Cuando el agente habla: conmutar videos suavemente */
-    body.is-speaking #video-idle {
-      opacity: 0;
-    }
-    body.is-speaking #video-talking {
-      opacity: 1;
-    }
-
-    /* Capa de Avatar Estático Levitando (Alta Definición) */
-    .avatar-static-layer {
-      position: absolute;
-      top: 19.5%;
-      left: 0;
-      right: 0;
-      height: 28%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
       pointer-events: none;
-      transition: opacity 0.4s ease;
-    }
-
-    .avatar-orb-wrapper {
-      position: relative;
-      width: clamp(170px, 42vw, 250px);
-      height: clamp(170px, 42vw, 250px);
-      animation: levitate 3.6s ease-in-out infinite;
-    }
-
-    .avatar-halo-ring {
-      position: absolute;
-      inset: -14px;
-      border-radius: 50%;
-      border: 2px dashed rgba(212, 175, 55, 0.65);
-      animation: rotateHalo 20s linear infinite;
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
       z-index: 1;
     }
 
-    @keyframes rotateHalo {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    .avatar-orb-glow {
+    /* ==================== 1. HEADER SUPERIOR (ESTILO MINIMALISTA VIRAL) ==================== */
+    .holo-header {
       position: absolute;
-      inset: -18px;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--gold-glow) 35%, transparent 75%);
-      animation: pulseGlow 2.4s ease-in-out infinite;
-      z-index: 1;
-    }
-
-    body.is-speaking .avatar-orb-glow {
-      animation: pulseSpeaking 0.8s ease-in-out infinite;
-      background: radial-gradient(circle, var(--cyan-glow) 45%, transparent 80%);
-    }
-
-    .avatar-orb-img {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      object-fit: cover;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
-      border: 4px solid var(--gold);
-      box-shadow: 0 15px 45px rgba(0,0,0,0.95), 0 0 35px var(--gold-glow), inset 0 0 25px rgba(212,175,55,0.4);
-      z-index: 2;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-
-    body.is-speaking .avatar-orb-img {
-      border-color: var(--cyan);
-      box-shadow: 0 15px 50px rgba(0,240,255,0.7), 0 0 40px var(--cyan-glow), inset 0 0 30px rgba(0,240,255,0.5);
-    }
-
-    @keyframes levitate {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-16px); }
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.55; transform: scale(1); }
-      50% { opacity: 0.95; transform: scale(1.08); }
-    }
-
-    @keyframes pulseSpeaking {
-      0%, 100% { opacity: 0.7; transform: scale(1.02); }
-      50% { opacity: 1; transform: scale(1.15); }
-    }
-
-    /* Viñeta cinematográfica para que los textos siempre resalten */
-    .vignette-overlay {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, transparent 35%, rgba(4,6,12,0.65) 75%, rgba(2,3,7,0.92) 100%),
-                  linear-gradient(180deg, rgba(4,6,12,0.85) 0%, transparent 18%, transparent 58%, rgba(4,6,12,0.95) 90%, #030508 100%);
-      z-index: 4;
-      pointer-events: none;
-    }
-
-    /* ==================== CAPA HUD / INTERFAZ SUPERPUESTA ==================== */
-    .hud-layer {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      z-index: 10;
+      top: 3.5%;
+      left: 6%;
+      right: 6%;
+      z-index: 20;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 68px 18px 18px;
-      pointer-events: none;
+      gap: 5px;
+      text-align: left;
     }
 
-    /* Header Superior */
-    .stream-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 6px;
-    }
-
-    .top-meta-row {
+    .holo-title {
+      font-size: clamp(24px, 3.2vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.7), 0 0 40px rgba(0, 240, 255, 0.3);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .live-badge {
+    .holo-subtitle {
+      font-size: clamp(13px, 1.6vw, 17px);
+      color: #94a3b8;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    .holo-meta-row {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #64748b;
+      font-family: var(--font-mono);
+    }
+
+    .live-dot-pulse {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff2a6d;
+      box-shadow: 0 0 10px #ff2a6d;
+      animation: liveBlink 1.4s ease-in-out infinite;
+    }
+
+    @keyframes liveBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .holo-meta-tag {
+      color: #00f0ff;
+      font-weight: 700;
+    }
+
+    /* ==================== 2. ESCENARIO HOLOGRÁFICO CENTRAL ==================== */
+    .holo-stage {
+      position: absolute;
+      top: 17%;
+      left: 0;
+      right: 0;
+      height: 38%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO */
+    .holo-core-container {
+      position: absolute;
+      width: clamp(230px, 32vw, 360px);
+      height: clamp(230px, 32vw, 360px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #holo-orb-canvas {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 60px rgba(0, 132, 168, 0.45));
+    }
+
+    /* B) LA MUÑECA / SENSEI HABLANDO (HOLOGRAMA CUANDO CONTESTA) */
+    .holo-sensei-container {
+      position: absolute;
+      width: clamp(230px, 32vw, 360px);
+      height: clamp(230px, 32vw, 360px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      transform: scale(0.75);
+      pointer-events: none;
+    }
+
+    /* Envoltorio con efecto holográfico, scanlines y aura cyan */
+    .holo-avatar-wrap {
+      position: relative;
+      width: 88%;
+      height: 88%;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 
+        0 0 40px rgba(0, 240, 255, 0.8),
+        0 0 80px rgba(0, 240, 255, 0.4),
+        inset 0 0 45px rgba(0, 240, 255, 0.6);
+      border: 2px solid rgba(0, 240, 255, 0.85);
+      animation: holoFloat 3.2s ease-in-out infinite;
+    }
+
+    .holo-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: 
+        drop-shadow(0 0 20px rgba(0, 240, 255, 0.8))
+        brightness(1.15) 
+        contrast(1.1);
+      mix-blend-mode: screen;
+      transition: transform 0.12s ease-out;
+    }
+
+    /* Scanlines holográficas continuas sobre el avatar */
+    .holo-scanlines {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 240, 255, 0) 50%,
+        rgba(0, 240, 255, 0.25) 51%,
+        rgba(0, 0, 0, 0.4) 52%
+      );
+      background-size: 100% 6px;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0.65;
+    }
+
+    /* Rayo de escaneo holográfico vertical */
+    .holo-beam {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      right: 0;
+      height: 35%;
+      background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.55), transparent);
+      animation: scanBeam 2.8s linear infinite;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    @keyframes scanBeam {
+      0% { top: -40%; }
+      100% { top: 120%; }
+    }
+
+    @keyframes holoFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.02); }
+    }
+
+    /* CONMUTACIÓN DINÁMICA: CUANDO EL SENSEI ESTÁ HABLANDO */
+    body.is-speaking .holo-core-container {
+      opacity: 0;
+      transform: scale(0.45);
+      filter: blur(6px);
+    }
+
+    body.is-speaking .holo-sensei-container {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS (ESTILO LIMPIO SCREENSHOT) ==================== */
+    .holo-response-area {
+      position: absolute;
+      top: 56%;
+      left: 6%;
+      right: 6%;
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .holo-user-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #ff0044;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      box-shadow: 0 0 15px rgba(255, 0, 68, 0.7);
-      animation: livePulse 1.8s infinite;
-    }
-
-    .live-dot {
-      width: 7px;
-      height: 7px;
-      background: #fff;
-      border-radius: 50%;
-    }
-
-    @keyframes livePulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.05); opacity: 0.9; }
-    }
-
-    .store-badge {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      font-size: 11px;
+      font-size: 13.5px;
       font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      color: #ddd;
+      color: #00f0ff;
+      letter-spacing: 0.2px;
+      text-transform: none;
     }
 
-    .boutique-title {
-      font-family: var(--font-luxury);
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 1.2px;
-      background: linear-gradient(135deg, #fff 20%, var(--gold) 70%, #ffdf79 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 20px var(--gold-glow);
+    .holo-user-badge .prefix-label {
+      color: #64748b;
+      font-weight: 600;
+      font-size: 12px;
       text-transform: uppercase;
-      line-height: 1.15;
-      margin-top: 3px;
-    }
-
-    .boutique-sub {
-      font-size: 10.5px;
-      font-weight: 700;
-      color: var(--cyan);
-      text-shadow: 0 0 8px var(--cyan-glow);
       letter-spacing: 0.5px;
     }
 
-    /* Pop-up de Venta en Vivo Confirmada */
-    .sale-alert-popup {
+    .holo-answer-box {
+      font-size: clamp(16px, 2.2vw, 24px);
+      font-weight: 600;
+      line-height: 1.45;
+      color: #f8fafc;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+      transition: color 0.3s ease;
+    }
+
+    .holo-answer-box.is-vip {
+      color: #ffd700;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    .holo-answer-box.is-speaking-text {
+      color: #ffffff;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+    }
+
+    /* Toast Flotante Compacto para cuando alguien entra */
+    .holo-join-pill {
       position: absolute;
-      top: 96px;
-      left: 18px;
-      right: 18px;
-      background: linear-gradient(135deg, rgba(20, 24, 12, 0.95), rgba(12, 28, 16, 0.95));
-      border: 1.5px solid #00ff88;
-      border-radius: 14px;
-      padding: 12px 16px;
-      box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+      top: 13.5%;
+      left: 6%;
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #00f0ff;
       display: flex;
       align-items: center;
-      gap: 12px;
-      transform: translateY(-130px);
-      opacity: 0;
-      transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s ease;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      animation: toastIn 0.35s ease-out;
       z-index: 30;
     }
 
-    .sale-alert-popup.active {
-      transform: translateY(0);
-      opacity: 1;
+    @keyframes toastIn {
+      0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .sale-alert-icon {
-      font-size: 28px;
-      animation: bounceSale 0.8s infinite alternate;
-    }
-
-    @keyframes bounceSale {
-      from { transform: scale(0.9); }
-      to { transform: scale(1.15); }
-    }
-
-    .sale-alert-text {
-      flex: 1;
-      font-size: 12px;
-      line-height: 1.3;
-    }
-
-    .sale-alert-title {
-      font-size: 13px;
-      font-weight: 900;
-      color: #00ff88;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    /* Subtítulos y Pastilla de Pregunta (Ubicados limpiamente debajo del Sensei a top: 50.5%, finito y responsivo) */
-    .stream-subtitles-hud {
+    /* Espacio inferior completamente limpio para TikTok Live Chat (40% libre) */
+    .tiktok-chat-safe-zone {
       position: absolute;
-      left: 10px;
-      right: 10px;
-      top: 50.5%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      z-index: 25;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 38%;
       pointer-events: none;
-      box-sizing: border-box;
-      max-width: 100%;
+      z-index: 5;
     }
 
-    /* 1. Pastilla de Pregunta Compacta (1 sola línea finita y proporcionada) */
-    .hud-question-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: rgba(5, 7, 15, 0.92);
-      border: 1px solid rgba(0, 240, 255, 0.6);
-      border-radius: 16px;
-      padding: 3px 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-      max-width: 92%;
-      box-sizing: border-box;
-      backdrop-filter: blur(8px);
-      animation: popIn 0.3s ease-out;
-      transition: all 0.3s ease;
-    }
-
-    .hud-question-pill.is-vip-donator {
-      background: linear-gradient(135deg, rgba(28, 18, 5, 0.95), rgba(12, 8, 2, 0.95));
-      border: 1.2px solid #ffd700;
-      box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
-      animation: vipPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .hud-question-pill.is-vip-donator .hud-q-badge {
-      color: #ffd700;
-      text-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
-      font-weight: 900;
-    }
-
-    @keyframes vipPop {
-      0% { transform: scale(0.85); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    .hud-q-badge {
-      font-size: clamp(9.5px, 2.4vw, 11px);
-      font-weight: 800;
-      color: var(--cyan);
-      white-space: nowrap;
-      flex-shrink: 0;
-      letter-spacing: 0.2px;
-    }
-
-    .hud-q-content {
-      font-size: clamp(10px, 2.5vw, 11.5px);
-      font-weight: 600;
-      color: #fff;
-      font-style: italic;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 250px;
-    }
-
-    /* 2. Caja de Subtítulo Activo (Finito, responsivo, texto dinámico sin desbordes) */
-    .hud-sub-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 3px;
-      width: 100%;
-      max-width: 90%;
-      box-sizing: border-box;
-    }
-
-    .hud-sub-speaker-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: linear-gradient(90deg, #d4af37, #f39c12);
-      color: #07090e;
-      font-size: 8.5px;
-      font-weight: 900;
-      padding: 2px 7px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
-      box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
-      text-transform: uppercase;
-    }
-
-    .hud-sub-active-line {
-      display: inline-block;
-      font-family: var(--font-body);
-      font-size: clamp(12.5px, 3.1vw, 14.5px);
-      font-weight: 800;
-      line-height: 1.32;
-      color: #ffffff;
-      text-align: center;
-      background: rgba(3, 5, 12, 0.92);
-      border: 1.2px solid var(--gold);
-      border-radius: 10px;
-      padding: 5px 14px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.9), 0 0 10px var(--gold-glow);
-      text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-      letter-spacing: 0.2px;
-      max-width: 100%;
-      box-sizing: border-box;
-      word-break: break-word;
-      overflow-wrap: break-word;
-      animation: subPop 0.22s ease-out;
-    }
-
-    @keyframes subPop {
-      0% { transform: scale(0.92); opacity: 0.3; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes popIn {
-      0% { transform: translateY(-8px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-
-    /* 3. Pill de Espera (Finito y centrado) */
-    .hud-waiting-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: rgba(5, 7, 16, 0.88);
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      border-radius: 16px;
-      padding: 4px 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-      max-width: 92%;
-      box-sizing: border-box;
-      animation: pulsePill 2.5s infinite alternate;
-    }
-
-    .wait-dot {
-      width: 7px;
-      height: 7px;
-      background: #00ff88;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #00ff88;
-    }
-
-    .hud-waiting-pill span {
-      font-size: 11px;
-      font-weight: 700;
-      color: #ddd;
-    }
-
-    @keyframes pulsePill {
-      0% { border-color: rgba(212, 175, 55, 0.3); }
-      100% { border-color: rgba(0, 240, 255, 0.6); }
-    }
-
-    .soundwave {
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      height: 10px;
-    }
-
-    .soundwave-bar {
-      width: 2px;
-      height: 100%;
-      background: #07090e;
-      border-radius: 2px;
-      animation: soundwaveAnim 0.7s infinite alternate;
-    }
-
-    .soundwave-bar:nth-child(2) { animation-delay: 0.2s; }
-    .soundwave-bar:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes soundwaveAnim {
-      from { height: 2px; }
-      to { height: 10px; }
-    }
-
-    /* Pastilla VIP Compacta en Top Meta Row (Cero Estorbo) */
-    .vip-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: linear-gradient(135deg, rgba(255, 42, 109, 0.45), rgba(212, 175, 55, 0.45));
-      border: 1.2px solid rgba(255, 215, 0, 0.85);
-      border-radius: 20px;
-      padding: 3px 9px;
-      box-shadow: 0 0 10px rgba(255, 42, 109, 0.4);
-      animation: vipGlow 2.2s ease-in-out infinite alternate;
-    }
-
-    @keyframes vipGlow {
-      0%, 100% {
-        box-shadow: 0 0 8px rgba(255, 42, 109, 0.35);
-        border-color: rgba(255, 215, 0, 0.6);
-      }
-      50% {
-        box-shadow: 0 0 16px rgba(255, 215, 0, 0.7), 0 0 22px rgba(255, 42, 109, 0.5);
-        border-color: rgba(255, 42, 109, 0.9);
-      }
-    }
-
-    .vip-pulse-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #ff2a6d;
-      box-shadow: 0 0 6px #ff2a6d;
-      animation: pulseDot 1s infinite alternate;
-    }
-
-    @keyframes pulseDot {
-      from { transform: scale(0.85); opacity: 0.7; }
-      to { transform: scale(1.3); opacity: 1; }
-    }
-
-    .vip-text {
-      font-size: 10px;
-      font-weight: 900;
-      color: #ffd700;
-      letter-spacing: 0.4px;
-      text-transform: uppercase;
-      text-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
-    }
-
-    /* Barra Inferior de Llamado a la Acción */
-    .cta-bar {
-      background: rgba(8, 12, 22, 0.88);
-      border: 1.2px solid rgba(212, 175, 55, 0.45);
-      border-radius: 10px;
-      padding: 6px 12px;
-      text-align: center;
-      box-shadow: 0 0 15px var(--gold-glow);
-    }
-
-    .cta-text {
-      font-size: 11.5px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #fff;
-      text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-
-    /* Botón flotante para activar audio (oculto en stream) */
-    .audio-toggle-btn {
-      display: none !important;
-    }
-
-    /* Menú Flotante Lateral de Acciones (Estilo Lorenita / Live Interactivo) */
-    .hud-lateral-menu {
+    /* Botón flotante para activar audio si el navegador bloquea autoplay */
+    .audio-unlock-btn {
       position: absolute;
-      right: 12px;
-      top: 19%;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      background: rgba(8, 12, 24, 0.82);
-      backdrop-filter: blur(8px);
-      border: 1.2px solid rgba(255, 215, 0, 0.4);
-      border-radius: 12px;
-      padding: 7px 9px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8);
-      z-index: 28;
-      pointer-events: none;
-    }
-
-    .hud-lateral-title {
-      font-size: 8px;
-      font-weight: 900;
-      color: #ffd700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-      padding-bottom: 3px;
-      margin-bottom: 2px;
-      text-align: center;
-    }
-
-    .hud-perk-row {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 9px;
-      font-weight: 800;
-      color: #eee;
-      letter-spacing: 0.2px;
-      white-space: nowrap;
-    }
-
-    .hud-perk-icon {
-      font-size: 11px;
-      width: 14px;
-      text-align: center;
-    }
-
-    /* Podio MVP en Pantalla (Prestigio Social en Vivo) */
-    .hud-mvp-box {
-      position: absolute;
-      left: 12px;
-      top: 19%;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, rgba(28, 18, 5, 0.9), rgba(12, 8, 2, 0.9));
-      border: 1.2px solid rgba(255, 215, 0, 0.65);
-      border-radius: 12px;
-      padding: 5px 9px;
-      box-shadow: 0 0 12px rgba(255, 215, 0, 0.4);
-      z-index: 28;
-      pointer-events: none;
-    }
-
-    .hud-mvp-crown {
-      font-size: 14px;
-      animation: bounceSale 1.2s infinite alternate;
-    }
-
-    .hud-mvp-info {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .hud-mvp-tag {
-      font-size: 7.5px;
-      font-weight: 900;
-      color: #ffd700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .hud-mvp-name {
-      font-size: 10px;
-      font-weight: 800;
-      color: #fff;
-      max-width: 95px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Radar de Toxicidad / Infidelidad Picante */
-    .hud-radar-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: linear-gradient(90deg, #ff2a6d, #ff0044);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 900;
-      letter-spacing: 0.3px;
-      padding: 3px 9px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(255, 42, 109, 0.6);
-      animation: livePulse 1.4s infinite alternate;
-      margin-top: 2px;
-    }
-
-    /* Fila de Reacciones / Multiplicadores sobre el Chat (Estilo Lorenita) */
-    .hud-reaction-multipliers {
-      position: absolute;
-      bottom: 18px;
-      left: 10px;
-      right: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 7px;
-      z-index: 26;
-      pointer-events: none;
-    }
-
-    .reaction-pill {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(10, 14, 28, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 12px;
-      padding: 3px 7px;
-      font-size: 9.5px;
-      font-weight: 800;
-      color: #ddd;
-      backdrop-filter: blur(6px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-    }
-
-    .reaction-pill.hl {
-      border-color: rgba(255, 42, 109, 0.6);
-      color: #ff6b8b;
-    }
-
-    .reaction-pill.gold {
-      border-color: rgba(255, 215, 0, 0.6);
-      color: #ffd700;
-    }
-
-    /* Banner de Debate Picante Rotativo */
-    .hud-debate-banner {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, rgba(20, 10, 35, 0.94), rgba(10, 5, 20, 0.94));
-      border: 1.2px solid #00f0ff;
-      border-radius: 16px;
-      padding: 4px 12px;
-      font-size: 10.5px;
-      font-weight: 800;
+      top: 15px;
+      right: 15px;
+      z-index: 100;
+      background: rgba(0, 240, 255, 0.2);
+      border: 1px solid #00f0ff;
       color: #00f0ff;
-      letter-spacing: 0.2px;
-      box-shadow: 0 0 12px rgba(0, 240, 255, 0.35);
-      max-width: 90%;
-      text-align: center;
-      animation: popIn 0.3s ease-out;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
     }
-  
-    /* ==================== CAPA DE CHISPAS DINÁMICAS (ANTI-ESTÁTICO TIKTOK) ==================== */
-    .sparks-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 12;
-      overflow: hidden;
-    }
-
-    .spark {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: #ffd700;
-      box-shadow: 0 0 10px #ffd700, 0 0 20px #ff2a6d;
-      opacity: 0;
-      animation: floatSpark 4s infinite linear;
-    }
-
-    .spark:nth-child(1) { left: 15%; animation-duration: 3.5s; animation-delay: 0s; background: #00f0ff; box-shadow: 0 0 8px #00f0ff; }
-    .spark:nth-child(2) { left: 35%; animation-duration: 4.8s; animation-delay: 1.2s; background: #ffd700; }
-    .spark:nth-child(3) { left: 55%; animation-duration: 4.0s; animation-delay: 0.5s; background: #ff2a6d; box-shadow: 0 0 10px #ff2a6d; }
-    .spark:nth-child(4) { left: 75%; animation-duration: 5.2s; animation-delay: 2.1s; background: #00ff88; box-shadow: 0 0 8px #00ff88; }
-    .spark:nth-child(5) { left: 25%; animation-duration: 3.8s; animation-delay: 1.8s; background: #ffd700; }
-    .spark:nth-child(6) { left: 85%; animation-duration: 4.5s; animation-delay: 0.8s; background: #00f0ff; }
-    .spark:nth-child(7) { left: 45%; animation-duration: 5.0s; animation-delay: 2.5s; background: #ff2a6d; }
-    .spark:nth-child(8) { left: 65%; animation-duration: 4.2s; animation-delay: 1.0s; background: #ffd700; }
-
-    @keyframes floatSpark {
-      0% { transform: translateY(105vh) scale(0.6); opacity: 0; }
-      20% { opacity: 0.9; }
-      80% { opacity: 0.7; }
-      100% { transform: translateY(-5vh) scale(1.4); opacity: 0; }
-    }
-
-    /* Anillo giratorio de energía mística alrededor del Sensei */
-    .avatar-spin-ring {
-      position: absolute;
-      inset: -14px;
-      border-radius: 50%;
-      border: 2px dashed rgba(255, 215, 0, 0.45);
-      box-shadow: 0 0 18px rgba(255, 42, 109, 0.35);
-      animation: spinRing 12s linear infinite;
-      pointer-events: none;
-    }
-
-    @keyframes spinRing {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    /* Pastilla flotante de Saludo Instantáneo a Nuevos Conectados */
-    .hud-join-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, rgba(255, 42, 109, 0.92), rgba(212, 175, 55, 0.92));
-      border: 1.5px solid #ffffff;
-      border-radius: 20px;
-      padding: 5px 14px;
-      color: #ffffff;
-      font-weight: 800;
-      font-size: clamp(11.5px, 3.2vw, 13.5px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 42, 109, 0.6);
-      animation: popJoin 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 35;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-      max-width: 90%;
-      box-sizing: border-box;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    @keyframes popJoin {
-      0% { transform: scale(0.7) translateY(-10px); opacity: 0; }
-      100% { transform: scale(1) translateY(0); opacity: 1; }
-    }
-
   </style>
 </head>
 <body>
 
   <div class="stream-viewport">
 
-    <!-- FONDO AMBIENTAL DE ALTA DEFINICIÓN -->
-    <div class="ambient-stream-bg"></div>
+    <!-- CANVAS FONDO ESTELAR DINÁMICO -->
+    <canvas id="starfield-canvas"></canvas>
 
-    <!-- CAPA 1: PRESENTADOR (VIDEOS HÍBRIDOS O AVATAR ESTÁTICO LEVITANDO) -->
-    
-    <!-- CAPA DE CHISPAS FLOTANTES ACTIVAS (PREVIENE DETECCIÓN DE LIVE ESTÁTICO EN TIKTOK) -->
-    <div class="sparks-layer">
-      <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
-      <div class="spark"></div><div class="spark"></div><div class="spark"></div><div class="spark"></div>
+    <!-- 1. HEADER MINIMALISTA IDENTICO AL SCREENSHOT -->
+    <header class="holo-header">
+      <h1 class="holo-title" id="hdr-title">Pregúntale al Sensei</h1>
+      <p class="holo-subtitle" id="hdr-subtitle">Escribe tu dilema de amor, ex o conquista</p>
+      <div class="holo-meta-row">
+        <span class="live-dot-pulse"></span>
+        <span>EN VIVO</span>
+        <span id="live-clock">--:--:--</span>
+        <span>·</span>
+        <span id="live-viewers">12 en la sala</span>
+        <span>·</span>
+        <span class="holo-meta-tag" id="live-stats">Consultorio Activo</span>
+      </div>
+    </header>
+
+    <!-- TOAST DE SALUDO FLOTANTE -->
+    <div class="holo-join-pill" id="join-pill" style="display: none;">
+      <span>👋</span>
+      <span id="join-pill-text">¡Bienvenido al dojo!</span>
     </div>
 
-    <div class="presenter-container">
-      <video id="video-idle" class="presenter-video" loop muted playsinline autoplay style="display: none;"></video>
-      <video id="video-talking" class="presenter-video" loop muted playsinline style="display: none;"></video>
+    <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO -->
+    <div class="holo-stage">
 
-      <!-- Capa de Avatar Estático Levitando (Siempre visible con El Sensei) -->
-      <div id="avatar-static-layer" class="avatar-static-layer" style="display: flex;">
-        <div class="avatar-orb-wrapper">
-          <div class="avatar-spin-ring"></div>
-          <div class="avatar-halo-ring"></div>
-          <div class="avatar-orb-glow"></div>
-          <img id="avatar-static-img" class="avatar-orb-img" src="/assets/logo_sensei.jpg" alt="El Sensei">
+      <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO DE PARTÍCULAS EN REPOSO -->
+      <div class="holo-core-container" id="holo-core">
+        <canvas id="holo-orb-canvas" width="400" height="400"></canvas>
+      </div>
+
+      <!-- B) LA MUÑECA / SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR -->
+      <div class="holo-sensei-container" id="holo-sensei">
+        <div class="holo-avatar-wrap">
+          <div class="holo-scanlines"></div>
+          <div class="holo-beam"></div>
+          <img id="holo-avatar-img" class="holo-avatar-img" src="/assets/logo_circle.png" alt="El Sensei">
         </div>
+      </div>
+
+    </div>
+
+    <!-- 3. TARJETA DE RESPUESTA / SUBTÍTULOS -->
+    <div class="holo-response-area">
+      <div class="holo-user-badge" id="resp-user-badge">
+        <span class="prefix-label" id="resp-prefix">ÚLTIMA RESPUESTA</span>
+        <span id="resp-username">@espectador</span>
+      </div>
+      <div class="holo-answer-box" id="resp-text">
+        Deja tu caso de amor o pareja en los comentarios y te daré mi veredicto en directo.
       </div>
     </div>
 
-    <!-- CAPA 2: VIÑETA CINEMATOGRÁFICA -->
-    <div class="vignette-overlay"></div>
+    <!-- ZONA INFERIOR LIBRE PARA EL CHAT DE TIKTOK LIVE -->
+    <div class="tiktok-chat-safe-zone"></div>
 
-    <!-- BOTÓN DE SONIDO PARA NAVEGADOR -->
-    <button class="audio-toggle-btn" id="btn-unmute" onclick="activarAudio()">
-      🔊 Escuchar Audio
-    </button>
-    <!-- MÚSICA MÍSTICA DE FONDO (CONTINUA EN TIKTOK LIVE) -->
+    <!-- BOTÓN DE DESBLOQUEO DE AUDIO PARA NAVEGADOR -->
+    <button class="audio-unlock-btn" id="btn-unlock-audio" onclick="desbloquearAudio()">🔊 Activar Sonido</button>
+
+    <!-- REPRODUCTOR DE VOZ DUAL-ENGINE -->
+    <audio id="speech-audio" preload="auto" playsinline autoplay></audio>
     <audio id="bg-music" src="/assets/musica_misteriosa.mp3" loop preload="auto"></audio>
-    <!-- REPRODUCTOR ÚNICO DE VOZ (ANTI-ECO Y MONO CANAL) -->
-    <audio id="speech-audio" preload="auto"></audio>
-
-    <!-- CAPA 3: HUD E INTERFAZ FLOTANTE -->
-    <div class="hud-layer">
-
-      <!-- HEADER SUPERIOR -->
-      <header class="stream-header">
-        <div class="top-meta-row">
-          <div class="live-badge">
-            <span class="live-dot"></span>
-            <span>LIVE</span>
-          </div>
-          <div class="store-badge" id="hud-store-badge">COLOMBIA 🇨🇴</div>
-          <div class="vip-badge" id="hud-vip-badge">
-            <span class="vip-pulse-dot"></span>
-            <span class="vip-text" id="hud-vip-text">❤️ TOCA LA PANTALLA</span>
-          </div>
-        </div>
-        <h1 class="boutique-title" id="hud-title">~ EL SENSEI DEL AMOR ~</h1>
-        <p class="boutique-sub" id="hud-subtitle">Conquista · Infidelidad · Parejas · Amor Propio</p>
-      </header>
-
-      <!-- PODIO MVP FLOTANTE (ESTILO LORENITA) -->
-      <div class="hud-mvp-box" id="hud-mvp-box">
-        <span class="hud-mvp-crown">👑</span>
-        <div class="hud-mvp-info">
-          <span class="hud-mvp-tag">MVP DEL DOJO</span>
-          <span class="hud-mvp-name" id="hud-mvp-name">@Destacado</span>
-        </div>
-      </div>
-
-      <!-- MENÚ FLOTANTE LATERAL DE REACCIONES (ESTILO LORENITA) -->
-      <div class="hud-lateral-menu">
-        <div class="hud-lateral-title">⚡ EVENTOS LIVE</div>
-        <div class="hud-perk-row"><span class="hud-perk-icon">💬</span><span>Dilema en Vivo</span></div>
-        <div class="hud-perk-row"><span class="hud-perk-icon">🔥</span><span>Veredicto Picante</span></div>
-        <div class="hud-perk-row"><span class="hud-perk-icon">🚨</span><span>Radar Infidelidad</span></div>
-        <div class="hud-perk-row"><span class="hud-perk-icon">👑</span><span>Nombre en Pantalla</span></div>
-      </div>
-
-      <!-- POPUP FLOTANTE DE VENTA EN VIVO -->
-      <div class="sale-alert-popup" id="sale-popup">
-        <div class="sale-alert-icon">🛍️</div>
-        <div class="sale-alert-text">
-          <div class="sale-alert-title">¡VENTA EN DIRECTO CONFIRMADA!</div>
-          <div id="sale-popup-desc" style="color: #eee;">Carlos de Medellín acaba de pedir Lattafa Yara 100ml</div>
-        </div>
-      </div>
-
-      <!-- ==================== SUBTÍTULOS DINÁMICOS PROFESIONALES (TIPO CAPCUT / TIKTOK VIRAL) ==================== -->
-      <div class="stream-subtitles-hud" id="stream-subtitles-hud">
-
-        <!-- 0. Toast de Saludo Instantáneo a Nuevos Conectados -->
-        <div class="hud-join-pill" id="card-join-toast" style="display: none;">
-          <span id="card-join-text">👋 ¡Bienvenido/a @usuario al dojo! Deja tu caso 👇</span>
-        </div>
-
-        <!-- 1. Pastilla de Pregunta Compacta (1 sola línea) -->
-        <div class="hud-question-pill" id="card-question" style="display: none;">
-          <span class="hud-q-badge" id="card-q-user">👤 @usuario</span>
-          <span class="hud-q-content" id="card-q-text">"¿Pregunta?"</span>
-        </div>
-
-        <!-- Radar de Toxicidad / Infidelidad Picante -->
-        <div class="hud-radar-badge" id="hud-radar" style="display: none;">
-          <span>🚨 RADAR DE INFIDELIDAD: 96%</span>
-        </div>
-
-        <!-- 2. Subtítulo Dinámico (1 frase grande que cambia mientras habla) -->
-        <div class="hud-sub-box" id="card-answer" style="display: none;">
-          <div class="hud-sub-speaker-tag">
-            <span id="card-ans-speaker">⛩️ EL SENSEI</span>
-            <span class="soundwave">
-              <span class="soundwave-bar"></span>
-              <span class="soundwave-bar"></span>
-              <span class="soundwave-bar"></span>
-            </span>
-          </div>
-          <div class="hud-sub-active-line" id="card-ans-text">
-            <!-- Frase actual sincronizada -->
-          </div>
-        </div>
-
-        <!-- 3. Pill de Espera -->
-        <div class="hud-waiting-pill" id="card-waiting">
-          <span class="wait-dot"></span>
-          <span id="card-waiting-sub">⛩️ Deja tu dilema en los comentarios y te respondo en vivo 👇</span>
-        </div>
-
-        <!-- Banner de Debate Polémico Rotativo para encender el chat -->
-        <div class="hud-debate-banner" id="hud-debate">
-          <span>⚡ DEBATE: "¿El que engaña una vez, vuelve a engañar? Comenta 1 (SÍ) o 2 (NO)"</span>
-        </div>
-
-      </div>
-
-      <!-- BARRA DE REACCIONES / MULTIPLICADORES SOBRE EL CHAT (ESTILO LORENITA) -->
-      <div class="hud-reaction-multipliers">
-        <div class="reaction-pill hl"><span>🔥</span><span>x1 Veredicto</span></div>
-        <div class="reaction-pill gold"><span>👑</span><span>x3 Destacado</span></div>
-        <div class="reaction-pill"><span>⚡</span><span>x5 Alarma</span></div>
-        <div class="reaction-pill hl"><span>❤️</span><span>x10 Respeto</span></div>
-      </div>
-
-    </div>
 
   </div>
 
   <script>
-    const vidIdle = document.getElementById("video-idle");
-    const vidTalking = document.getElementById("video-talking");
-    const avatarStaticLayer = document.getElementById("avatar-static-layer");
-    const avatarStaticImg = document.getElementById("avatar-static-img");
-
-    const hudTitle = document.getElementById("hud-title");
-    const hudSubtitle = document.getElementById("hud-subtitle");
-    const hudCta = document.getElementById("hud-cta");
-    const hudStoreBadge = document.getElementById("hud-store-badge");
-
-    const cardQuestion = document.getElementById("card-question");
-    const cardQUser = document.getElementById("card-q-user");
-    const cardQText = document.getElementById("card-q-text");
-
-    const cardAnswer = document.getElementById("card-answer");
-    const cardAnsSpeaker = document.getElementById("card-ans-speaker");
-    const cardAnsText = document.getElementById("card-ans-text");
-
-    const cardWaiting = document.getElementById("card-waiting");
-    const cardWaitingSub = document.getElementById("card-waiting-sub");
-
-    const hudRadar = document.getElementById("hud-radar");
-    const hudDebate = document.getElementById("hud-debate");
-    const hudMvpName = document.getElementById("hud-mvp-name");
-
-    const debatesLista = [
-      '⚡ DEBATE: "¿El que engaña una vez, vuelve a engañar? Comenta 1 (SÍ) o 2 (NO)"',
-      '⚡ DEBATE: "¿Si mira historias de su ex, es infidelidad? Comenta SÍ o NO 👇"',
-      '⚡ DEBATE: "¿Quién miente más en una relación: hombres o mujeres? Comenta H o M"',
-      '⚡ DEBATE: "¿Tu pareja debe tener acceso a tu celular? Comenta SÍ o NO 👇"',
-      '⚡ DEBATE: "¿Existe la amistad entre hombre y mujer sin segundas intenciones? 👇"'
-    ];
-    let debateIdx = 0;
-    setInterval(() => {
-      debateIdx = (debateIdx + 1) % debatesLista.length;
-      if (hudDebate) hudDebate.textContent = debatesLista[debateIdx];
-    }, 10000);
-
-    const salePopup = document.getElementById("sale-popup");
-    const salePopupDesc = document.getElementById("sale-popup-desc");
-    const btnUnmute = document.getElementById("btn-unmute");
-    const bgMusic = document.getElementById("bg-music");
-    if (bgMusic) {
-      bgMusic.volume = 0.09; // Volumen suave ambiental para evitar ruido o distorsión
+    // ==================== 1. RELOJ EN VIVO EN TIEMPO REAL ====================
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const s = String(now.getSeconds()).padStart(2, '0');
+      const el = document.getElementById("live-clock");
+      if (el) el.textContent = `${h}:${m}:${s}`;
     }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-    let currentAgentId = null;
-    let isSpeakingState = false;
-    let currentIdleSrc = "";
-    let currentTalkSrc = "";
-    let lastSaleId = null;
-    let lastAudioVersionPlayed = 0;
-    let tsLastAudioTrigger = 0;
-    let initialAudioLoaded = false;
-    const speechAudio = document.getElementById("speech-audio");
+    // ==================== 2. FONDO DE ESTRELLAS Y POLVO CÓSMICO (CANVAS) ====================
+    const bgCanvas = document.getElementById("starfield-canvas");
+    const bgCtx = bgCanvas ? bgCanvas.getContext("2d") : null;
+    let stars = [];
 
-    function reproducirVozSensei(audioUrl) {
-      if (!speechAudio) return;
-      try {
-        speechAudio.pause();
-        speechAudio.currentTime = 0;
-        speechAudio.src = audioUrl;
-        speechAudio.volume = 1.0;
-        speechAudio.play().catch(e => {
-          console.warn("Aviso play voz:", e);
+    function resizeBgCanvas() {
+      if (!bgCanvas) return;
+      bgCanvas.width = bgCanvas.parentElement.clientWidth;
+      bgCanvas.height = bgCanvas.parentElement.clientHeight;
+      initStars();
+    }
+    window.addEventListener("resize", resizeBgCanvas);
+
+    function initStars() {
+      stars = [];
+      const numStars = Math.floor((bgCanvas.width * bgCanvas.height) / 7500);
+      for (let i = 0; i < numStars; i++) {
+        stars.push({
+          x: Math.random() * bgCanvas.width,
+          y: Math.random() * bgCanvas.height,
+          size: Math.random() * 1.8 + 0.4,
+          speed: Math.random() * 0.35 + 0.1,
+          opacity: Math.random() * 0.7 + 0.2,
+          pulseSpeed: Math.random() * 0.03 + 0.01,
+          pulseVal: Math.random() * Math.PI
         });
-      } catch(e) {
-        console.warn("Error reproducir voz:", e);
       }
     }
 
-    function activarAudio() {
-      // Los videos de presentador siempre permanecen muteados para que no metan estática ni ruido
-      vidIdle.muted = true;
-      vidTalking.muted = true;
-      if (bgMusic && bgMusic.paused) {
-        bgMusic.play().catch(() => {});
-      }
-      btnUnmute.style.opacity = "0";
-      setTimeout(() => { btnUnmute.style.display = "none"; }, 350);
-    }
-
-    document.addEventListener("click", () => {
-      activarAudio();
-    }, { once: true });
-
-    // ==================== MOTOR DE SUBTÍTULOS DINÁMICOS ====================
-    let currentSubtitleInterval = null;
-    let lastRenderedAnswer = "";
-    let tsLastAnswerStart = 0;
-
-    function splitTextIntoSubtitles(text) {
-      const clean = text.replace(/\[[A-Z_]+\]/g, "").replace(/^["'“”]/, "").replace(/["'“”]$/, "").trim();
-      const words = clean.split(/\s+/);
-      const segments = [];
-      let current = [];
-      for (let i = 0; i < words.length; i++) {
-        current.push(words[i]);
-        const w = words[i];
-        const endsWithPunct = /[.,!?;:]$/.test(w);
-        if ((endsWithPunct && current.length >= 2) || current.length >= 4 || i === words.length - 1) {
-          segments.push(current.join(" "));
-          current = [];
+    function renderStarfield() {
+      if (!bgCtx) return;
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      for (let s of stars) {
+        s.y -= s.speed;
+        if (s.y < 0) {
+          s.y = bgCanvas.height;
+          s.x = Math.random() * bgCanvas.width;
         }
+        s.pulseVal += s.pulseSpeed;
+        const currentAlpha = s.opacity * (0.6 + 0.4 * Math.sin(s.pulseVal));
+        bgCtx.fillStyle = `rgba(0, 240, 255, ${currentAlpha * 0.65})`;
+        bgCtx.beginPath();
+        bgCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        bgCtx.fill();
       }
-      return segments.length > 0 ? segments : [clean];
+      requestAnimationFrame(renderStarfield);
     }
+    resizeBgCanvas();
+    renderStarfield();
 
-    function iniciarSubtitulosDinamicos(fullText) {
-      if (currentSubtitleInterval) {
-        clearInterval(currentSubtitleInterval);
-        currentSubtitleInterval = null;
+    // ==================== 3. EL PRIMER SÍMBOLO: CORE HOLOGRÁFICO EN REPOSO ====================
+    // Dibuja una esfera 3D de partículas holográficas rotando con respiración orgánica
+    const orbCanvas = document.getElementById("holo-orb-canvas");
+    const orbCtx = orbCanvas ? orbCanvas.getContext("2d") : null;
+    const NUM_ORB_POINTS = 180;
+    let orbPoints = [];
+
+    function initHoloOrb() {
+      orbPoints = [];
+      for (let i = 0; i < NUM_ORB_POINTS; i++) {
+        const theta = Math.acos(2 * Math.random() - 1);
+        const phi = Math.random() * Math.PI * 2;
+        orbPoints.push({
+          theta: theta,
+          phi: phi,
+          baseRadius: 105 + (Math.random() * 16 - 8),
+          pulseOffset: Math.random() * Math.PI * 2,
+          size: Math.random() * 2.2 + 1.1
+        });
       }
-      const segments = splitTextIntoSubtitles(fullText);
-      let idx = 0;
-
-      function renderNextSegment() {
-        if (idx < segments.length) {
-          cardAnsText.textContent = segments[idx];
-          cardAnsText.style.animation = "none";
-          void cardAnsText.offsetWidth;
-          cardAnsText.style.animation = "subPop 0.22s ease-out";
-          idx++;
-        }
-      }
-
-      renderNextSegment();
-      currentSubtitleInterval = setInterval(() => {
-        if (idx < segments.length) {
-          renderNextSegment();
-        } else {
-          clearInterval(currentSubtitleInterval);
-          currentSubtitleInterval = null;
-        }
-      }, 1250);
     }
+    initHoloOrb();
 
-    
-    // ==================== MOTOR DE ANIMACIÓN DEL SENSEI (ANTI-ESTÁTICO TIKTOK) ====================
+    let orbRotY = 0;
+    let orbRotX = 0.25;
+    let orbTime = 0;
+
+    function renderHoloOrb() {
+      if (!orbCtx) return;
+      orbCtx.clearRect(0, 0, orbCanvas.width, orbCanvas.height);
+
+      const cx = orbCanvas.width / 2;
+      const cy = orbCanvas.height / 2;
+      orbTime += 0.022;
+      orbRotY += 0.014;
+
+      // Resplandor central del núcleo de energía
+      const grad = orbCtx.createRadialGradient(cx, cy, 10, cx, cy, 140);
+      grad.addColorStop(0, 'rgba(0, 240, 255, 0.45)');
+      grad.addColorStop(0.35, 'rgba(0, 180, 220, 0.18)');
+      grad.addColorStop(0.7, 'rgba(0, 100, 160, 0.05)');
+      grad.addColorStop(1, 'transparent');
+      orbCtx.fillStyle = grad;
+      orbCtx.beginPath();
+      orbCtx.arc(cx, cy, 140, 0, Math.PI * 2);
+      orbCtx.fill();
+
+      // Respiración armónica de la esfera
+      const breathing = 1.0 + 0.07 * Math.sin(orbTime * 1.6);
+
+      // Dibujar partículas holográficas en coordenadas 3D proyectadas
+      for (let p of orbPoints) {
+        const r = p.baseRadius * breathing;
+        // Coordenadas esféricas
+        let x = r * Math.sin(p.theta) * Math.cos(p.phi);
+        let y = r * Math.sin(p.theta) * Math.sin(p.phi);
+        let z = r * Math.cos(p.theta);
+
+        // Rotación en eje Y
+        let x1 = x * Math.cos(orbRotY) - z * Math.sin(orbRotY);
+        let z1 = x * Math.sin(orbRotY) + z * Math.cos(orbRotY);
+
+        // Rotación en eje X
+        let y2 = y * Math.cos(orbRotX) - z1 * Math.sin(orbRotX);
+        let z2 = y * Math.sin(orbRotX) + z1 * Math.cos(orbRotX);
+
+        // Proyección de perspectiva 3D
+        const fov = 340;
+        const scale = fov / (fov + z2);
+        const projX = cx + x1 * scale;
+        const projY = cy + y2 * scale;
+
+        // Profundidad de opacidad
+        const alpha = Math.max(0.12, (z2 + 130) / 260);
+
+        // Dibujar partícula con aura cyan
+        orbCtx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.9})`;
+        orbCtx.shadowColor = '#00f0ff';
+        orbCtx.shadowBlur = 8 * scale;
+        orbCtx.beginPath();
+        orbCtx.arc(projX, projY, p.size * scale, 0, Math.PI * 2);
+        orbCtx.fill();
+        orbCtx.shadowBlur = 0;
+      }
+
+      requestAnimationFrame(renderHoloOrb);
+    }
+    renderHoloOrb();
+
+    // ==================== 4. LA MUÑECA / SENSEI HABLANDO: MOTOR LABIAL ====================
+    const avatarImg = document.getElementById("holo-avatar-img");
+    const AVATAR_FRAMES = [
+      "/assets/logo_circle_talk.png",
+      "/assets/logo_circle.png",
+      "/assets/logo_circle_talk.png",
+      "/assets/logo_circle_laugh.png"
+    ];
     let avatarAnimInterval = null;
-    let idleBlinkTimeout = null;
-    let currentAvatarFrame = 0;
+    let currentFrameIdx = 0;
 
-    const AVATAR_IMG_IDLE = "/assets/logo_sensei.jpg";
-    const AVATAR_IMG_TALK = "/assets/logo_sensei_talk.jpg";
-    const AVATAR_IMG_LAUGH = "/assets/logo_sensei_laugh.jpg";
-
-    function iniciarAnimacionAvatar(hablando, emocion) {
+    function startSenseiTalkingAnimation(isSpeaking, emotion) {
       if (avatarAnimInterval) {
         clearInterval(avatarAnimInterval);
         avatarAnimInterval = null;
       }
-      if (idleBlinkTimeout) {
-        clearTimeout(idleBlinkTimeout);
-        idleBlinkTimeout = null;
-      }
 
-      const img = avatarStaticImg;
-      if (!img) return;
+      if (!avatarImg) return;
 
-      if (hablando) {
-        // Expresiones activas y movimiento labial mientras habla
-        const frames = (emocion === "RISA" || emocion === "PICANTE")
-          ? [AVATAR_IMG_LAUGH, AVATAR_IMG_TALK, AVATAR_IMG_LAUGH, AVATAR_IMG_IDLE]
-          : [AVATAR_IMG_TALK, AVATAR_IMG_IDLE, AVATAR_IMG_TALK, AVATAR_IMG_LAUGH];
-
-        currentAvatarFrame = 0;
+      if (isSpeaking) {
+        currentFrameIdx = 0;
         avatarAnimInterval = setInterval(() => {
-          currentAvatarFrame = (currentAvatarFrame + 1) % frames.length;
-          img.src = frames[currentAvatarFrame];
-          // Micro-balanceo para mayor dinamismo
-          const microScale = 1.0 + (Math.sin(Date.now() / 150) * 0.016);
-          img.style.transform = `scale(${microScale})`;
-        }, 190);
+          currentFrameIdx = (currentFrameIdx + 1) % AVATAR_FRAMES.length;
+          avatarImg.src = AVATAR_FRAMES[currentFrameIdx];
+          // Micro-escala sonora para simular vibración de voz
+          const microScale = 1.0 + (Math.sin(Date.now() / 120) * 0.025);
+          avatarImg.style.transform = `scale(${microScale})`;
+        }, 175);
       } else {
-        // En reposo: volver al rostro neutral con micro-respiración y parpadeos
-        img.src = AVATAR_IMG_IDLE;
-        img.style.transform = "scale(1.0)";
-
-        function planearBlink() {
-          const delay = 3200 + Math.random() * 2400;
-          idleBlinkTimeout = setTimeout(() => {
-            if (!isSpeakingState) {
-              img.style.filter = "brightness(0.92) contrast(1.05)";
-              setTimeout(() => {
-                img.style.filter = "none";
-              }, 160);
-              planearBlink();
-            }
-          }, delay);
-        }
-        planearBlink();
+        avatarImg.src = "/assets/logo_circle.png";
+        avatarImg.style.transform = "scale(1.0)";
       }
     }
 
-    iniciarAnimacionAvatar(false, "SABIO");
+    // ==================== 5. MOTOR DE AUDIO DUAL-ENGINE ANTI-BLOQUEO ====================
+    let audioCtx = null;
+    const speechAudio = document.getElementById("speech-audio");
+    const bgMusic = document.getElementById("bg-music");
+    const btnUnlock = document.getElementById("btn-unlock-audio");
+    let lastAudioVersion = 0;
+    let initialLoadDone = false;
 
-    let isPolling = false;
-    async function pollStatus() {
-      if (isPolling) return;
-      isPolling = true;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function reproducirAudioSensei(url) {
+      if (!speechAudio) return;
+
+      // 1. Intento primario con elemento HTML5 Audio
       try {
-        const resp = await fetch("/api/status");
-        if (!resp.ok) return;
-        const data = await resp.json();
+        speechAudio.pause();
+        speechAudio.currentTime = 0;
+        speechAudio.src = url;
+        speechAudio.volume = 1.0;
+        const playPromise = speechAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn("HTML5 audio bloqueado por navegador, activando WebAudio fallback:", err);
+            // 2. Respaldo Web Audio API (evita restricciones CEF en OBS / TikTok Studio)
+            try {
+              const ctx = getAudioContext();
+              if (ctx) {
+                fetch(url)
+                  .then(r => r.arrayBuffer())
+                  .then(buf => ctx.decodeAudioData(buf))
+                  .then(decoded => {
+                    const source = ctx.createBufferSource();
+                    source.buffer = decoded;
+                    source.connect(ctx.destination);
+                    source.start(0);
+                  })
+                  .catch(e => console.warn("WebAudio fallback err:", e));
+              }
+            } catch(e2) {}
+            if (btnUnlock) btnUnlock.style.display = "block";
+          });
+        }
+      } catch(e) {
+        console.warn("Error audio:", e);
+      }
+    }
 
-        // 1. Configuración del Agente y Tema
-        if (data.id !== currentAgentId) {
-          currentAgentId = data.id;
-          hudTitle.textContent = data.banner_title || data.name || "~ EN VIVO ~";
-          hudSubtitle.textContent = data.banner_subtitle || data.niche || "";
-          hudCta.textContent = data.call_to_action || "📦 Pide el tuyo en el enlace de la biografía";
+    function desbloquearAudio() {
+      getAudioContext();
+      if (bgMusic) {
+        bgMusic.volume = 0.04;
+        bgMusic.play().catch(() => {});
+      }
+      if (btnUnlock) btnUnlock.style.display = "none";
+    }
 
-          hudStoreBadge.textContent = data.store_name ? data.store_name.slice(0, 24) : "COLOMBIA 🇨🇴";
-          cardAnsSpeaker.textContent = (data.name || "ASESOR").split("·")[0].trim().toUpperCase();
+    document.addEventListener("click", () => desbloquearAudio(), { once: true });
 
-          if (cardWaitingSub) {
-            if (data.type === "tienda_ventas") {
-              cardWaitingSub.textContent = data.call_to_action || "Pide tu perfume árabe favorito o clon de diseñador y te respondemos en vivo.";
-            } else {
-              cardWaitingSub.textContent = "⛩️ Deja tu dilema en el chat · Toca 2 veces la pantalla ❤️";
-            }
-          }
+    // ==================== 6. POLLING DE ESTADO EN TIEMPO REAL ====================
+    const hdrTitle = document.getElementById("hdr-title");
+    const hdrSubtitle = document.getElementById("hdr-subtitle");
+    const respPrefix = document.getElementById("resp-prefix");
+    const respUsername = document.getElementById("resp-username");
+    const respText = document.getElementById("resp-text");
+    const joinPill = document.getElementById("join-pill");
+    const joinPillText = document.getElementById("join-pill-text");
 
-          if (data.theme_color) {
-            document.documentElement.style.setProperty("--gold", data.theme_color);
-          }
-          if (data.accent_color) {
-            document.documentElement.style.setProperty("--cyan", data.accent_color);
-          }
+    let isSpeakingState = false;
+    let toastTimeout = null;
 
-          // Cargar videos si el agente es tipo video_loop
-          if (data.avatar_type === "video_loop" && data.video_idle) {
-            avatarStaticLayer.style.display = "none";
-            vidIdle.style.display = "block";
-            vidTalking.style.display = "block";
+    async function pollStatus() {
+      try {
+        const res = await fetch("/api/status");
+        if (!res.ok) return;
+        const data = await res.json();
 
-            if (currentIdleSrc !== data.video_idle) {
-              currentIdleSrc = data.video_idle;
-              vidIdle.src = data.video_idle;
-              vidIdle.play().catch(() => {});
-            }
-            if (currentTalkSrc !== (data.video_talking || data.video_idle)) {
-              currentTalkSrc = data.video_talking || data.video_idle;
-              vidTalking.src = currentTalkSrc;
-              vidTalking.play().catch(() => {});
-            }
-          } else {
-            // Modo avatar estático
-            vidIdle.style.display = "none";
-            vidTalking.style.display = "none";
-            avatarStaticLayer.style.display = "flex";
-            if (data.avatar) {
-              avatarStaticImg.src = data.avatar;
-            } else {
-              avatarStaticImg.src = "/assets/logo_sensei.jpg";
-            }
+        // 1. Actualizar títulos de agente
+        if (data.banner_title && hdrTitle.textContent !== data.banner_title) {
+          hdrTitle.textContent = data.banner_title;
+        }
+        if (data.banner_subtitle && hdrSubtitle.textContent !== data.banner_subtitle) {
+          hdrSubtitle.textContent = data.banner_subtitle;
+        }
+
+        // 2. Toast de espectador que entra al live
+        if (data.last_joined_user && (Date.now() - (data.last_joined_ts || 0) < 4000)) {
+          if (joinPillText) {
+            joinPillText.textContent = `👋 ¡${data.last_joined_user} acaba de entrar al dojo!`;
+            joinPill.style.display = "flex";
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+              joinPill.style.display = "none";
+            }, 3500);
           }
         }
 
-        // 2. Reproducir audio de respuesta en tiempo real (blindaje anti-eco estricto de canal único)
-        const version = data.audio_version || 0;
-        const ahora = Date.now();
-        if (!initialAudioLoaded) {
-          initialAudioLoaded = true;
-          lastAudioVersionPlayed = version;
-        } else if (version && version !== lastAudioVersionPlayed && (ahora - tsLastAudioTrigger > 2200)) {
-          lastAudioVersionPlayed = version;
-          tsLastAudioTrigger = ahora;
-          reproducirVozSensei(`/api/live-audio?v=${version}`);
-        }
-
-        // 3. Control de Estado de Habla (Talking vs Idle) con Ducking de Música
+        // 3. Control de Estado de Habla: Core Orb vs Muñeca Sensei
         const speakingNow = !!data.is_speaking;
         if (speakingNow !== isSpeakingState) {
           isSpeakingState = speakingNow;
-          iniciarAnimacionAvatar(speakingNow, data.active_emotion || "SABIO");
           if (speakingNow) {
             document.body.classList.add("is-speaking");
-            if (vidTalking.paused) vidTalking.play().catch(() => {});
-            // Ducking: atenuar suavemente la música de fondo al 2% mientras habla El Sensei
-            if (bgMusic) bgMusic.volume = 0.02;
+            startSenseiTalkingAnimation(true, data.active_emotion || "SABIO");
+            // Ducking musical: baja música de fondo mientras habla
+            if (bgMusic) bgMusic.volume = 0.01;
           } else {
             document.body.classList.remove("is-speaking");
-            // Restaurar volumen normal de música ambiental (9%) en momentos de espera
-            if (bgMusic) bgMusic.volume = 0.09;
+            startSenseiTalkingAnimation(false, data.active_emotion || "SABIO");
+            if (bgMusic) bgMusic.volume = 0.04;
           }
         }
 
-        // Asegurar que la música mística de fondo suene continuamente en TikTok Live
-        if (bgMusic && bgMusic.paused) {
-          bgMusic.play().catch(() => {});
+        // 4. Reproducir audio si hay una nueva versión de voz
+        const audioVer = data.audio_version || 0;
+        if (!initialLoadDone) {
+          initialLoadDone = true;
+          lastAudioVersion = audioVer;
+        } else if (audioVer && audioVer !== lastAudioVersion) {
+          lastAudioVersion = audioVer;
+          reproducirAudioSensei(`/api/live-audio?v=${audioVer}`);
         }
 
-        // 4. Control de Subtítulos y Pregunta en Pantalla
+        // 5. Renderizado de Texto (Exactamente como el screenshot de referencia)
         const phase = data.status_phase || "esperando";
+        let u = (data.active_user || "espectador").trim();
+        let q = (data.active_question || "").trim();
+        let a = (data.active_answer || "").trim();
 
         if (phase === "pensando") {
-          cardWaiting.style.display = "none";
-          if (hudRadar) hudRadar.style.display = "none";
-          if (hudDebate) hudDebate.style.display = "none";
-          cardQuestion.style.display = "inline-flex";
-          let rawU = (data.active_user || 'espectador').replace(/GANCHO VIRAL/gi, "SABIDURÍA").trim();
-          let rawQ = (data.active_question || '...').replace(/GANCHO VIRAL/gi, "").trim();
-          if (rawU.includes("👑")) {
-            cardQuestion.classList.add("is-vip-donator");
-          } else {
-            cardQuestion.classList.remove("is-vip-donator");
-          }
-          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤") || rawU.includes("⛩️")) {
-            cardQUser.textContent = rawU;
-          } else {
-            cardQUser.textContent = `👤 @${rawU}`;
-          }
-          cardQText.textContent = rawQ ? `"${rawQ}"` : '';
-          cardAnswer.style.display = "none";
-          if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
-          lastRenderedAnswer = "";
-
+          respPrefix.textContent = "CONSULTA EN VIVO";
+          respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
+          respText.className = "holo-answer-box";
+          respText.textContent = q ? `«${q}»` : "Analizando dilema...";
         } else if (phase === "respondiendo" || phase === "leyendo" || phase === "soporte_escrito") {
-          cardWaiting.style.display = "none";
-          cardQuestion.style.display = "inline-flex";
-          let rawU = (data.active_user || 'espectador').replace(/GANCHO VIRAL/gi, "SABIDURÍA").trim();
-          let rawQ = (data.active_question || '').replace(/GANCHO VIRAL/gi, "").trim();
-          if (rawU.includes("👑")) {
-            cardQuestion.classList.add("is-vip-donator");
-          } else {
-            cardQuestion.classList.remove("is-vip-donator");
-          }
-          if (rawU.includes("👑") || rawU.includes("🔥") || rawU.includes("🎁") || rawU.includes("👤") || rawU.includes("⛩️")) {
-            cardQUser.textContent = rawU;
-          } else {
-            cardQUser.textContent = `👤 @${rawU}`;
-          }
-          cardQText.textContent = rawQ ? `"${rawQ}"` : '';
-
-          if (hudRadar) {
-            hudRadar.style.display = "inline-flex";
-            let pLow = (data.active_question || "").toLowerCase();
-            if (pLow.includes("infiel") || pLow.includes("engaño") || pLow.includes("celular") || pLow.includes("amig")) {
-              hudRadar.innerHTML = "<span>🚨 RADAR DE INFIDELIDAD: 96% [RED FLAG]</span>";
-            } else if (pLow.includes("ex") || pLow.includes("volver") || pLow.includes("bloque")) {
-              hudRadar.innerHTML = "<span>⚡ RADAR DE TOXICIDAD: 93% [SAL DE AHÍ]</span>";
-            } else if (pLow.includes("visto") || pLow.includes("tarda") || pLow.includes("segunda")) {
-              hudRadar.innerHTML = "<span>⏳ NIVEL DE DESINTERÉS: 100% [DIGNIDAD]</span>";
-            } else {
-              hudRadar.innerHTML = "<span>🔥 VEREDICTO PICANTE: SIN ANESTESIA</span>";
-            }
-          }
-          if (hudDebate) hudDebate.style.display = "none";
-          if (hudMvpName && rawU && !rawU.includes("espectador") && !rawU.includes("EN VIVO") && !rawU.includes("SABIDURÍA")) {
-            hudMvpName.textContent = rawU.replace("👑", "").trim();
-          }
-
-          cardAnswer.style.display = "flex";
-          const ans = data.active_answer || "...";
-          if (phase === "soporte_escrito") {
-            // Modo Soporte Escrito: subtítulos dinámicos de 3-4 palabras sin desbordar el móvil
-            cardAnsSpeaker.textContent = "⛩️ VEREDICTO FINAL";
-            if (ans !== lastRenderedAnswer) {
-              lastRenderedAnswer = ans;
-              iniciarSubtitulosDinamicos(ans);
-            }
-          } else if (ans !== lastRenderedAnswer) {
-            lastRenderedAnswer = ans;
-            tsLastAnswerStart = Date.now();
-            cardAnsSpeaker.textContent = (data.name || "SENSEI").split("·")[0].trim().toUpperCase();
-            iniciarSubtitulosDinamicos(ans);
-          } else if (phase === "respondiendo" && (Date.now() - tsLastAnswerStart) > 22000) {
-            // Protección anti-congelamiento local: si el subtítulo lleva más de 22s, devolver pantalla a espera
-            cardWaiting.style.display = "inline-flex";
-            cardQuestion.style.display = "none";
-            cardAnswer.style.display = "none";
-            if (hudRadar) hudRadar.style.display = "none";
-            if (hudDebate) hudDebate.style.display = "inline-flex";
-            if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
-          }
-
+          respPrefix.textContent = speakingNow ? "RESPONDIENDO" : "ÚLTIMA RESPUESTA";
+          respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
+          respText.className = speakingNow ? "holo-answer-box is-speaking-text" : "holo-answer-box";
+          if (u.includes("👑")) respText.classList.add("is-vip");
+          respText.textContent = a || q || "El Sensei está compartiendo su veredicto.";
         } else {
           // Fase esperando
-          cardWaiting.style.display = "inline-flex";
-          cardQuestion.style.display = "none";
-          cardAnswer.style.display = "none";
-          if (hudRadar) hudRadar.style.display = "none";
-          if (hudDebate) hudDebate.style.display = "inline-flex";
-          if (currentSubtitleInterval) { clearInterval(currentSubtitleInterval); currentSubtitleInterval = null; }
-          lastRenderedAnswer = "";
-        }
-
-        
-        // 4.5. Toast de Saludo Instantáneo a Nuevos Conectados
-        if (data.last_joined_ts && data.last_joined_ts !== lastJoinTs) {
-          lastJoinTs = data.last_joined_ts;
-          const uJoin = data.last_joined_user || "amigo";
-          const cardJoinToast = document.getElementById("card-join-toast");
-          const cardJoinText = document.getElementById("card-join-text");
-          if (cardJoinToast && cardJoinText) {
-            cardJoinText.textContent = `👋 ¡Bienvenido/a @${uJoin} al dojo! Deja tu caso 👇`;
-            cardJoinToast.style.display = "inline-flex";
-            setTimeout(() => {
-              cardJoinToast.style.display = "none";
-            }, 6000);
+          respPrefix.textContent = "ÚLTIMA RESPUESTA";
+          if (a) {
+            respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
+            respText.className = "holo-answer-box";
+            respText.textContent = a;
+          } else {
+            respUsername.textContent = "@dojo";
+            respText.className = "holo-answer-box";
+            respText.textContent = "Deja tu caso de amor o pareja en los comentarios y te daré mi veredicto en directo.";
           }
         }
 
-        // 5. Pop-up de Venta en Vivo
-        if (data.last_sale_alert && data.last_sale_alert.id !== lastSaleId) {
-          lastSaleId = data.last_sale_alert.id;
-          const a = data.last_sale_alert;
-          salePopupDesc.textContent = `${a.cliente} (${a.ciudad}) acaba de pedir: ${a.producto} (${a.precio}) · ¡Quedan pocas unidades!`;
-          salePopup.classList.add("active");
-          setTimeout(() => {
-            salePopup.classList.remove("active");
-          }, 9000);
-        }
-
-      } catch (err) {
-        // Silenciar errores de red
-      } finally {
-        isPolling = false;
+      } catch(err) {
+        console.warn("Poll error:", err);
       }
     }
 
-    // Polling estable a 750ms con mutex anti-eco
-    setInterval(pollStatus, 750);
+    setInterval(pollStatus, 500);
     pollStatus();
   </script>
 </body>

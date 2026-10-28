@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 TikTok Live - Sensei del Amor y la Seducción (VPS / Coolify Headless Streaming)
 Transmisión en vivo 24/7 sin OBS: Escucha preguntas de seducción, conquista,
@@ -1258,7 +1258,7 @@ async def worker_preguntas():
             resp_clean = (respuesta or "").strip()
             nombre_lower = nombre_humano.lower()
 
-            if not es_regalo and not es_bienvenida_donador and not es_frase_viral:
+            if not es_regalo and not es_bienvenida_donador and not es_frase_viral and not es_saludo and not es_intervencion_manual:
                 # Comprobar si la IA ya leyó la pregunta en voz alta dentro de su respuesta generada
                 preg_fragmento = pregunta.lower()[:20].strip()
                 ia_ya_leyo = (preg_fragmento in resp_clean.lower()) or (f"{nombre_lower} nos" in resp_clean.lower()) or (f"{nombre_lower} pregunta" in resp_clean.lower()) or ("pregunta:" in resp_clean.lower())
@@ -1281,7 +1281,7 @@ async def worker_preguntas():
                     if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo":
                         respuesta = f"Atento {nombre_humano}: {resp_clean}"
             else:
-                if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo" and not es_frase_viral:
+                if nombre_lower not in resp_clean.lower() and nombre_lower != "amigo" and not es_frase_viral and not es_saludo and not es_intervencion_manual:
                     import random
                     prefijos = [
                         f"Escucha bien, {nombre_humano}:",
@@ -1557,6 +1557,9 @@ async def escuchar_tiktok():
                     if not u:
                         return
                     u_key = u.lower().strip()
+                    if u_key == usuario.lower().strip():
+                        return  # No saludarse a sí mismo (creador del Live)
+
                     nombre_h = limpiar_nombre_usuario(u)
                     if nombre_h.lower() == "amigo" and hasattr(user, "nickname") and user.nickname:
                         nombre_nick = limpiar_nombre_usuario(user.nickname)
@@ -1567,8 +1570,8 @@ async def escuchar_tiktok():
                     info_donador = obtener_info_donador(user)
                     es_donador = info_donador.get("es_donador", False)
 
-                    # Cooldown de 3 minutos por usuario para no spamear
-                    if ahora - usuarios_saludados_recientes.get(u_key, 0) < 180:
+                    # Cooldown de 90 segundos por usuario para no spamear si reconecta
+                    if ahora - usuarios_saludados_recientes.get(u_key, 0) < 90:
                         return
                     usuarios_saludados_recientes[u_key] = ahora
                     if len(usuarios_saludados_recientes) > 300:
@@ -1585,8 +1588,8 @@ async def escuchar_tiktok():
                         await encolar_pregunta(u, msg_saludo, es_vip=True)
                     else:
                         registrar_log(f"👋 ¡Nuevo conectado! @{u} ({nombre_h}) entró al Live", "green")
-                        # Saludar verbalmente si El Sensei está disponible
-                        if estado.get("status_phase") in ["esperando", "soporte_escrito"] and not estado.get("is_speaking") and cola_preguntas.empty():
+                        # Saludar verbalmente si la cola no está saturada
+                        if cola_preguntas.qsize() < 3:
                             await encolar_saludo_inmediato(u, nombre_h, current_agent)
                 except Exception as e_join:
                     logger.warning(f"Aviso procesando join en TikTok: {e_join}")
@@ -1637,6 +1640,41 @@ async def escuchar_tiktok():
                     u = event.user.unique_id
                     c = event.comment.strip()
                     if not c or len(c) < 2:
+                        return
+
+                    c_low = c.lower().strip()
+
+                    # 1. Filtro estricto: Descartar eventos de unión emitidos por TikTok como mensajes de chat
+                    frases_join = [
+                        "se unió", "se unio", "joined", "gracias a las publicaciones", 
+                        "gracias a la publicación", "gracias a la publicacion", "se ha unido"
+                    ]
+                    if any(fj in c_low for fj in frases_join):
+                        u_key = u.lower().strip()
+                        if u_key != usuario.lower().strip():
+                            ahora_j = time.time()
+                            if ahora_j - usuarios_saludados_recientes.get(u_key, 0) >= 90:
+                                usuarios_saludados_recientes[u_key] = ahora_j
+                                nombre_h = limpiar_nombre_usuario(u)
+                                if hasattr(event.user, "nickname") and event.user.nickname:
+                                    n_nick = limpiar_nombre_usuario(event.user.nickname)
+                                    if n_nick.lower() != "amigo":
+                                        nombre_h = n_nick
+                                estado["last_joined_user"] = nombre_h
+                                estado["last_joined_ts"] = int(ahora_j * 1000)
+                                if cola_preguntas.qsize() < 3:
+                                    await encolar_saludo_inmediato(u, nombre_h, current_agent)
+                        return
+
+                    # 2. Filtro estricto: Descartar eventos sociales de likes, shares y follow
+                    frases_sociales = [
+                        "le dio me gusta", "dio me gusta", "me gusta al live",
+                        "compartió el live", "compartio el live", "compartió", "compartio", 
+                        "ha compartido", "envió una rosa", "envio una rosa", "envió un regalo", 
+                        "envio un regalo", "siguió al creador", "siguio al creador", 
+                        "comenzó a seguir", "comenzo a seguir", "te sigue"
+                    ]
+                    if any(fs in c_low for fs in frases_sociales):
                         return
 
                     # Filtro anti-duplicados inteligente por tiempo (5 segundos para evitar ecos de red)
