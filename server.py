@@ -1694,13 +1694,17 @@ async def escuchar_tiktok():
 
             @client.on(CommentEvent)
             async def on_comment(event: CommentEvent):
+                global historial_comentarios_timestamps
                 try:
                     # Descartar el volcado de paquetes iniciales de TikTok (<1.2s)
                     if time.time() < ignorar_buffer_hasta:
                         return
 
-                    u = event.user.unique_id
-                    c = event.comment.strip()
+                    user = getattr(event, "user", None)
+                    if not user:
+                        return
+                    u = getattr(user, "unique_id", "") or getattr(user, "nickname", "") or "espectador"
+                    c = (getattr(event, "comment", "") or "").strip()
                     if not c or len(c) < 2:
                         return
 
@@ -1718,8 +1722,8 @@ async def escuchar_tiktok():
                             if ahora_j - usuarios_saludados_recientes.get(u_key, 0) >= 35:
                                 usuarios_saludados_recientes[u_key] = ahora_j
                                 nombre_h = limpiar_nombre_usuario(u)
-                                if hasattr(event.user, "nickname") and event.user.nickname:
-                                    n_nick = limpiar_nombre_usuario(event.user.nickname)
+                                if hasattr(user, "nickname") and user.nickname:
+                                    n_nick = limpiar_nombre_usuario(user.nickname)
                                     if n_nick.lower() != "amigo":
                                         nombre_h = n_nick
                                 estado["last_joined_user"] = nombre_h
@@ -1738,17 +1742,21 @@ async def escuchar_tiktok():
                     if any(fs in c_low for fs in frases_sociales):
                         return
 
-                    # Filtro anti-duplicados inteligente por tiempo (5 segundos para evitar ecos de red)
+                    # Filtro anti-duplicados inteligente por tiempo (4 segundos para evitar ecos de red)
                     ahora = time.time()
                     clave_comentario = f"{u.lower()}:{c.lower()}"
                     if clave_comentario in historial_comentarios_timestamps:
-                        if ahora - historial_comentarios_timestamps[clave_comentario] < 5.0:
+                        if ahora - historial_comentarios_timestamps[clave_comentario] < 4.0:
                             return
                     historial_comentarios_timestamps[clave_comentario] = ahora
                     if len(historial_comentarios_timestamps) > 200:
-                        historial_comentarios_timestamps = {k: v for k, v in historial_comentarios_timestamps.items() if ahora - v < 60.0}
+                        viejas = [k for k, v in historial_comentarios_timestamps.items() if ahora - v >= 60.0]
+                        for k in viejas:
+                            historial_comentarios_timestamps.pop(k, None)
 
-                    info_donador = obtener_info_donador(event.user)
+                    registrar_log(f"📥 [CHAT RECIBIDO] @{u}: \"{c}\"", "hl")
+
+                    info_donador = obtener_info_donador(user)
                     if info_donador.get("es_donador"):
                         registrar_usuario_vip(u, minutos=30)
 
@@ -1756,12 +1764,11 @@ async def escuchar_tiktok():
                     if vip_activo:
                         lvl_tag = f" [DONADOR NIVEL {info_donador.get('nivel', 1)}]" if info_donador.get("es_donador") else " [VIP]"
                         registrar_log(f"👑 [CONSULTA{lvl_tag}] de @{u}: \"{c}\"", "green")
-                    else:
-                        registrar_log(f"📥 Comentario en vivo de @{u}: \"{c}\"", "hl")
 
                     await encolar_pregunta(u, c, es_vip=vip_activo)
                 except Exception as e:
-                    logger.warning(f"Aviso procesando comentario de TikTok: {e}")
+                    registrar_log(f"⚠️ Error procesando comentario de TikTok: {e}", "warn")
+                    logger.error(f"Error procesando comentario de TikTok: {e}", exc_info=True)
 
             @client.on(DisconnectEvent)
             async def on_disconnect(event: DisconnectEvent):
@@ -2320,7 +2327,6 @@ async def handle_stop(request):
 
 async def handle_logs(request):
     logs_a_enviar = list(buffer_logs)
-    buffer_logs.clear()
     return web.json_response(logs_a_enviar)
 
 async def handle_audio_test(request):
