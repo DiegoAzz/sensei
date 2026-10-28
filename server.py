@@ -2257,6 +2257,7 @@ async def start_dual_servers():
     app = web.Application()
     app.router.add_get("/", handle_index)
     app.router.add_get("/client", handle_index)
+    app.router.add_get("/live", handle_live_screen)
     app.router.add_get("/live-screen", handle_live_screen)
     app.router.add_get("/overlay", handle_live_screen)
     app.router.add_get("/api/live-audio", handle_live_audio)
