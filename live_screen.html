@@ -9,14 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --cyan: #00f0ff;
-      --cyan-glow: rgba(0, 240, 255, 0.55);
-      --cyan-dark: #0084a8;
       --gold: #ffd700;
-      --gold-glow: rgba(255, 215, 0, 0.45);
-      --bg: #030508;
-      --card-bg: rgba(6, 11, 20, 0.85);
-      --border-cyan: rgba(0, 240, 255, 0.28);
+      --gold-glow: rgba(255, 215, 0, 0.55);
+      --crimson: #ff2a6d;
+      --crimson-glow: rgba(255, 42, 109, 0.55);
+      --crimson-dark: #8c0a32;
+      --bg: #08010d;
+      --card-bg: rgba(18, 4, 26, 0.85);
+      --border-sensei: rgba(255, 215, 0, 0.35);
       --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
       --font-luxury: 'Cinzel', serif;
       --font-mono: 'JetBrains Mono', monospace;
@@ -46,12 +46,12 @@
       max-width: 1080px;
       margin: 0 auto;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 36%, #0b1526 0%, #030508 72%);
+      background: radial-gradient(circle at 50% 36%, #22052e 0%, #08010d 75%);
       display: flex;
       flex-direction: column;
     }
 
-    /* Fondo de Partículas Cósmicas / Polvo Estelar Flotante */
+    /* Fondo de Partículas Cósmicas / Polvo Dorado y Carmesí Flotante */
     #starfield-canvas {
       position: absolute;
       inset: 0;
@@ -61,7 +61,7 @@
       z-index: 1;
     }
 
-    /* ==================== 1. HEADER SUPERIOR (ESTILO MINIMALISTA VIRAL) ==================== */
+    /* ==================== 1. HEADER SUPERIOR (ESTILO MINIMALISTA VIRAL DEL SENSEI) ==================== */
     .holo-header {
       position: absolute;
       top: 3.5%;
@@ -79,7 +79,7 @@
       font-weight: 800;
       letter-spacing: -0.5px;
       color: #ffffff;
-      text-shadow: 0 0 20px rgba(0, 240, 255, 0.7), 0 0 40px rgba(0, 240, 255, 0.3);
+      text-shadow: 0 0 20px rgba(255, 42, 109, 0.8), 0 0 40px rgba(255, 215, 0, 0.45);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -87,7 +87,7 @@
 
     .holo-subtitle {
       font-size: clamp(13px, 1.6vw, 17px);
-      color: #94a3b8;
+      color: #cbd5e1;
       font-weight: 500;
       letter-spacing: 0.2px;
     }
@@ -98,7 +98,7 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: #64748b;
+      color: #94a3b8;
       font-family: var(--font-mono);
     }
 
@@ -118,8 +118,9 @@
     }
 
     .holo-meta-tag {
-      color: #00f0ff;
+      color: #ffd700;
       font-weight: 700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
     }
 
     /* ==================== 2. ESCENARIO HOLOGRÁFICO CENTRAL ==================== */
@@ -136,7 +137,7 @@
       pointer-events: none;
     }
 
-    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO */
+    /* A) EL PRIMER SÍMBOLO: ORBE / CORE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) */
     .holo-core-container {
       position: absolute;
       width: clamp(230px, 32vw, 360px);
@@ -152,10 +153,10 @@
     #holo-orb-canvas {
       width: 100%;
       height: 100%;
-      filter: drop-shadow(0 0 30px rgba(0, 240, 255, 0.75)) drop-shadow(0 0 60px rgba(0, 132, 168, 0.45));
+      filter: drop-shadow(0 0 35px rgba(255, 42, 109, 0.75)) drop-shadow(0 0 65px rgba(255, 215, 0, 0.5));
     }
 
-    /* B) LA MUÑECA / SENSEI HABLANDO (HOLOGRAMA CUANDO CONTESTA) */
+    /* B) EL SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR */
     .holo-sensei-container {
       position: absolute;
       width: clamp(230px, 32vw, 360px);
@@ -169,7 +170,7 @@
       pointer-events: none;
     }
 
-    /* Envoltorio con efecto holográfico, scanlines y aura cyan */
+    /* Envoltorio con efecto holográfico, aura de oro y carmesí */
     .holo-avatar-wrap {
       position: relative;
       width: 88%;
@@ -180,10 +181,10 @@
       align-items: center;
       justify-content: center;
       box-shadow: 
-        0 0 40px rgba(0, 240, 255, 0.8),
-        0 0 80px rgba(0, 240, 255, 0.4),
-        inset 0 0 45px rgba(0, 240, 255, 0.6);
-      border: 2px solid rgba(0, 240, 255, 0.85);
+        0 0 40px rgba(255, 42, 109, 0.85),
+        0 0 80px rgba(255, 215, 0, 0.45),
+        inset 0 0 45px rgba(255, 215, 0, 0.55);
+      border: 2px solid rgba(255, 215, 0, 0.9);
       animation: holoFloat 3.2s ease-in-out infinite;
     }
 
@@ -192,21 +193,21 @@
       height: 100%;
       object-fit: cover;
       filter: 
-        drop-shadow(0 0 20px rgba(0, 240, 255, 0.8))
+        drop-shadow(0 0 25px rgba(255, 42, 109, 0.8))
         brightness(1.15) 
-        contrast(1.1);
+        contrast(1.08);
       mix-blend-mode: screen;
       transition: transform 0.12s ease-out;
     }
 
-    /* Scanlines holográficas continuas sobre el avatar */
+    /* Scanlines holográficas doradas y carmesí sobre el avatar */
     .holo-scanlines {
       position: absolute;
       inset: 0;
       background: linear-gradient(
         to bottom,
-        rgba(0, 240, 255, 0) 50%,
-        rgba(0, 240, 255, 0.25) 51%,
+        rgba(255, 215, 0, 0) 50%,
+        rgba(255, 42, 109, 0.22) 51%,
         rgba(0, 0, 0, 0.4) 52%
       );
       background-size: 100% 6px;
@@ -222,7 +223,7 @@
       left: 0;
       right: 0;
       height: 35%;
-      background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.55), transparent);
+      background: linear-gradient(180deg, transparent, rgba(255, 215, 0, 0.45), transparent);
       animation: scanBeam 2.8s linear infinite;
       pointer-events: none;
       z-index: 6;
@@ -250,7 +251,7 @@
       transform: scale(1);
     }
 
-    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS (ESTILO LIMPIO SCREENSHOT) ==================== */
+    /* ==================== 3. TARJETA DE RESPUESTA / SUBTÍTULOS (COLORES DEL SENSEI) ==================== */
     .holo-response-area {
       position: absolute;
       top: 56%;
@@ -265,39 +266,44 @@
     .holo-user-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13.5px;
+      gap: 8px;
+      font-size: 14px;
       font-weight: 700;
-      color: #00f0ff;
+      color: #ffd700;
       letter-spacing: 0.2px;
       text-transform: none;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
     }
 
     .holo-user-badge .prefix-label {
-      color: #64748b;
-      font-weight: 600;
+      color: #ff2a6d;
+      font-weight: 800;
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
+      background: rgba(255, 42, 109, 0.15);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 42, 109, 0.35);
     }
 
     .holo-answer-box {
       font-size: clamp(16px, 2.2vw, 24px);
       font-weight: 600;
       line-height: 1.45;
-      color: #f8fafc;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+      color: #ffffff;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
       transition: color 0.3s ease;
     }
 
     .holo-answer-box.is-vip {
       color: #ffd700;
-      text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
     }
 
     .holo-answer-box.is-speaking-text {
       color: #ffffff;
-      text-shadow: 0 0 15px rgba(0, 240, 255, 0.6);
+      text-shadow: 0 0 16px rgba(255, 42, 109, 0.65), 0 0 30px rgba(255, 215, 0, 0.3);
     }
 
     /* Toast Flotante Compacto para cuando alguien entra */
@@ -305,18 +311,18 @@
       position: absolute;
       top: 13.5%;
       left: 6%;
-      background: rgba(0, 240, 255, 0.12);
-      border: 1px solid rgba(0, 240, 255, 0.4);
+      background: rgba(255, 42, 109, 0.16);
+      border: 1px solid rgba(255, 215, 0, 0.45);
       border-radius: 999px;
       padding: 5px 14px;
       font-size: 12px;
-      font-weight: 600;
-      color: #00f0ff;
+      font-weight: 700;
+      color: #ffd700;
       display: flex;
       align-items: center;
       gap: 6px;
       backdrop-filter: blur(8px);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.3);
       animation: toastIn 0.35s ease-out;
       z-index: 30;
     }
@@ -343,15 +349,16 @@
       top: 15px;
       right: 15px;
       z-index: 100;
-      background: rgba(0, 240, 255, 0.2);
-      border: 1px solid #00f0ff;
-      color: #00f0ff;
+      background: rgba(255, 42, 109, 0.25);
+      border: 1px solid #ffd700;
+      color: #ffd700;
       padding: 6px 12px;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: none;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
   </style>
 </head>
@@ -359,19 +366,19 @@
 
   <div class="stream-viewport">
 
-    <!-- CANVAS FONDO ESTELAR DINÁMICO -->
+    <!-- CANVAS FONDO ESTELAR DINÁMICO (POLVO DORADO Y CARMESÍ) -->
     <canvas id="starfield-canvas"></canvas>
 
-    <!-- 1. HEADER MINIMALISTA IDENTICO AL SCREENSHOT -->
+    <!-- 1. HEADER MINIMALISTA CON LOS COLORES DEL SENSEI -->
     <header class="holo-header">
-      <h1 class="holo-title" id="hdr-title">Pregúntale al Sensei</h1>
+      <h1 class="holo-title" id="hdr-title">⛩️ Pregúntale al Sensei</h1>
       <p class="holo-subtitle" id="hdr-subtitle">Escribe tu dilema de amor, ex o conquista</p>
       <div class="holo-meta-row">
         <span class="live-dot-pulse"></span>
         <span>EN VIVO</span>
         <span id="live-clock">--:--:--</span>
         <span>·</span>
-        <span id="live-viewers">12 en la sala</span>
+        <span id="live-viewers">12 en el Dojo</span>
         <span>·</span>
         <span class="holo-meta-tag" id="live-stats">Consultorio Activo</span>
       </div>
@@ -386,12 +393,12 @@
     <!-- 2. ESCENARIO CENTRAL HOLOGRÁFICO -->
     <div class="holo-stage">
 
-      <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO DE PARTÍCULAS EN REPOSO -->
+      <!-- A) PRIMER SÍMBOLO: CORE / ORBE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) -->
       <div class="holo-core-container" id="holo-core">
         <canvas id="holo-orb-canvas" width="400" height="400"></canvas>
       </div>
 
-      <!-- B) LA MUÑECA / SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR -->
+      <!-- B) EL SENSEI HABLANDO: HOLOGRAMA ACTIVO AL CONTESTAR -->
       <div class="holo-sensei-container" id="holo-sensei">
         <div class="holo-avatar-wrap">
           <div class="holo-scanlines"></div>
@@ -438,7 +445,7 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // ==================== 2. FONDO DE ESTRELLAS Y POLVO CÓSMICO (CANVAS) ====================
+    // ==================== 2. FONDO DE ESTRELLAS Y POLVO CÓSMICO (CANVAS - ORO Y CARMESÍ) ====================
     const bgCanvas = document.getElementById("starfield-canvas");
     const bgCtx = bgCanvas ? bgCanvas.getContext("2d") : null;
     let stars = [];
@@ -462,7 +469,8 @@
           speed: Math.random() * 0.35 + 0.1,
           opacity: Math.random() * 0.7 + 0.2,
           pulseSpeed: Math.random() * 0.03 + 0.01,
-          pulseVal: Math.random() * Math.PI
+          pulseVal: Math.random() * Math.PI,
+          isGold: Math.random() > 0.4
         });
       }
     }
@@ -478,7 +486,9 @@
         }
         s.pulseVal += s.pulseSpeed;
         const currentAlpha = s.opacity * (0.6 + 0.4 * Math.sin(s.pulseVal));
-        bgCtx.fillStyle = `rgba(0, 240, 255, ${currentAlpha * 0.65})`;
+        bgCtx.fillStyle = s.isGold 
+          ? `rgba(255, 215, 0, ${currentAlpha * 0.7})` 
+          : `rgba(255, 42, 109, ${currentAlpha * 0.6})`;
         bgCtx.beginPath();
         bgCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
         bgCtx.fill();
@@ -488,11 +498,11 @@
     resizeBgCanvas();
     renderStarfield();
 
-    // ==================== 3. EL PRIMER SÍMBOLO: CORE HOLOGRÁFICO EN REPOSO ====================
-    // Dibuja una esfera 3D de partículas holográficas rotando con respiración orgánica
+    // ==================== 3. EL PRIMER SÍMBOLO: CORE HOLOGRÁFICO EN REPOSO (ORO Y CARMESÍ) ====================
+    // Dibuja una esfera 3D de partículas de energía del Sensei rotando con respiración orgánica
     const orbCanvas = document.getElementById("holo-orb-canvas");
     const orbCtx = orbCanvas ? orbCanvas.getContext("2d") : null;
-    const NUM_ORB_POINTS = 180;
+    const NUM_ORB_POINTS = 185;
     let orbPoints = [];
 
     function initHoloOrb() {
@@ -505,7 +515,8 @@
           phi: phi,
           baseRadius: 105 + (Math.random() * 16 - 8),
           pulseOffset: Math.random() * Math.PI * 2,
-          size: Math.random() * 2.2 + 1.1
+          size: Math.random() * 2.2 + 1.1,
+          colorType: i % 3 // 0: Oro brillante, 1: Carmesí neón, 2: Blanco puro
         });
       }
     }
@@ -524,11 +535,11 @@
       orbTime += 0.022;
       orbRotY += 0.014;
 
-      // Resplandor central del núcleo de energía
+      // Resplandor central del núcleo de energía del Sensei (Oro cálido en el centro, Carmesí en el exterior)
       const grad = orbCtx.createRadialGradient(cx, cy, 10, cx, cy, 140);
-      grad.addColorStop(0, 'rgba(0, 240, 255, 0.45)');
-      grad.addColorStop(0.35, 'rgba(0, 180, 220, 0.18)');
-      grad.addColorStop(0.7, 'rgba(0, 100, 160, 0.05)');
+      grad.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
+      grad.addColorStop(0.35, 'rgba(255, 42, 109, 0.3)');
+      grad.addColorStop(0.7, 'rgba(140, 10, 50, 0.1)');
       grad.addColorStop(1, 'transparent');
       orbCtx.fillStyle = grad;
       orbCtx.beginPath();
@@ -541,31 +552,34 @@
       // Dibujar partículas holográficas en coordenadas 3D proyectadas
       for (let p of orbPoints) {
         const r = p.baseRadius * breathing;
-        // Coordenadas esféricas
         let x = r * Math.sin(p.theta) * Math.cos(p.phi);
         let y = r * Math.sin(p.theta) * Math.sin(p.phi);
         let z = r * Math.cos(p.theta);
 
-        // Rotación en eje Y
         let x1 = x * Math.cos(orbRotY) - z * Math.sin(orbRotY);
         let z1 = x * Math.sin(orbRotY) + z * Math.cos(orbRotY);
 
-        // Rotación en eje X
         let y2 = y * Math.cos(orbRotX) - z1 * Math.sin(orbRotX);
         let z2 = y * Math.sin(orbRotX) + z1 * Math.cos(orbRotX);
 
-        // Proyección de perspectiva 3D
         const fov = 340;
         const scale = fov / (fov + z2);
         const projX = cx + x1 * scale;
         const projY = cy + y2 * scale;
 
-        // Profundidad de opacidad
-        const alpha = Math.max(0.12, (z2 + 130) / 260);
+        const alpha = Math.max(0.15, (z2 + 130) / 260);
 
-        // Dibujar partícula con aura cyan
-        orbCtx.fillStyle = `rgba(0, 240, 255, ${alpha * 0.9})`;
-        orbCtx.shadowColor = '#00f0ff';
+        if (p.colorType === 0) {
+          orbCtx.fillStyle = `rgba(255, 215, 0, ${alpha * 0.95})`;
+          orbCtx.shadowColor = '#ffd700';
+        } else if (p.colorType === 1) {
+          orbCtx.fillStyle = `rgba(255, 42, 109, ${alpha * 0.95})`;
+          orbCtx.shadowColor = '#ff2a6d';
+        } else {
+          orbCtx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.9})`;
+          orbCtx.shadowColor = '#ffd700';
+        }
+
         orbCtx.shadowBlur = 8 * scale;
         orbCtx.beginPath();
         orbCtx.arc(projX, projY, p.size * scale, 0, Math.PI * 2);
@@ -577,7 +591,7 @@
     }
     renderHoloOrb();
 
-    // ==================== 4. LA MUÑECA / SENSEI HABLANDO: MOTOR LABIAL ====================
+    // ==================== 4. EL SENSEI HABLANDO: MOTOR LABIAL ====================
     const avatarImg = document.getElementById("holo-avatar-img");
     const AVATAR_FRAMES = [
       "/assets/logo_circle_talk.png",
@@ -601,7 +615,6 @@
         avatarAnimInterval = setInterval(() => {
           currentFrameIdx = (currentFrameIdx + 1) % AVATAR_FRAMES.length;
           avatarImg.src = AVATAR_FRAMES[currentFrameIdx];
-          // Micro-escala sonora para simular vibración de voz
           const microScale = 1.0 + (Math.sin(Date.now() / 120) * 0.025);
           avatarImg.style.transform = `scale(${microScale})`;
         }, 175);
@@ -635,7 +648,6 @@
     function reproducirAudioSensei(url) {
       if (!speechAudio) return;
 
-      // 1. Intento primario con elemento HTML5 Audio
       try {
         speechAudio.pause();
         speechAudio.currentTime = 0;
@@ -645,7 +657,6 @@
         if (playPromise !== undefined) {
           playPromise.catch(err => {
             console.warn("HTML5 audio bloqueado por navegador, activando WebAudio fallback:", err);
-            // 2. Respaldo Web Audio API (evita restricciones CEF en OBS / TikTok Studio)
             try {
               const ctx = getAudioContext();
               if (ctx) {
@@ -725,7 +736,6 @@
           if (speakingNow) {
             document.body.classList.add("is-speaking");
             startSenseiTalkingAnimation(true, data.active_emotion || "SABIO");
-            // Ducking musical: baja música de fondo mientras habla
             if (bgMusic) bgMusic.volume = 0.01;
           } else {
             document.body.classList.remove("is-speaking");
@@ -744,7 +754,7 @@
           reproducirAudioSensei(`/api/live-audio?v=${audioVer}`);
         }
 
-        // 5. Renderizado de Texto (Exactamente como el screenshot de referencia)
+        // 5. Renderizado de Texto (Colores del Sensei: Oro y Carmesí)
         const phase = data.status_phase || "esperando";
         let u = (data.active_user || "espectador").trim();
         let q = (data.active_question || "").trim();
@@ -762,7 +772,6 @@
           if (u.includes("👑")) respText.classList.add("is-vip");
           respText.textContent = a || q || "El Sensei está compartiendo su veredicto.";
         } else {
-          // Fase esperando
           respPrefix.textContent = "ÚLTIMA RESPUESTA";
           if (a) {
             respUsername.textContent = u.startsWith("@") ? u : `@${u}`;
