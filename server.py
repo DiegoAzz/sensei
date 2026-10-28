@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 TikTok Live - Sensei del Amor y la Seducción (VPS / Coolify Headless Streaming)
 Transmisión en vivo 24/7 sin OBS: Escucha preguntas de seducción, conquista,
@@ -42,16 +42,21 @@ DEFAULT_OPENAI_KEY_B64 = "c2stcHJvai1UMS1icEoxa3hieUhBTXl4QkNMdkdKdUpPMkVVczZmQ3
 
 def obtener_ai_key_default():
     env_k = os.environ.get("GEMINI_API_KEY") or os.environ.get("OPENAI_API_KEY")
-    if env_k:
+    if env_k and not env_k.startswith("AQ."):
         return env_k.strip()
     try:
-        return base64.b64decode(DEFAULT_GEMINI_KEY_B64).decode("utf-8").strip()
+        k = base64.b64decode(DEFAULT_GEMINI_KEY_B64).decode("utf-8").strip()
+        if k and not k.startswith("AQ."):
+            return k
     except Exception:
         pass
     try:
-        return base64.b64decode(DEFAULT_OPENAI_KEY_B64).decode("utf-8").strip()
+        k_oa = base64.b64decode(DEFAULT_OPENAI_KEY_B64).decode("utf-8").strip()
+        if k_oa and not k_oa.startswith("AQ."):
+            return k_oa
     except Exception:
-        return ""
+        pass
+    return ""
 
 def obtener_gemini_key_default():
     return obtener_ai_key_default()
@@ -286,7 +291,7 @@ async def responder_con_ia(usuario: str, pregunta: str, agent: dict = None) -> t
     agent_name = agent.get("name", "El Sensei del Amor")
 
     # 0. RESPUESTA INSTANTÁNEA PARA SALUDOS SIMPLES (0 ms de espera para TikTok Live)
-    saludos_cortos = ["hola", "buenas", "buenas noches", "buen dia", "saludos", "que tal", "hola sensei", "holaa", "como estas", "cómo estás", "como va"]
+    saludos_cortos = ["hola", "buenas", "buenas noches", "buen dia", "saludos", "que tal", "hola sensei", "holaa", "como estas", "cómo estás", "como va", "volviste", "volvió", "ya volví", "saludos sensei", "buenas noches sensei"]
     p_clean = pregunta.lower().strip().rstrip(".!?¿¡")
     if p_clean in saludos_cortos or len(p_clean) <= 3:
         import random
@@ -551,8 +556,7 @@ Respuesta de {agent_name}:"""
                         "contents": [{"parts": [{"text": prompt}]}],
                         "generationConfig": {
                             "temperature": 0.85,
-                            "maxOutputTokens": 180,
-                            "thinkingConfig": {"thinkingBudget": 0}
+                            "maxOutputTokens": 180
                         }
                     }
                     session = await get_http_session()
@@ -1127,6 +1131,20 @@ async def audio_streamer_loop():
             break
 
 # ==================== WORKER DE PREGUNTAS ====================
+
+async def encolar_saludo_inmediato(usuario: str, nombre_humano: str, agent: dict):
+    """Encola un saludo instantáneo y cálido cuando un espectador entra al Live."""
+    saludos_frases = [
+        f"¡Qué tal {nombre_humano}! Bienvenido al dojo del amor. Deja tu dilema en los comentarios.",
+        f"Saludos {nombre_humano}. Bienvenido al templo. ¿Qué dilema de pareja traes hoy?",
+        f"¡Hola {nombre_humano}! Un placer tenerte en la sala. Cuéntame tu caso en el chat.",
+        f"Bienvenido {nombre_humano}. Estás en el dojo del Sensei. Deja tu caso y te daré mi veredicto sincero.",
+        f"¡Qué energía {nombre_humano}! Bienvenido al live. Deja tu pregunta y la analizamos en directo."
+    ]
+    import random
+    frase = random.choice(saludos_frases)
+    await cola_preguntas.put((usuario, f"👋 SALUDO: {frase}"))
+
 async def worker_preguntas():
     while estado["is_streaming"]:
         try:
@@ -1138,13 +1156,25 @@ async def worker_preguntas():
             nombre_humano = limpiar_nombre_usuario(usuario)
             current_agent = agent_manager.get_active_agent() or {}
 
+            es_saludo = pregunta.startswith("👋 SALUDO:")
             es_regalo = pregunta.startswith("🎁 REGALO VIP:")
             es_bienvenida_donador = pregunta.startswith("👑 BIENVENIDA DONADOR VIP:")
             es_frase_viral = pregunta.startswith("📣 FRASE VIRAL:")
             es_intervencion_manual = pregunta.startswith("🎙️ INTERVENCION_MANUAL:")
             vip_activo = es_usuario_vip(usuario) or es_regalo or es_bienvenida_donador or es_intervencion_manual
 
-            if es_intervencion_manual:
+            if es_saludo:
+                frase_saludo = pregunta.replace("👋 SALUDO:", "").strip()
+                estado["active_user"] = f"👋 {nombre_humano}"
+                estado["active_question"] = "¡Acaba de entrar al Live! 👋"
+                estado["active_answer"] = frase_saludo
+                estado["active_emotion"] = "AMIGABLE"
+                estado["status_phase"] = "respondiendo"
+                actualizar_overlay_video(nombre_humano, "¡Nuevo espectador!", frase_saludo, estado_tipo="respondiendo", agent=current_agent)
+                respuesta = frase_saludo
+                emocion = "AMIGABLE"
+
+            elif es_intervencion_manual:
                 raw_payload = pregunta.replace("🎙️ INTERVENCION_MANUAL:", "").strip()
                 if ":::" in raw_payload:
                     preg_real, resp_real = raw_payload.split(":::", 1)
@@ -1513,6 +1543,8 @@ async def escuchar_tiktok():
                 registrar_log(f"✅ ¡Conectado al Live de TikTok de @{usuario} ({current_agent.get('name')})!", "green")
                 registrar_log("🔥 En vivo: Escuchando comentarios nuevos en tiempo real.", "green")
 
+            usuarios_saludados_recientes = {}
+
             @client.on(JoinEvent)
             async def on_join(event: JoinEvent):
                 try:
@@ -1521,27 +1553,43 @@ async def escuchar_tiktok():
                     user = getattr(event, "user", None)
                     if not user:
                         return
-                    u = user.unique_id
+                    u = getattr(user, "unique_id", "") or ""
+                    if not u:
+                        return
                     u_key = u.lower().strip()
+                    nombre_h = limpiar_nombre_usuario(u)
+                    if nombre_h.lower() == "amigo" and hasattr(user, "nickname") and user.nickname:
+                        nombre_nick = limpiar_nombre_usuario(user.nickname)
+                        if nombre_nick.lower() != "amigo":
+                            nombre_h = nombre_nick
 
-                    info_donador = obtener_info_donador(user)
-                    if not info_donador.get("es_donador"):
-                        return
-
-                    # Cooldown de 8 minutos para no repetir saludo al mismo donador si su conexión parpadea
                     ahora = time.time()
-                    if ahora - saludos_donadores_recientes.get(u_key, 0) < 480:
+                    info_donador = obtener_info_donador(user)
+                    es_donador = info_donador.get("es_donador", False)
+
+                    # Cooldown de 3 minutos por usuario para no spamear
+                    if ahora - usuarios_saludados_recientes.get(u_key, 0) < 180:
                         return
-                    saludos_donadores_recientes[u_key] = ahora
+                    usuarios_saludados_recientes[u_key] = ahora
+                    if len(usuarios_saludados_recientes) > 300:
+                        usuarios_saludados_recientes.clear()
 
-                    nivel = info_donador.get("nivel", 1) or 1
-                    registrar_usuario_vip(u, minutos=30)
-                    registrar_log(f"👑 ¡DONADOR DETECTADO ENTRANDO AL LIVE! @{u} (Nivel {nivel})", "green")
+                    estado["last_joined_user"] = nombre_h
+                    estado["last_joined_ts"] = int(ahora * 1000)
 
-                    msg_saludo = f"👑 BIENVENIDA DONADOR VIP: Nivel {nivel}"
-                    await encolar_pregunta(u, msg_saludo, es_vip=True)
+                    if es_donador:
+                        nivel = info_donador.get("nivel", 1) or 1
+                        registrar_usuario_vip(u, minutos=30)
+                        registrar_log(f"👑 ¡DONADOR ENTRANDO AL LIVE! @{u} (Nivel {nivel})", "green")
+                        msg_saludo = f"👑 BIENVENIDA DONADOR VIP: Nivel {nivel}"
+                        await encolar_pregunta(u, msg_saludo, es_vip=True)
+                    else:
+                        registrar_log(f"👋 ¡Nuevo conectado! @{u} ({nombre_h}) entró al Live", "green")
+                        # Saludar verbalmente si El Sensei está disponible
+                        if estado.get("status_phase") in ["esperando", "soporte_escrito"] and not estado.get("is_speaking") and cola_preguntas.empty():
+                            await encolar_saludo_inmediato(u, nombre_h, current_agent)
                 except Exception as e_join:
-                    logger.warning(f"Aviso procesando join de donador: {e_join}")
+                    logger.warning(f"Aviso procesando join en TikTok: {e_join}")
 
             @client.on(GiftEvent)
             async def on_gift(event: GiftEvent):
@@ -2296,6 +2344,7 @@ async def start_dual_servers():
     app = web.Application()
     app.router.add_get("/", handle_index)
     app.router.add_get("/client", handle_index)
+    app.router.add_get("/live", handle_live_screen)
     app.router.add_get("/live-screen", handle_live_screen)
     app.router.add_get("/overlay", handle_live_screen)
     app.router.add_get("/api/live-audio", handle_live_audio)
